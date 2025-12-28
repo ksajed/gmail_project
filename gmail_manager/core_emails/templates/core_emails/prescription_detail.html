@@ -1,0 +1,349 @@
+{% load prescription_extras %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ordonnance #{{ prescription.id }}</title>
+
+    <style>
+        :root {
+            --primary: #1f9d55;
+            --border: #dee2e6;
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #212529;
+            --muted: #6c757d;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .back {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .label {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .value {
+            font-weight: 500;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-progress { background: #dbeafe; color: #1e40af; }
+        .status-valid { background: #dcfce7; color: #166534; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-archived { background: #e5e7eb; color: #374151; }
+
+        select {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        button {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-warning {
+            background: #f97316;
+            margin-top: 8px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 10px;
+            width: 420px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .field {
+            margin-bottom: 14px;
+        }
+
+        .field label {
+            font-size: 13px;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🧾 Ordonnance #{{ prescription.id }}</h1>
+        <a href="{% url 'core_emails:dashboard' %}" class="back">⬅ Retour dashboard</a>
+    </div>
+
+    <div class="card">
+        <div class="info-grid">
+            <div>
+                <div class="label">Statut</div>
+                <span class="status-badge {% prescription_status_class prescription.status %}">
+                    {{ prescription.get_status_display }}
+                </span>
+            </div>
+
+            <div>
+                <div class="label">Patient</div>
+                <div class="value">
+                    {{ prescription.patient.email|default:"—" }}
+                </div>
+
+                {% if prescription.patient and not prescription.patient.is_complete %}
+                    <button type="button" class="btn-warning" onclick="openPatientModal()">
+                        Compléter le patient
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- PIÈCES JOINTES -->
+    <div class="card">
+        <h3>📎 Pièces jointes</h3>
+        <ul>
+            {% for a in attachments %}
+                <li>
+                    {{ a.original_filename }} —
+                    <a href="{% url 'core_attachments:download_attachment' a.id %}">
+                        ⬇️ Télécharger
+                    </a>
+                    —
+                    <a href="#"
+                       class="btn-viewer"
+                       data-viewer-url="{% url 'core_attachments:attachment_viewer' a.id %}">
+                        👁️ Visualiser
+                    </a>
+                </li>
+            {% empty %}
+                <li>Aucune pièce jointe</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>🕒 Historique des statuts</h3>
+
+        {% if history %}
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Utilisateur</th>
+                        <th>Changement</th>
+                        <th>Commentaire</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in history %}
+                        <tr>
+                            <td>{{ h.changed_at|date:"d/m/Y H:i" }}</td>
+                            <td>{{ h.changed_by|default:"Système" }}</td>
+                            <td>{{ h.old_status }} → {{ h.new_status }}</td>
+                            <td>{{ h.comment|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Aucun historique disponible.</p>
+        {% endif %}
+    </div>
+
+    {% if allowed_statuses %}
+    <div class="card">
+        <h3>🔄 Changer le statut</h3>
+        <form method="post" action="{% url 'core_emails:change_status' prescription.id %}">
+            {% csrf_token %}
+            <select name="status" required>
+                <option value="">— Sélectionner —</option>
+                {% for value, label in allowed_statuses %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Valider</button>
+        </form>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if prescription.patient %}
+<div id="patientModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🧍 Compléter le patient</h2>
+            <button class="close-btn" onclick="closePatientModal()">×</button>
+        </div>
+
+        <form method="post" action="{% url 'core_patients:complete_patient' prescription.patient.id %}">
+            {% csrf_token %}
+
+            <div class="field">
+                <label>Nom complet</label>
+                <input type="text" name="full_name"
+                       value="{{ prescription.patient.full_name }}" required>
+            </div>
+
+            <div class="field">
+                <label>Téléphone</label>
+                <input type="text" name="phone_number"
+                       value="{{ prescription.patient.phone_number }}" required>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn-cancel" onclick="closePatientModal()">Annuler</button>
+                <button type="submit">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function openPatientModal() {
+    document.getElementById("patientModal").style.display = "flex";
+}
+
+function closePatientModal() {
+    document.getElementById("patientModal").style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".btn-viewer").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+
+            const url = this.dataset.viewerUrl;
+            if (!url) return;
+
+            const width = 1000;
+            const height = 700;
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+
+            window.open(
+                url,
+                "viewerPopup",
+                `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+            );
+        });
+    });
+});
+</script>
+
+</body>
+</html>

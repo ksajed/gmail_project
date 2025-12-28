@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Ordonnance rejetée</title>
+</head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
+    <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:8px;padding:24px;">
+        <h2 style="color:#991b1b;">❌ Ordonnance rejetée</h2>
+
+        <p>Bonjour,</p>
+
+        <p>
+            Votre ordonnance n’a pas pu être traitée par la pharmacie.
+        </p>
+
+        <p>
+            Merci de vérifier les informations transmises ou de nous recontacter.
+        </p>
+
+        <p>
+            <strong>Référence :</strong> {{ prescription.id }}
+        </p>
+
+        <p style="margin-top:32px;">
+            Cordialement,<br>
+            <strong>La pharmacie</strong>
+        </p>
+    </div>
+</body>
+</html>

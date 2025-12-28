@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Ordonnance délivrée</title>
+</head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
+    <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:8px;padding:24px;">
+        
+        <h2 style="color:#0f766e;">📦 Ordonnance délivrée</h2>
+
+        <p>Bonjour,</p>
+
+        <p>
+            Nous vous informons que votre ordonnance a été
+            <strong>délivrée par la pharmacie</strong>.
+        </p>
+
+        <p>
+            Le traitement est maintenant terminé.
+        </p>
+
+        <p style="background:#f0fdfa;padding:12px;border-radius:6px;">
+            <strong>Référence ordonnance :</strong> {{ prescription.id }}<br>
+            {% if prescription.updated_at %}
+                <strong>Date de délivrance :</strong>
+                {{ prescription.updated_at|date:"d/m/Y H:i" }}
+            {% endif %}
+        </p>
+
+        <p style="margin-top:32px;">
+            Si vous avez des questions, n’hésitez pas à contacter la pharmacie.
+        </p>
+
+        <p style="margin-top:24px;">
+            Cordialement,<br>
+            <strong>La pharmacie</strong>
+        </p>
+
+    </div>
+</body>
+</html>

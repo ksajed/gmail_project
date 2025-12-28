@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Profil patient</title>
+
+    <style>
+        :root {
+            --primary: #1f9d55;
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #212529;
+            --muted: #6c757d;
+            --border: #dee2e6;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .row {
+            margin-bottom: 16px;
+        }
+
+        .label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .value {
+            font-weight: 600;
+        }
+
+        .status-valid {
+            color: #166534;
+            font-weight: 700;
+        }
+
+        .status-rejected {
+            color: #991b1b;
+            font-weight: 700;
+        }
+
+        .actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            text-decoration: none;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .btn-primary {
+            padding: 10px 16px;
+            border-radius: 6px;
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>👤 Profil patient</h1>
+
+        <div class="row">
+            <div class="label">Email</div>
+            <div class="value">{{ patient.email }}</div>
+        </div>
+
+        <div class="row">
+            <div class="label">Nom complet</div>
+            <div class="value">{{ patient.full_name|default:"—" }}</div>
+        </div>
+
+        <div class="row">
+            <div class="label">Téléphone</div>
+            <div class="value">{{ patient.phone_number|default:"—" }}</div>
+        </div>
+
+        <div class="row">
+            <div class="label">Statut du dossier</div>
+            {% if patient.is_complete %}
+                <div class="status-valid">✔ Patient complet</div>
+            {% else %}
+                <div class="status-rejected">⚠ Patient incomplet</div>
+            {% endif %}
+        </div>
+
+        <div class="actions">
+            {% if not patient.is_complete %}
+                <a
+                    href="{% url 'core_patients:complete_patient' patient.id %}"
+                    class="btn btn-primary"
+                >
+                    Compléter le profil
+                </a>
+            {% endif %}
+
+            <a href="javascript:history.back()" class="btn">
+                ⬅ Retour
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

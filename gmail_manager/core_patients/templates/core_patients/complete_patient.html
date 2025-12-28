@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Compléter le patient</title>
+
+    <style>
+        :root {
+            --primary: #1f9d55;
+            --border: #dee2e6;
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #212529;
+            --muted: #6c757d;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #374151;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>🧍 Compléter le patient</h1>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="field">
+                <label for="full_name">Nom complet</label>
+                <input
+                    type="text"
+                    id="full_name"
+                    name="full_name"
+                    value="{{ patient.full_name }}"
+                    placeholder="Nom et prénom"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label for="phone_number">Téléphone</label>
+                <input
+                    type="text"
+                    id="phone_number"
+                    name="phone_number"
+                    value="{{ patient.phone_number }}"
+                    placeholder="Ex : 06 12 34 56 78"
+                    required
+                >
+            </div>
+
+            <div class="actions">
+                <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="btn btn-cancel">
+                    Annuler
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Ordonnance reçue</title>
+</head>
+<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
+    <div style="max-width:600px;margin:40px auto;background:#ffffff;border-radius:8px;padding:24px;">
+        <h2 style="color:#1e40af;">📥 Ordonnance reçue</h2>
+
+        <p>Bonjour,</p>
+
+        <p>
+            Votre ordonnance a bien été reçue par la pharmacie.
+            Elle va être prise en charge dans les meilleurs délais.
+        </p>
+
+        <p>
+            <strong>Référence :</strong> {{ prescription.id }}<br>
+            <strong>Date de réception :</strong> {{ prescription.received_at|date:"d/m/Y H:i" }}
+        </p>
+
+        <p style="margin-top:32px;">
+            Cordialement,<br>
+            <strong>La pharmacie</strong>
+        </p>
+    </div>
+</body>
+</html>

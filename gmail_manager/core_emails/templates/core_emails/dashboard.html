@@ -1,0 +1,412 @@
+{% load prescription_extras %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau de bord — Pharmacie</title>
+
+    <style>
+        :root {
+            --primary: #1f9d55;
+            --primary-dark: #157347;
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --danger-bg: #fef2f2;
+            --danger-text: #991b1b;
+            --info-bg: #eef2ff;
+            --info-text: #3730a3;
+            --success-bg: #ecfdf5;
+            --success-text: #065f46;
+            --warning-bg: #fff7ed;
+            --warning-text: #9a3412;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 36px auto;
+            padding: 0 24px;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* BOUTONS */
+        .sync-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--info-bg);
+            color: var(--info-text);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .sync-btn:hover {
+            background: #e0e7ff;
+        }
+
+        .logout-btn {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+        }
+
+        /* FILTRES */
+        .filter-box {
+            background: var(--card);
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            background: white;
+        }
+
+        button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        /* =========================
+            STATISTIQUES (UNE SEULE LIGNE)
+         ========================= */
+        .stats-grid {
+         display: grid;
+         grid-template-columns: repeat(6, 1fr); /* 6 stats = 1 ligne */
+         gap: 16px;
+         margin-bottom: 28px;
+                     }
+
+
+        .stat-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 18px 20px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .stat-total { background: #ffffff; }
+        .stat-received { background: var(--info-bg); color: var(--info-text); }
+        .stat-progress { background: var(--warning-bg); color: var(--warning-text); }
+        .stat-ready { background: var(--success-bg); color: var(--success-text); }
+        .stat-delivered { background: #f0fdf4; color: #166534; }
+        .stat-blocked { background: var(--danger-bg); color: var(--danger-text); }
+
+        /* VUES */
+        .views-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .view-btn {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            background: var(--card);
+        }
+
+        .view-active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* TABLE */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        thead {
+            background: #f9fafb;
+        }
+
+        th {
+            text-align: left;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        /* BADGES */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        /* LIENS */
+        a.action-link {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        a.action-link:hover {
+            text-decoration: underline;
+        }
+
+        /* PAGINATION */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .pagination a,
+        .pagination span {
+            min-width: 34px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            text-decoration: none;
+            color: var(--text);
+            background: white;
+        }
+
+        .pagination .active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination .disabled {
+            color: var(--muted);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Tableau de bord — Pharmacie</h1>
+
+        <div class="header-actions">
+            <div style="font-size:13px;font-weight:600;">
+                👤 {{ request.user.get_full_name|default:request.user.username }}
+            </div>
+
+            <a href="{% url 'core_emails:logout' %}" class="sync-btn logout-btn">🚪 Déconnexion</a>
+            <a href="{% url 'core_emails:sync_gmail_now' %}" class="sync-btn">🔄 Synchroniser Gmail</a>
+
+            <form method="get" class="filter-box">
+                {% if current_view %}<input type="hidden" name="view" value="{{ current_view }}">{% endif %}
+
+                <select name="status">
+                    <option value="">Tous les statuts</option>
+                    {% for code, label in statuses %}
+                        <option value="{{ code }}" {% if code == current_status %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="per_page" onchange="this.form.submit()">
+                    <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 lignes</option>
+                    <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 lignes</option>
+                    <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 lignes</option>
+                </select>
+
+                <button type="submit">Appliquer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div class="stats-grid">
+        <div class="stat-card stat-total">
+            <div class="stat-label">Total ordonnances</div>
+            <div class="stat-value">{{ total_prescriptions }}</div>
+        </div>
+        <div class="stat-card stat-received">
+            <div class="stat-label">Reçues</div>
+            <div class="stat-value">{{ count_received }}</div>
+        </div>
+        <div class="stat-card stat-progress">
+            <div class="stat-label">En cours</div>
+            <div class="stat-value">{{ count_in_progress }}</div>
+        </div>
+        <div class="stat-card stat-ready">
+            <div class="stat-label">Prêtes</div>
+            <div class="stat-value">{{ count_ready }}</div>
+        </div>
+        <div class="stat-card stat-delivered">
+            <div class="stat-label">Délivrées</div>
+            <div class="stat-value">{{ count_delivered }}</div>
+        </div>
+        <div class="stat-card stat-blocked">
+            <div class="stat-label">Bloquées</div>
+            <div class="stat-value">{{ count_blocked }}</div>
+        </div>
+    </div>
+
+    <!-- VUES -->
+    <div class="views-bar">
+        <a href="{% url 'core_emails:dashboard' %}" class="view-btn {% if not current_view %}view-active{% endif %}">Toutes</a>
+        <a href="?view=todo" class="view-btn {% if current_view == 'todo' %}view-active{% endif %}">À traiter</a>
+        <a href="?view=blocked" class="view-btn {% if current_view == 'blocked' %}view-active{% endif %}">Bloquées</a>
+        <a href="?view=archived" class="view-btn {% if current_view == 'archived' %}view-active{% endif %}">Archivées</a>
+    </div>
+
+    <!-- TABLE + PAGINATION (INCHANGÉES) -->
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Réf.</th>
+                    <th>Patient</th>
+                    <th>Statut ordonnance</th>
+                    <th>Date de réception</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in prescriptions %}
+                <tr>
+                    <td>#{{ p.id }}</td>
+                    <td>{% if p.patient %}<strong>{{ p.patient.email }}</strong>{% else %}—{% endif %}</td>
+                    <td>
+                        <span class="status-badge {% prescription_status_class p.status %}">
+                            {{ p.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ p.received_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'core_emails:prescription_detail' p.id %}" class="action-link">Ouvrir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:#6b7280;">
+                        Aucune ordonnance disponible
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if prescriptions.has_other_pages %}
+        <div class="pagination">
+            {% if prescriptions.has_previous %}
+                <a href="?page={{ prescriptions.previous_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">‹</a>
+            {% else %}
+                <span class="disabled">‹</span>
+            {% endif %}
+
+            {% for num in prescriptions.paginator.page_range %}
+                {% if prescriptions.number == num %}
+                    <span class="active">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if prescriptions.has_next %}
+                <a href="?page={{ prescriptions.next_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">›</a>
+            {% else %}
+                <span class="disabled">›</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>
