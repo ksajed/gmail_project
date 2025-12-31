@@ -1,51 +1,12 @@
-# gmail_manager/core_emails/views.py
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+# gmail_manager/core_gmail/views.py
 
-from core_emails.models import Prescription
-from core_gmail.services import fetch_new_gmail_messages
+"""
+Ordo V1 — core_gmail
 
-from django.contrib.auth.views import LoginView, LogoutView
+Ce module ne définit AUCUNE vue HTTP.
+La récupération Gmail est effectuée via :
+- service IMAP (services.py)
+- commande Django (management/commands/fetch_gmail.py)
 
-
-@login_required
-def pharmacy_dashboard(request):
-    """
-    Dashboard principal de la pharmacie.
-    """
-
-    prescriptions = (
-        Prescription.objects
-        .select_related("patient")
-        .prefetch_related("attachments", "status_history")
-        .order_by("-received_at")
-    )
-    return render(
-        request,
-        "core_emails/dashboard.html",
-        {
-            "prescriptions": prescriptions
-        }
-    )
-
-
-@login_required
-def sync_gmail_now(request):
-    """
-    Synchronisation Gmail manuelle via bouton.
-    """
-    fetch_new_gmail_messages()
-    return redirect("pharmacy_dashboard")
-
-
-
-#✅ AJOUT — VUES D’AUTHENTIFICATION PERSONNALISÉES
-
-class PharmacyLoginView(LoginView):
-    template_name = "auth/login.html"
-
-
-class PharmacyLogoutView(LogoutView):
-    pass
-
-
+Toute exposition web est volontairement exclue en V1.
+"""

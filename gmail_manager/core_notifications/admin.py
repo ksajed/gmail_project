@@ -1,3 +1,4 @@
+# gmail_manager/core_notifications/admin.py
 from django.contrib import admin, messages
 from .models import Notification
 

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "core_attachments",
     "core_notifications",
     "core_patients",
+    "core_people",
 ]
 
 

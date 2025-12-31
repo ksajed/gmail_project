@@ -2,10 +2,7 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
-from .models import (
-    PrescriptionStatusHistory,
-    PrescriptionStatus,
-)
+from .models import PrescriptionStatusHistory
 from .states import (
     PrescriptionStatusEnum,
     PRESCRIPTION_STATUS_TRANSITIONS,
@@ -17,30 +14,36 @@ from core_emails.emailing import send_status_email
 User = get_user_model()
 
 
+def status_label(enum: PrescriptionStatusEnum) -> str:
+    """
+    Libellé humain à partir de l'Enum
+    Ex: IN_PROGRESS → In Progress
+    """
+    return enum.value.replace("_", " ").title()
+
+
 @transaction.atomic
 def change_prescription_status(*, prescription, new_status, user=None, comment=""):
     """
     🔒 MÉTHODE UNIQUE ET OFFICIELLE POUR CHANGER UN STATUT D’ORDONNANCE
 
-    ✔ transitions strictes (states.py)
+    ✔ transitions strictes
     ✔ BLOCKED → commentaire obligatoire
     ✔ ARCHIVED → état final
-    ✔ historique légal opposable
+    ✔ historique opposable (commentaire jamais NULL)
     ✔ notifications internes
-    ✔ emails patients via emailing.py
+    ✔ emails patients
     """
-
-    # =====================================================
-    # DEBUG (peut être supprimé plus tard)
-    # =====================================================
-    print(">>> SERVICE change_prescription_status APPELÉ <<<")
-    print("STATUT RÉEL =", new_status)
 
     old_status = prescription.status
 
-    # ⛔ Aucun changement réel
+    # =====================================================
+    # ⛔ STATUT IDENTIQUE
+    # =====================================================
     if old_status == new_status:
-        return prescription
+        raise ValidationError(
+            "Le statut sélectionné est identique au statut actuel."
+        )
 
     # =====================================================
     # 0️⃣ VALIDATION DES STATUTS
@@ -52,7 +55,7 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         raise ValidationError("Statut d’ordonnance invalide.")
 
     # =====================================================
-    # 🔒 ARCHIVED = ÉTAT FINAL
+    # 🔒 ARCHIVED = FINAL
     # =====================================================
     if current_enum == PrescriptionStatusEnum.ARCHIVED:
         raise ValidationError(
@@ -60,16 +63,16 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         )
 
     # =====================================================
-    # 🔄 TRANSITION AUTORISÉE ?
+    # 🔄 TRANSITION AUTORISÉE
     # =====================================================
     allowed_transitions = PRESCRIPTION_STATUS_TRANSITIONS.get(
-        current_enum,
-        set()
+        current_enum, set()
     )
 
     if target_enum not in allowed_transitions:
         raise ValidationError(
-            f"Transition interdite : {current_enum.value} → {target_enum.value}"
+            f"Transition interdite : "
+            f"{status_label(current_enum)} → {status_label(target_enum)}"
         )
 
     # =====================================================
@@ -81,14 +84,24 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         )
 
     # =====================================================
-    # 1️⃣ HISTORIQUE DES STATUTS (AUDIT OPPOSABLE)
+    # 📝 COMMENTAIRE GARANTI (ANTI-NULL)
+    # =====================================================
+    final_comment = comment.strip()
+    if not final_comment:
+        final_comment = (
+            f"Changement de statut : "
+            f"{status_label(current_enum)} → {status_label(target_enum)}"
+        )
+
+    # =====================================================
+    # 1️⃣ HISTORIQUE OPPOSABLE
     # =====================================================
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
         old_status=old_status,
         new_status=new_status,
         changed_by=user,
-        comment=comment,
+        comment=final_comment,
     )
 
     # =====================================================
@@ -98,24 +111,21 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
     prescription.save(update_fields=["status", "updated_at"])
 
     # =====================================================
-    # 3️⃣ NOTIFICATION INTERNE (PHARMACIE)
+    # 3️⃣ NOTIFICATION INTERNE
     # =====================================================
-    users = User.objects.all()
-
     notify_users(
-        users=users,
+        users=User.objects.all(),
         title="Statut d’ordonnance modifié",
         message=(
             f"Ordonnance #{prescription.id}\n"
-            f"Statut : {old_status} → {new_status}\n"
-            f"{comment}"
+            f"{status_label(current_enum)} → {status_label(target_enum)}"
         ),
         object_type="Prescription",
         object_id=prescription.id,
     )
 
     # =====================================================
-    # 4️⃣ EMAIL PATIENT (EMAILING CENTRALISÉ)
+    # 4️⃣ EMAIL PATIENT
     # =====================================================
     send_status_email(
         prescription=prescription,

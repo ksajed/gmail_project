@@ -1,3 +1,4 @@
+# gmail_manager/core_emails/emailing.py
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings

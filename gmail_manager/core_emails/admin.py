@@ -1,22 +1,22 @@
 from django.contrib import admin
+
 from .models import Prescription, PrescriptionStatusHistory
+from .models_assignment import PrescriptionAssignment
 
 
 @admin.register(Prescription)
 class PrescriptionAdmin(admin.ModelAdmin):
-    """
-    Admin des ordonnances (pharmacie unique).
-    """
-
     list_display = (
         "id",
         "status",
+        "sender_type",
         "received_at",
         "updated_at",
     )
 
     list_filter = (
         "status",
+        "sender_type",
         "received_at",
     )
 
@@ -30,10 +30,6 @@ class PrescriptionAdmin(admin.ModelAdmin):
 
 @admin.register(PrescriptionStatusHistory)
 class PrescriptionStatusHistoryAdmin(admin.ModelAdmin):
-    """
-    Historique légal des statuts d’ordonnance.
-    """
-
     list_display = (
         "prescription",
         "old_status",
@@ -46,4 +42,25 @@ class PrescriptionStatusHistoryAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "changed_at",
+    )
+
+
+@admin.register(PrescriptionAssignment)
+class PrescriptionAssignmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "prescription",
+        "nurse",
+        "patient",
+        "assigned_at",
+    )
+
+    ordering = ("-assigned_at",)
+
+    autocomplete_fields = (
+        "nurse",
+        "patient",
+    )
+
+    readonly_fields = (
+        "assigned_at",
     )

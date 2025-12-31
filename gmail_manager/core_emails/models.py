@@ -1,4 +1,4 @@
-#core_emails/models.py
+# core_emails/models.py
 from django.conf import settings
 from django.db import models
 
@@ -19,6 +19,16 @@ class PrescriptionStatus(models.TextChoices):
     ARCHIVED = PrescriptionStatusEnum.ARCHIVED.value, "Archivée"
 
 
+class SenderType(models.TextChoices):
+    """
+    Type d'expéditeur (V2 — organisationnel, non médical).
+    """
+    DOCTOR = "doctor", "Médecin"
+    NURSE = "nurse", "Infirmier"
+    PATIENT = "patient", "Patient"
+    UNKNOWN = "unknown", "Inconnu"
+
+
 class Prescription(models.Model):
     """
     Ordonnance reçue par la pharmacie.
@@ -32,6 +42,16 @@ class Prescription(models.Model):
         max_length=20,
         choices=PrescriptionStatus.choices,
         default=PrescriptionStatus.RECEIVED,
+    )
+
+    # ===============================
+    # ORIGINE EMAIL (V2 — ORGANISATIONNEL)
+    # ===============================
+    sender_type = models.CharField(
+        max_length=20,
+        choices=SenderType.choices,
+        default=SenderType.UNKNOWN,
+        help_text="Type d'expéditeur de l'ordonnance (organisationnel)",
     )
 
     # ===============================
@@ -114,3 +134,5 @@ class PrescriptionStatusHistory(models.Model):
             f"Ordonnance #{self.prescription.id} : "
             f"{self.old_status} → {self.new_status}"
         )
+# Import V2 (obligatoire pour que Django détecte le modèle)
+from .models_assignment import PrescriptionAssignment  # noqa

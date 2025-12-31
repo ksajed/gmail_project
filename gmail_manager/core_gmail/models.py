@@ -1,3 +1,4 @@
+# gmail_manager/core_gmail/models.py
 from django.db import models
 
 

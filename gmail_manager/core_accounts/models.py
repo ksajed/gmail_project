@@ -1,3 +1,4 @@
+# gmail_manager/core_accounts/models.py
 from django.conf import settings
 from django.db import models
 

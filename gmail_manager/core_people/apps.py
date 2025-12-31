@@ -1,7 +1,6 @@
-# gmail_manager/core_gmail/apps.py
 from django.apps import AppConfig
 
 
-class CoreGmailConfig(AppConfig):
+class CorePeopleConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'core_gmail'
+    name = 'core_people'

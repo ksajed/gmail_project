@@ -2,411 +2,612 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Tableau de bord — Pharmacie</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Tableau de bord — Pharmacie</title>
 
-    <style>
-        :root {
-            --primary: #1f9d55;
-            --primary-dark: #157347;
-            --bg: #f4f6f8;
-            --card: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --border: #e5e7eb;
-            --danger-bg: #fef2f2;
-            --danger-text: #991b1b;
-            --info-bg: #eef2ff;
-            --info-text: #3730a3;
-            --success-bg: #ecfdf5;
-            --success-text: #065f46;
-            --warning-bg: #fff7ed;
-            --warning-text: #9a3412;
-        }
+  <style>
+    :root{
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e5e7eb;
 
-        * {
-            box-sizing: border-box;
-            font-family: "Inter", "Segoe UI", Arial, sans-serif;
-        }
+      --primary: #16a34a;
+      --primary-600:#15803d;
+      --primary-soft: #eafaf0;
 
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-        }
+      --danger: #dc2626;
+      --danger-600:#b91c1c;
+      --danger-soft:#fee2e2;
 
-        .container {
-            max-width: 1200px;
-            margin: 36px auto;
-            padding: 0 24px;
-        }
+      --warning:#b45309;
+      --warning-soft:#ffedd5;
 
-        /* HEADER */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
+      --info:#3730a3;
+      --info-soft:#eef2ff;
 
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
+      --shadow: 0 10px 25px rgba(15, 23, 42, .08);
+      --shadow-sm: 0 6px 16px rgba(15, 23, 42, .06);
 
-        .header-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+      --radius: 14px;
+      --radius-sm: 10px;
 
-        /* BOUTONS */
-        .sync-btn {
-            padding: 8px 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--info-bg);
-            color: var(--info-text);
-            font-size: 13px;
-            font-weight: 600;
-            text-decoration: none;
-            cursor: pointer;
-        }
+      --ring: 0 0 0 4px rgba(22, 163, 74, .18);
+    }
 
-        .sync-btn:hover {
-            background: #e0e7ff;
-        }
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      line-height:1.4;
+    }
 
-        .logout-btn {
-            background: var(--danger-bg);
-            color: var(--danger-text);
-        }
+    /* APP */
+    .app{ min-height:100%; display:flex; flex-direction:column; }
 
-        /* FILTRES */
-        .filter-box {
-            background: var(--card);
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
+    /* TOPBAR */
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      background:rgba(255,255,255,.86);
+      backdrop-filter:saturate(180%) blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    .topbar__inner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    .titlewrap{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+    .page-title{
+      margin:0;
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .breadcrumb{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
 
-        select {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            font-size: 13px;
-            background: white;
-        }
+    .userchip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:13px;
+      font-weight:750;
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .avatar{
+      width:26px; height:26px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--primary-soft);
+      color:var(--primary-600);
+      font-weight:900;
+      border:1px solid rgba(22,163,74,.18);
+      flex:0 0 auto;
+    }
 
-        button {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            background: var(--primary);
-            color: #fff;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-        }
+    /* CONTAINER */
+    .container{
+      max-width:1100px;
+      margin:22px auto;
+      padding:0 20px 28px;
+      width:100%;
+    }
 
-        button:hover {
-            background: var(--primary-dark);
-        }
+    /* BUTTONS */
+    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:#0f172a;
+      font-weight:800;
+      font-size:13px;
+      cursor:pointer;
+      transition: transform .04s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
+      text-decoration:none;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ box-shadow: 0 10px 18px rgba(15,23,42,.07); border-color:#d1d5db; }
+    .btn:active{ transform: translateY(1px); }
+    .btn:focus-visible{ outline:none; box-shadow: var(--ring); border-color: rgba(22,163,74,.45); }
 
-        /* =========================
-            STATISTIQUES (UNE SEULE LIGNE)
-         ========================= */
-        .stats-grid {
-         display: grid;
-         grid-template-columns: repeat(6, 1fr); /* 6 stats = 1 ligne */
-         gap: 16px;
-         margin-bottom: 28px;
-                     }
+    .btn--primary{
+      background:var(--primary);
+      border-color:rgba(22,163,74,.55);
+      color:#fff;
+    }
+    .btn--primary:hover{ background:var(--primary-600); }
+    .btn--danger{
+      background:var(--danger);
+      border-color:rgba(220,38,38,.55);
+      color:#fff;
+    }
+    .btn--danger:hover{ background:var(--danger-600); }
+    .btn--soft-info{
+      background:var(--info-soft);
+      color:var(--info);
+      border-color:rgba(55,48,163,.18);
+    }
+    .btn--ghost{ background:transparent; }
 
+    /* CARDS */
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-sm);
+      overflow:hidden;
+    }
+    .card__header{
+      padding:14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(to bottom, rgba(248,250,252,.9), rgba(255,255,255,.8));
+    }
+    .card__title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.25px;
+      text-transform:uppercase;
+      color:#0b1220;
+      margin:0;
+    }
+    .card__body{ padding:16px; }
 
-        .stat-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 18px 20px;
-            border: 1px solid var(--border);
-        }
+    /* ICONS */
+    .ico{ width:16px; height:16px; display:inline-block; }
+    .ico svg{ width:16px; height:16px; display:block; }
 
-        .stat-label {
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
+    /* STATS GRID */
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap:12px;
+      margin-bottom:14px;
+    }
+    @media (max-width: 1100px){
+      .stats-grid{ grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 640px){
+      .stats-grid{ grid-template-columns: repeat(2, 1fr); }
+    }
 
-        .stat-value {
-            font-size: 26px;
-            font-weight: 700;
-        }
+    .stat{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      padding:14px;
+      box-shadow:var(--shadow-sm);
+    }
+    .stat__label{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.25px;
+    }
+    .stat__value{
+      margin-top:8px;
+      font-size:24px;
+      font-weight:900;
+      letter-spacing:-.3px;
+    }
+    .stat--info{ background:var(--info-soft); border-color:rgba(55,48,163,.18); color:var(--info); }
+    .stat--warn{ background:var(--warning-soft); border-color:rgba(180,83,9,.18); color:var(--warning); }
+    .stat--success{ background:var(--primary-soft); border-color:rgba(22,163,74,.18); color:var(--primary-600); }
+    .stat--danger{ background:var(--danger-soft); border-color:rgba(220,38,38,.18); color:var(--danger-600); }
 
-        .stat-total { background: #ffffff; }
-        .stat-received { background: var(--info-bg); color: var(--info-text); }
-        .stat-progress { background: var(--warning-bg); color: var(--warning-text); }
-        .stat-ready { background: var(--success-bg); color: var(--success-text); }
-        .stat-delivered { background: #f0fdf4; color: #166534; }
-        .stat-blocked { background: var(--danger-bg); color: var(--danger-text); }
+    /* FILTER BAR */
+    .bar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin:12px 0 16px;
+    }
+    .bar-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .bar-right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
-        /* VUES */
-        .views-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--muted);
+      white-space:nowrap;
+    }
 
-        .view-btn {
-            padding: 6px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 600;
-            text-decoration: none;
-            border: 1px solid var(--border);
-            color: var(--text);
-            background: var(--card);
-        }
+    /* TABS */
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+    .tab{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      text-decoration:none;
+      font-weight:900;
+      font-size:13px;
+    }
+    .tab:hover{ box-shadow: 0 10px 18px rgba(15,23,42,.07); border-color:#d1d5db; }
+    .tab--active{
+      background:var(--primary);
+      border-color:rgba(22,163,74,.55);
+      color:#fff;
+    }
 
-        .view-active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
+    /* FORM */
+    form{ margin:0; }
+    label{ display:block; font-size:12px; font-weight:900; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.25px; }
+    select{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      font-size:14px;
+      outline:none;
+      transition: box-shadow .2s ease, border-color .2s ease;
+      min-width: 190px;
+    }
+    select:focus{ border-color: rgba(22,163,74,.55); box-shadow: var(--ring); }
 
-        /* TABLE */
-        .card {
-            background: var(--card);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
+    .filterform{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:end;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      box-shadow:var(--shadow-sm);
+    }
+    .field{ display:flex; flex-direction:column; gap:0; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+    /* TABLE */
+    .tablewrap{ overflow:auto; }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:13px;
+    }
+    thead th{
+      text-align:left;
+      padding:12px 12px;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.25px;
+      color:var(--muted);
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:12px 12px;
+      border-bottom:1px solid var(--border);
+      vertical-align:top;
+      background:#fff;
+    }
+    tbody tr:hover td{ background:#fafafa; }
+    tbody tr:last-child td{ border-bottom:none; }
+    .nowrap{ white-space:nowrap; }
 
-        th, td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-            font-size: 13px;
-            vertical-align: top;
-        }
+    /* STATUS BADGES (compat avec ta class django) */
+    .status-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid transparent;
+      white-space:nowrap;
+    }
 
-        thead {
-            background: #f9fafb;
-        }
+    /* ACTION LINK */
+    .action-link{
+      color:var(--primary-600);
+      font-weight:900;
+      text-decoration:none;
+    }
+    .action-link:hover{ text-decoration:underline; }
 
-        th {
-            text-align: left;
-            font-weight: 700;
-            color: #374151;
-        }
-
-        /* BADGES */
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        /* LIENS */
-        a.action-link {
-            color: var(--primary);
-            font-weight: 600;
-            text-decoration: none;
-            font-size: 13px;
-        }
-
-        a.action-link:hover {
-            text-decoration: underline;
-        }
-
-        /* PAGINATION */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            padding: 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        .pagination a,
-        .pagination span {
-            min-width: 34px;
-            height: 34px;
-            padding: 0 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            text-decoration: none;
-            color: var(--text);
-            background: white;
-        }
-
-        .pagination .active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .pagination .disabled {
-            color: var(--muted);
-            pointer-events: none;
-        }
-    </style>
+    /* PAGINATION */
+    .pagination{
+      display:flex;
+      justify-content:center;
+      gap:6px;
+      padding:14px 16px;
+      border-top:1px solid var(--border);
+      background:#fbfdff;
+      flex-wrap:wrap;
+    }
+    .pagination a,
+    .pagination span{
+      min-width:36px;
+      height:36px;
+      padding:0 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:13px;
+      text-decoration:none;
+      color:var(--text);
+      background:#fff;
+      font-weight:900;
+    }
+    .pagination .active{
+      background:var(--primary);
+      color:#fff;
+      border-color:rgba(22,163,74,.55);
+    }
+    .pagination .disabled{
+      color:var(--muted);
+      pointer-events:none;
+      background:transparent;
+    }
+  </style>
 </head>
+
 <body>
+<div class="app">
 
-<div class="container">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar__inner">
+      <div class="titlewrap">
+        <h1 class="page-title">Tableau de bord — Pharmacie</h1>
+        <div class="breadcrumb">Dashboard → Ordonnances</div>
+      </div>
 
-    <!-- HEADER -->
-    <div class="header">
-        <h1>Tableau de bord — Pharmacie</h1>
-
-        <div class="header-actions">
-            <div style="font-size:13px;font-weight:600;">
-                👤 {{ request.user.get_full_name|default:request.user.username }}
-            </div>
-
-            <a href="{% url 'core_emails:logout' %}" class="sync-btn logout-btn">🚪 Déconnexion</a>
-            <a href="{% url 'core_emails:sync_gmail_now' %}" class="sync-btn">🔄 Synchroniser Gmail</a>
-
-            <form method="get" class="filter-box">
-                {% if current_view %}<input type="hidden" name="view" value="{{ current_view }}">{% endif %}
-
-                <select name="status">
-                    <option value="">Tous les statuts</option>
-                    {% for code, label in statuses %}
-                        <option value="{{ code }}" {% if code == current_status %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-
-                <select name="per_page" onchange="this.form.submit()">
-                    <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 lignes</option>
-                    <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 lignes</option>
-                    <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 lignes</option>
-                </select>
-
-                <button type="submit">Appliquer</button>
-            </form>
+      <div class="btnrow">
+        <div class="userchip" title="{{ request.user.get_full_name|default:request.user.username }}">
+          <span class="avatar" aria-hidden="true">
+            {{ request.user.get_full_name|default:request.user.username|slice:":1"|upper }}
+          </span>
+          <span> {{ request.user.get_full_name|default:request.user.username }} </span>
         </div>
-    </div>
 
-    <!-- STATISTIQUES -->
+        <a href="{% url 'core_emails:sync_gmail_now' %}" class="btn btn--soft-info">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 10-3 6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M21 12v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          Synchroniser Gmail
+        </a>
+
+        <a href="{% url 'core_emails:logout' %}" class="btn btn--danger">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 21H4a2 2 0 01-2-2V5a2 2 0 012-2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          Déconnexion
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- STATS -->
     <div class="stats-grid">
-        <div class="stat-card stat-total">
-            <div class="stat-label">Total ordonnances</div>
-            <div class="stat-value">{{ total_prescriptions }}</div>
-        </div>
-        <div class="stat-card stat-received">
-            <div class="stat-label">Reçues</div>
-            <div class="stat-value">{{ count_received }}</div>
-        </div>
-        <div class="stat-card stat-progress">
-            <div class="stat-label">En cours</div>
-            <div class="stat-value">{{ count_in_progress }}</div>
-        </div>
-        <div class="stat-card stat-ready">
-            <div class="stat-label">Prêtes</div>
-            <div class="stat-value">{{ count_ready }}</div>
-        </div>
-        <div class="stat-card stat-delivered">
-            <div class="stat-label">Délivrées</div>
-            <div class="stat-value">{{ count_delivered }}</div>
-        </div>
-        <div class="stat-card stat-blocked">
-            <div class="stat-label">Bloquées</div>
-            <div class="stat-value">{{ count_blocked }}</div>
-        </div>
+      <div class="stat">
+        <div class="stat__label">Total</div>
+        <div class="stat__value">{{ total_prescriptions }}</div>
+      </div>
+      <div class="stat stat--info">
+        <div class="stat__label">Reçues</div>
+        <div class="stat__value">{{ count_received }}</div>
+      </div>
+      <div class="stat stat--warn">
+        <div class="stat__label">En cours</div>
+        <div class="stat__value">{{ count_in_progress }}</div>
+      </div>
+      <div class="stat stat--success">
+        <div class="stat__label">Prêtes</div>
+        <div class="stat__value">{{ count_ready }}</div>
+      </div>
+      <div class="stat stat--success" style="background:#f0fdf4; border-color: rgba(22,163,74,.18); color:#166534;">
+        <div class="stat__label">Délivrées</div>
+        <div class="stat__value">{{ count_delivered }}</div>
+      </div>
+      <div class="stat stat--danger">
+        <div class="stat__label">Bloquées</div>
+        <div class="stat__value">{{ count_blocked }}</div>
+      </div>
     </div>
 
-    <!-- VUES -->
-    <div class="views-bar">
-        <a href="{% url 'core_emails:dashboard' %}" class="view-btn {% if not current_view %}view-active{% endif %}">Toutes</a>
-        <a href="?view=todo" class="view-btn {% if current_view == 'todo' %}view-active{% endif %}">À traiter</a>
-        <a href="?view=blocked" class="view-btn {% if current_view == 'blocked' %}view-active{% endif %}">Bloquées</a>
-        <a href="?view=archived" class="view-btn {% if current_view == 'archived' %}view-active{% endif %}">Archivées</a>
+    <!-- FILTERS + TABS -->
+    <div class="bar">
+      <div class="bar-left">
+        <ul class="tabs">
+          <li><a href="{% url 'core_emails:dashboard' %}" class="tab {% if not current_view %}tab--active{% endif %}">Toutes</a></li>
+          <li><a href="?view=todo" class="tab {% if current_view == 'todo' %}tab--active{% endif %}">À traiter</a></li>
+          <li><a href="?view=blocked" class="tab {% if current_view == 'blocked' %}tab--active{% endif %}">Bloquées</a></li>
+          <li><a href="?view=archived" class="tab {% if current_view == 'archived' %}tab--active{% endif %}">Archivées</a></li>
+        </ul>
+      </div>
+
+      <div class="bar-right">
+        <span class="chip">Filtrage</span>
+        <form method="get" class="filterform">
+          {% if current_view %}<input type="hidden" name="view" value="{{ current_view }}">{% endif %}
+
+          <div class="field">
+            <label>Statut</label>
+            <select name="status">
+              <option value="">Tous les statuts</option>
+              {% for code, label in statuses %}
+                <option value="{{ code }}" {% if code == current_status %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Lignes</label>
+            <select name="per_page" onchange="this.form.submit()">
+              <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10</option>
+              <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25</option>
+              <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn--primary" style="height:42px;">Appliquer</button>
+        </form>
+      </div>
     </div>
 
-    <!-- TABLE + PAGINATION (INCHANGÉES) -->
-    <div class="card">
+    <!-- TABLE CARD -->
+    <section class="card">
+      <div class="card__header">
+        <h3 class="card__title">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          Ordonnances
+        </h3>
+
+        <span class="chip">{{ prescriptions.paginator.count|default:"0" }} résultat(s)</span>
+      </div>
+
+      <div class="card__body tablewrap">
         <table>
-            <thead>
-                <tr>
-                    <th>Réf.</th>
-                    <th>Patient</th>
-                    <th>Statut ordonnance</th>
-                    <th>Date de réception</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in prescriptions %}
-                <tr>
-                    <td>#{{ p.id }}</td>
-                    <td>{% if p.patient %}<strong>{{ p.patient.email }}</strong>{% else %}—{% endif %}</td>
-                    <td>
-                        <span class="status-badge {% prescription_status_class p.status %}">
-                            {{ p.get_status_display }}
-                        </span>
-                    </td>
-                    <td>{{ p.received_at|date:"d/m/Y H:i" }}</td>
-                    <td>
-                        <a href="{% url 'core_emails:prescription_detail' p.id %}" class="action-link">Ouvrir</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" style="text-align:center;color:#6b7280;">
-                        Aucune ordonnance disponible
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+          <thead>
+            <tr>
+              <th>Réf.</th>
+              <th>Patient</th>
+              <th>Statut ordonnance</th>
+              <th>Date de réception</th>
+              <th>Action</th>
+            </tr>
+          </thead>
 
-        {% if prescriptions.has_other_pages %}
-        <div class="pagination">
-            {% if prescriptions.has_previous %}
-                <a href="?page={{ prescriptions.previous_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">‹</a>
-            {% else %}
-                <span class="disabled">‹</span>
-            {% endif %}
+          <tbody>
+            {% for p in prescriptions %}
+              <tr>
+                <td class="nowrap">#{{ p.id }}</td>
 
-            {% for num in prescriptions.paginator.page_range %}
-                {% if prescriptions.number == num %}
-                    <span class="active">{{ num }}</span>
-                {% else %}
-                    <a href="?page={{ num }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">{{ num }}</a>
-                {% endif %}
+                <td>
+                  {% if p.patient %}
+                    <div style="font-weight:900;">{{ p.patient.email }}</div>
+                    {% if p.patient.full_name %}
+                      <div style="color:var(--muted); font-weight:700; font-size:12px; margin-top:2px;">
+                        {{ p.patient.full_name }}
+                      </div>
+                    {% endif %}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+
+                <td>
+                  <span class="status-badge {% prescription_status_class p.status %}">
+                    {{ p.get_status_display }}
+                  </span>
+                </td>
+
+                <td class="nowrap">{{ p.received_at|date:"d/m/Y H:i" }}</td>
+
+                <td class="nowrap">
+                  <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">
+                    Ouvrir →
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" style="text-align:center; color:var(--muted); font-weight:800; padding:18px;">
+                  Aucune ordonnance disponible
+                </td>
+              </tr>
             {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-            {% if prescriptions.has_next %}
-                <a href="?page={{ prescriptions.next_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">›</a>
+      {% if prescriptions.has_other_pages %}
+        <div class="pagination">
+          {% if prescriptions.has_previous %}
+            <a href="?page={{ prescriptions.previous_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">‹</a>
+          {% else %}
+            <span class="disabled">‹</span>
+          {% endif %}
+
+          {% for num in prescriptions.paginator.page_range %}
+            {% if prescriptions.number == num %}
+              <span class="active">{{ num }}</span>
             {% else %}
-                <span class="disabled">›</span>
+              <a href="?page={{ num }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">{{ num }}</a>
             {% endif %}
+          {% endfor %}
+
+          {% if prescriptions.has_next %}
+            <a href="?page={{ prescriptions.next_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">›</a>
+          {% else %}
+            <span class="disabled">›</span>
+          {% endif %}
         </div>
-        {% endif %}
-    </div>
+      {% endif %}
+    </section>
 
+  </div>
 </div>
-
 </body>
 </html>

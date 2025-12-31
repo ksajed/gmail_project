@@ -1,3 +1,4 @@
+# gmail_manager/core_notifications/apps.py
 from django.apps import AppConfig
 
 

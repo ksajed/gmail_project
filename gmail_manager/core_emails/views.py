@@ -1,27 +1,37 @@
-# gmail_manager/core_emails/views.py
-
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
-from django.contrib.auth.views import LoginView, LogoutView
+from django.views.decorators.http import require_POST
 
+# =====================================================
+# MODELS
+# =====================================================
 from .models import (
     Prescription,
     PrescriptionStatus,
     PrescriptionStatusHistory,
 )
+
+from .models_assignment import PrescriptionAssignment
+
+# =====================================================
+# SERVICES
+# =====================================================
 from .services import change_prescription_status
 from .states import (
     PrescriptionStatusEnum,
     PRESCRIPTION_STATUS_TRANSITIONS,
 )
 
-# ✅ Gmail
+# =====================================================
+# EXTERNES
+# =====================================================
 from core_gmail.services import fetch_new_gmail_messages
+from core_people.models import Person
 
 
 # =====================================================
@@ -30,23 +40,16 @@ from core_gmail.services import fetch_new_gmail_messages
 @login_required
 def dashboard(request):
     """
-    Dashboard pharmacie
-    - KPI métier
-    - Vues intelligentes (?view=...)
-    - Filtres
-    - Pagination
+    Tableau de bord pharmacie
+    - KPI
+    - Vues métier
+    - Pagination paramétrable
     """
 
-    # =========================
-    # PARAMÈTRES
-    # =========================
     status_filter = request.GET.get("status")
     view_filter = request.GET.get("view")
     page_number = request.GET.get("page")
 
-    # =========================
-    # LIGNES PAR PAGE
-    # =========================
     allowed_per_page = (10, 25, 50)
 
     per_page = getattr(
@@ -67,17 +70,11 @@ def dashboard(request):
         except ValueError:
             pass
 
-    # =========================
-    # BASE QUERYSET (LISTE)
-    # =========================
     prescriptions_qs = (
         Prescription.objects
         .select_related("patient")
     )
 
-    # =========================
-    # VUES MÉTIER
-    # =========================
     if view_filter == "todo":
         prescriptions_qs = prescriptions_qs.filter(
             status__in=[
@@ -94,25 +91,14 @@ def dashboard(request):
             status=PrescriptionStatus.ARCHIVED
         )
 
-    # =========================
-    # FILTRE STATUT
-    # =========================
     if status_filter:
-        prescriptions_qs = prescriptions_qs.filter(
-            status=status_filter
-        )
+        prescriptions_qs = prescriptions_qs.filter(status=status_filter)
 
     prescriptions_qs = prescriptions_qs.order_by("-received_at")
 
-    # =========================
-    # PAGINATION
-    # =========================
     paginator = Paginator(prescriptions_qs, per_page)
     prescriptions = paginator.get_page(page_number)
 
-    # =========================
-    # KPI GLOBAUX
-    # =========================
     raw_stats = (
         Prescription.objects
         .values("status")
@@ -132,20 +118,12 @@ def dashboard(request):
         if row["status"] in counters:
             counters[row["status"]] = row["total"]
 
-    # =========================
-    # CONTEXT
-    # =========================
     context = {
-        # LISTE
         "prescriptions": prescriptions,
-
-        # FILTRES
         "statuses": PrescriptionStatus.choices,
         "current_status": status_filter,
         "current_view": view_filter,
         "current_per_page": per_page,
-
-        # KPI
         "total_prescriptions": sum(counters.values()),
         "count_received": counters[PrescriptionStatus.RECEIVED],
         "count_in_progress": counters[PrescriptionStatus.IN_PROGRESS],
@@ -155,11 +133,7 @@ def dashboard(request):
         "count_archived": counters[PrescriptionStatus.ARCHIVED],
     }
 
-    return render(
-        request,
-        "core_emails/dashboard.html",
-        context,
-    )
+    return render(request, "core_emails/dashboard.html", context)
 
 
 # =====================================================
@@ -167,6 +141,15 @@ def dashboard(request):
 # =====================================================
 @login_required
 def prescription_detail(request, pk):
+    """
+    Fiche ordonnance complète
+    - Patient
+    - Pièces jointes
+    - Infirmier
+    - Statut
+    - Historique opposable
+    """
+
     prescription = (
         Prescription.objects
         .select_related("patient")
@@ -190,11 +173,18 @@ def prescription_detail(request, pk):
         for enum in allowed_enums
     ]
 
+    persons_nurses = (
+        Person.objects
+        .filter(role="nurse")
+        .order_by("last_name", "first_name")
+    )
+
     context = {
         "prescription": prescription,
         "attachments": attachments,
         "history": history,
         "allowed_statuses": allowed_statuses,
+        "persons_nurses": persons_nurses,
     }
 
     return render(
@@ -227,11 +217,122 @@ def change_status(request, pk):
             new_status=new_status,
             user=request.user,
         )
-        messages.success(request, "✅ Statut mis à jour avec succès.")
+        messages.success(request, "Statut mis à jour avec succès.")
     except ValidationError as e:
-        messages.error(request, f"⛔ {e}")
+        messages.error(request, str(e))
 
     return redirect("core_emails:prescription_detail", pk=pk)
+
+
+# =====================================================
+# AFFECTATION INFIRMIER (HISTORIQUE INCLUS)
+# =====================================================
+@login_required
+@require_POST
+def assign_nurse(request, pk):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    nurse_id = request.POST.get("nurse_id")
+    if not nurse_id:
+        messages.warning(request, "Aucun infirmier sélectionné.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    nurse = get_object_or_404(Person, pk=nurse_id, role="nurse")
+
+    assignment, _ = PrescriptionAssignment.objects.get_or_create(
+        prescription=prescription
+    )
+    assignment.nurse = nurse
+    assignment.save()
+
+    # 📝 Historique organisationnel
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment=(
+            f"Infirmier affecté à l’ordonnance : "
+            f"{nurse.first_name} {nurse.last_name}"
+        ),
+    )
+
+    messages.success(request, "Infirmier affecté à l’ordonnance.")
+    return redirect("core_emails:prescription_detail", pk=pk)
+
+
+# =====================================================
+# DÉSASSOCIATION INFIRMIER (HISTORIQUE INCLUS)
+# =====================================================
+@login_required
+@require_POST
+def unassign_nurse(request, pk):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    try:
+        assignment = PrescriptionAssignment.objects.get(
+            prescription=prescription
+        )
+    except PrescriptionAssignment.DoesNotExist:
+        messages.warning(request, "Aucune affectation à retirer.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    nurse = assignment.nurse
+    assignment.delete()
+
+    # 📝 Historique organisationnel
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment=(
+            f"Infirmier retiré de l’ordonnance : "
+            f"{nurse.first_name} {nurse.last_name}"
+        ),
+    )
+
+    messages.success(request, "Infirmier retiré de l’ordonnance.")
+    return redirect("core_emails:prescription_detail", pk=pk)
+
+
+# =====================================================
+# CRÉATION INFIRMIER
+# =====================================================
+@login_required
+@require_POST
+def create_nurse(request):
+    """
+    Création organisationnelle d’un infirmier
+    - Email obligatoire (contrainte DB)
+    """
+
+    first_name = request.POST.get("first_name", "").strip()
+    last_name = request.POST.get("last_name", "").strip()
+    email = request.POST.get("email", "").strip().lower()
+
+    if not first_name or not last_name or not email:
+        messages.error(
+            request,
+            "Nom, prénom et email sont obligatoires pour créer un infirmier."
+        )
+        return redirect(request.META.get("HTTP_REFERER", "core_emails:dashboard"))
+
+    nurse, created = Person.objects.get_or_create(
+        email=email,
+        defaults={
+            "first_name": first_name,
+            "last_name": last_name,
+            "role": "nurse",
+        },
+    )
+
+    if created:
+        messages.success(request, "Infirmier créé avec succès.")
+    else:
+        messages.info(request, "Cet infirmier existe déjà.")
+
+    return redirect(request.META.get("HTTP_REFERER", "core_emails:dashboard"))
 
 
 # =====================================================
@@ -241,15 +342,9 @@ def change_status(request, pk):
 def sync_gmail_now(request):
     try:
         fetch_new_gmail_messages()
-        messages.success(
-            request,
-            "📩 Synchronisation Gmail lancée avec succès."
-        )
+        messages.success(request, "Synchronisation Gmail lancée.")
     except Exception as e:
-        messages.error(
-            request,
-            f"⛔ Erreur lors de la synchronisation Gmail : {e}"
-        )
+        messages.error(request, f"Erreur Gmail : {e}")
 
     return redirect("core_emails:dashboard")
 

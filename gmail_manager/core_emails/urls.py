@@ -1,3 +1,4 @@
+# gmail_manager/core_emails/urls.py
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
@@ -35,4 +36,22 @@ urlpatterns = [
         views.change_status,
         name="change_status",
     ),
+
+    # 🅰️ AFFECTATION INFIRMIER (V2)
+    path(
+        "prescription/<int:pk>/assign-nurse/",
+        views.assign_nurse,
+        name="assign_nurse",
+    ),
+    path(
+    "prescription/<int:pk>/unassign-nurse/",
+    views.unassign_nurse,
+    name="unassign_nurse",
+),
+path(
+    "nurse/create/",
+    views.create_nurse,
+    name="create_nurse",
+)
+
 ]
