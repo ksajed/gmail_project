@@ -59,6 +59,12 @@ urlpatterns = [
     views.change_sender_type,
     name="change_sender_type",
     ),
+    
+    path(
+    "prescription/new/",
+    views.prescription_create,
+    name="prescription_create",
+        ),
 
 
 ]

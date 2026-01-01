@@ -9,6 +9,10 @@ from django.views.decorators.http import require_POST
 
 from .models import Prescription, SenderType
 
+from .models import Prescription, PrescriptionStatusHistory
+from .states import PrescriptionStatusEnum
+from core_attachments.models import PrescriptionAttachment
+
 # =====================================================
 # MODELS
 # =====================================================
@@ -384,3 +388,108 @@ def change_sender_type(request, pk):
         prescription.save(update_fields=["sender_type"])
 
     return redirect("core_emails:prescription_detail", pk=pk)
+
+
+# =====================================================
+# CRÉATION MANUELLE D’ORDONNANCE PAR LE PHARMACIEN
+# =====================================================
+
+@login_required
+def prescription_create(request):
+    """
+    V3 — Création manuelle d’une ordonnance par le pharmacien
+    """
+    if request.method == "POST":
+        sender_type = request.POST.get("sender_type")
+        email = request.POST.get("email")
+
+        # =====================================================
+        # 1. CRÉATION DE L’ORDONNANCE
+        # =====================================================
+        prescription = Prescription.objects.create(
+            sender_type=sender_type,
+            status=PrescriptionStatusEnum.RECEIVED.value,
+            created_by=request.user,
+        )
+
+        # =====================================================
+        # 2. UPLOAD DES PIÈCES JOINTES (V3 + VALIDATION
+        # =====================================================
+        files = request.FILES.getlist("attachments")
+
+        for f in files:
+            if f.size > MAX_FILE_SIZE:
+                messages.warning(
+                    request,
+                    f"Le fichier {f.name} dépasse la taille maximale "
+                    f"de {MAX_FILE_SIZE // (1024 * 1024)} Mo et "
+                    "n’a pas été ajouté."
+                )
+                continue
+                # Type MIME autorisé
+            if f.content_type not in ALLOWED_MIME_TYPES:
+                messages.error(
+                    request,
+                    f"Le fichier {f.name} a un type MIME non autorisé "
+                    f"({f.content_type}) et n’a pas été ajouté."
+                )
+                return redirect("core_emails:prescription_create")
+            
+            # Création de la pièce jointe
+            PrescriptionAttachment.objects.create(
+                prescription=prescription,
+                file=f,
+                original_filename=f.name,
+                mime_type=f.content_type,
+                uploaded_by=request.user,
+            )
+            # Optionnel : avertir si aucune PJ valide n’a été ajoutée
+            if files and not prescription.attachments.exists():
+                messages.error(
+                    request,
+                    "Aucune pièce jointe valide n’a été ajoutée "
+                    "à l’ordonnance."
+                )
+                return redirect("core_emails:prescription_create")
+        # =====================================================
+        # 3. ASSOCIATION DU PATIENT (SI FOURNI)
+        # =====================================================
+        if email:
+            from core_patients.models import Patient
+            patient, _ = Patient.objects.get_or_create(email=email)
+            prescription.patient = patient
+            prescription.save()
+
+        # =====================================================
+        # 4. HISTORIQUE OPPOSABLE (CRÉATION)
+        # =====================================================
+        PrescriptionStatusHistory.objects.create(
+            prescription=prescription,
+            old_status=prescription.status,   # NOT NULL → OK
+            new_status=prescription.status,   # statut initial
+            changed_by=request.user,
+        )
+
+        # =====================================================
+        # 5. REDIRECTION VERS LE DÉTAIL
+        # =====================================================
+        return redirect(
+            "core_emails:prescription_detail",
+            pk=prescription.pk,
+        )
+
+    # =====================================================
+    # AFFICHAGE DU FORMULAIRE
+    # =====================================================
+    return render(
+        request,
+        "core_emails/prescription_create.html",
+    )
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 Mo
+
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+}

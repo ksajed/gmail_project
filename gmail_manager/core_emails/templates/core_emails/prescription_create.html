@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Nouvelle ordonnance</title>
+</head>
+<body>
+
+<h1>Nouvelle ordonnance</h1>
+
+{# ============================= #}
+{# AFFICHAGE DES MESSAGES ERREUR #}
+{# ============================= #}
+{% if messages %}
+  <ul>
+    {% for message in messages %}
+      <li style="color:#b91c1c; font-weight:700; margin-bottom:6px;">
+        {{ message }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <label>Origine de l’ordonnance</label><br>
+  <select name="sender_type" required>
+    <option value="patient">Patient</option>
+    <option value="nurse">Infirmier</option>
+    <option value="doctor">Médecin</option>
+  </select>
+
+  <br><br>
+
+  <label>Email patient</label><br>
+  <input
+    type="email"
+    name="email"
+    placeholder="patient@email.fr"
+  >
+
+  <br><br>
+
+  <label>Pièces jointes (PDF ou images)</label><br>
+  <input
+    type="file"
+    name="attachments"
+    multiple
+    accept=".pdf,image/*"
+  >
+
+  <p style="font-size:12px; color:#64748b; margin-top:4px;">
+    Taille maximale : 10 Mo par fichier
+  </p>
+
+  <br>
+
+  <button type="submit">
+    Créer le dossier ordonnance
+  </button>
+</form>
+
+</body>
+</html>
