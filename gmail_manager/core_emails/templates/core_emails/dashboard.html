@@ -1,4 +1,5 @@
 
+{% load static %}
 {% load prescription_extras %}
 <!DOCTYPE html>
 <html lang="fr">
@@ -6,6 +7,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Tableau de bord — Pharmacie</title>
+    <!-- CSS externe (modals) -->
+  <link rel="stylesheet" href="{% static 'css/modals.css' %}">
 
   <style>
     :root{
@@ -446,6 +449,18 @@
           <span> {{ request.user.get_full_name|default:request.user.username }} </span>
         </div>
 
+
+        <!-- 🔹 AJOUT V3 — OUVERTURE MODAL SAAS -->
+       <button
+           type="button"
+           class="btn btn--primary"
+           id="btnNewPrescription">
+            + Nouvelle ordonnance
+        </button>
+
+
+        
+
         <a href="{% url 'core_emails:sync_gmail_now' %}" class="btn btn--soft-info">
           <span class="ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 10-3 6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M21 12v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -637,5 +652,125 @@
 
   </div>
 </div>
+
+<script src="{% static 'js/modals.js' %}"></script>
+
+<!-- ================= MODAL — NOUVELLE ORDONNANCE ================= -->
+<div class="modal-overlay" id="createPrescriptionModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); align-items:center; justify-content:center; z-index:9999;">
+  <div class="modal-card" style="background:#fff; width:460px; max-width:92%; border-radius:16px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.35);">
+
+    <div class="modal-header" style="padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #e5e7eb;">
+      <h2 style="margin:0; font-size:16px;">Nouvelle ordonnance</h2>
+      <button type="button" id="modalCloseBtn" style="border:none; background:transparent; font-size:18px; cursor:pointer;">✕</button>
+    </div>
+
+    <div class="modal-body" style="padding:16px;">
+      <form method="post" 
+            action="{% url 'core_emails:prescription_create' %}" 
+            enctype="multipart/form-data">
+        
+        {% csrf_token %}
+
+        <label style="display:block; font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.2px; margin-bottom:6px;">
+          Origine
+        </label>
+        <select name="sender_type" required style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid #e5e7eb;">
+          <option value="patient">Patient</option>
+          <option value="nurse">Infirmier</option>
+          <option value="doctor">Médecin</option>
+        </select>
+
+        <div style="height:12px;"></div>
+
+        <label style="display:block; font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.2px; margin-bottom:6px;">
+          Email patient (optionnel)
+        </label>
+        <input type="email" name="email" placeholder="patient@email.fr"
+               style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid #e5e7eb;">
+
+
+        <div style="height:12px;"></div>
+        <label style="display:block; font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.2px; margin-bottom:6px;">
+        Fichier ordonnance (PDF ou image)
+        </label>
+
+       <input type="file"
+          name="attachments"
+          multiple
+          accept=".pdf,image/*"
+          required
+          style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid #e5e7eb; background:#fff;">
+
+
+
+
+
+
+        <div style="height:16px;"></div>
+
+        <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; padding-top:10px;">
+          <button type="button" id="modalCancelBtn" class="btn">Annuler</button>
+          <button type="submit" class="btn btn--primary">Créer</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+<!-- =============================================================== -->
+<script>
+(function(){
+  function openModal(id){
+    const modal = document.getElementById(id);
+    if(!modal){
+      console.error("❌ Modal introuvable :", id);
+      return;
+    }
+    modal.style.display = "flex";
+    console.log("✅ Modal ouverte :", id);
+  }
+
+  function closeModal(id){
+    const modal = document.getElementById(id);
+    if(!modal) return;
+    modal.style.display = "none";
+    console.log("✅ Modal fermée :", id);
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    const btn = document.getElementById("btnNewPrescription");
+    const overlay = document.getElementById("createPrescriptionModal");
+    const closeBtn = document.getElementById("modalCloseBtn");
+    const cancelBtn = document.getElementById("modalCancelBtn");
+
+    console.log("DEBUG btnNewPrescription =", btn);
+    console.log("DEBUG createPrescriptionModal =", overlay);
+
+    if(btn){
+      btn.addEventListener("click", function(){
+        openModal("createPrescriptionModal");
+      });
+    } else {
+      console.error("❌ Bouton #btnNewPrescription introuvable");
+    }
+
+    if(closeBtn) closeBtn.addEventListener("click", function(){ closeModal("createPrescriptionModal"); });
+    if(cancelBtn) cancelBtn.addEventListener("click", function(){ closeModal("createPrescriptionModal"); });
+
+    // clic sur fond
+    if(overlay){
+      overlay.addEventListener("click", function(e){
+        if(e.target === overlay) closeModal("createPrescriptionModal");
+      });
+    }
+
+    // ESC
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape") closeModal("createPrescriptionModal");
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
