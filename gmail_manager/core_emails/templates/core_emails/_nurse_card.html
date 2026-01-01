@@ -1,0 +1,81 @@
+<section class="card">
+  <header class="card__header">
+    <h3 class="card__title">
+      Infirmier
+    </h3>
+
+    {% if prescription.assignment %}
+      <span class="chip">Affecté</span>
+    {% else %}
+      <span class="chip">Non affecté</span>
+    {% endif %}
+  </header>
+
+  <div class="card__body">
+
+    {% if prescription.assignment %}
+      <dl class="kv">
+        <dt class="k">Infirmier</dt>
+        <dd class="v">
+          {{ prescription.assignment.nurse }}
+        </dd>
+      </dl>
+
+      <div class="divider"></div>
+
+      <button
+        type="button"
+        class="btn btn--danger btn--sm"
+        data-modal="unassignModal">
+        Retirer l’infirmier
+      </button>
+
+    {% else %}
+      <p class="v muted">
+        Aucun infirmier n’est actuellement affecté à cette ordonnance.
+      </p>
+    {% endif %}
+
+    <div class="divider"></div>
+
+    <!-- AFFECTATION / MODIFICATION -->
+    <form method="post"
+          action="{% url 'core_emails:assign_nurse' prescription.id %}">
+      {% csrf_token %}
+
+      <div class="field">
+        <label>Affecter / modifier l’infirmier</label>
+        <select name="nurse_id" required>
+          <option value="">Sélectionner un infirmier</option>
+
+          {% for nurse in persons_nurses %}
+            <option value="{{ nurse.id }}"
+              {% if prescription.assignment and prescription.assignment.nurse.id == nurse.id %}
+                selected
+              {% endif %}>
+              {{ nurse }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <p class="hint">
+          L’infirmier affecté sera visible dans le suivi de l’ordonnance.
+        </p>
+      </div>
+
+      <div class="btnrow" style="justify-content:flex-start;">
+        <button type="submit" class="btn btn--primary">
+          Enregistrer
+        </button>
+
+        <button
+          type="button"
+          class="btn"
+          data-modal="createNurseModal">
+          Ajouter un infirmier
+        </button>
+      </div>
+    </form>
+
+  </div>
+</section>

@@ -1,6 +1,11 @@
+# core_emails/admin.py
 from django.contrib import admin
 
-from .models import Prescription, PrescriptionStatusHistory
+from .models import (
+    Prescription,
+    PrescriptionStatusHistory,
+    PrescriptionType,
+)
 from .models_assignment import PrescriptionAssignment
 
 
@@ -9,6 +14,7 @@ class PrescriptionAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "status",
+        "type",          # V3
         "sender_type",
         "received_at",
         "updated_at",
@@ -16,6 +22,7 @@ class PrescriptionAdmin(admin.ModelAdmin):
 
     list_filter = (
         "status",
+        "type",          # V3
         "sender_type",
         "received_at",
     )
@@ -25,6 +32,24 @@ class PrescriptionAdmin(admin.ModelAdmin):
     readonly_fields = (
         "received_at",
         "updated_at",
+    )
+
+    fieldsets = (
+        (None, {
+            "fields": (
+                "status",
+                "type",      # V3
+                "sender_type",
+                "patient",
+                "created_by",
+            )
+        }),
+        ("Traçabilité", {
+            "fields": (
+                "received_at",
+                "updated_at",
+            )
+        }),
     )
 
 

@@ -1,3 +1,4 @@
+
 {% load prescription_extras %}
 <!DOCTYPE html>
 <html lang="fr">
@@ -35,6 +36,24 @@
       --radius-sm: 10px;
 
       --ring: 0 0 0 4px rgba(22, 163, 74, .18);
+
+          /* ===== AJOUT V3 : BADGE TYPE ORDONNANCE ===== */
+    .type-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid transparent;
+      white-space:nowrap;
+      background:var(--info-soft);
+      color:var(--info);
+      border-color:rgba(55,48,163,.18);
+    }
+    /* ===== FIN AJOUT V3 ===== */
+
     }
 
     *{ box-sizing:border-box; }
@@ -530,19 +549,28 @@
       <div class="card__body tablewrap">
         <table>
           <thead>
-            <tr>
-              <th>Réf.</th>
-              <th>Patient</th>
+           <tr>
+             <th>Réf.</th>
+             <th>Type</th> <!-- AJOUT V3 -->
+             <th>Patient</th>
               <th>Statut ordonnance</th>
               <th>Date de réception</th>
-              <th>Action</th>
+               <th>Action</th>
             </tr>
+
           </thead>
 
           <tbody>
             {% for p in prescriptions %}
               <tr>
                 <td class="nowrap">#{{ p.id }}</td>
+
+                <td class="nowrap">
+                  <span class="type-badge">
+                  {{ p.get_sender_type_display }}
+                  </span>
+                </td>
+
 
                 <td>
                   {% if p.patient %}

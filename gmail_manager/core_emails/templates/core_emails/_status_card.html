@@ -1,0 +1,49 @@
+<section class="card">
+  <header class="card__header">
+    <h3 class="card__title">
+      Statut
+    </h3>
+
+    <span class="chip">
+      Action
+    </span>
+  </header>
+
+  <div class="card__body">
+
+    <form method="post"
+          action="{% url 'core_emails:change_status' prescription.id %}">
+      {% csrf_token %}
+
+      <div class="field">
+        <label>Changer le statut</label>
+        <select name="status" required>
+          <option value="">Sélectionner un statut</option>
+
+          {% for value, label in allowed_statuses %}
+            <option value="{{ value }}">
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <p class="hint">
+          Le changement de statut est enregistré et horodaté.
+        </p>
+      </div>
+
+      <div class="btnrow" style="justify-content:flex-start;">
+        <button type="submit" class="btn btn--primary">
+          Valider
+        </button>
+
+        <a class="btn"
+           href="{% url 'core_emails:dashboard' %}">
+          Retour au tableau de bord
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+</section>

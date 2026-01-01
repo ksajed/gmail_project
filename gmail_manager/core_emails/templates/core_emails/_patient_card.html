@@ -1,0 +1,102 @@
+<section class="card">
+
+  <!-- EN-TÊTE -->
+  <header class="card__header card__header--between">
+    <h3 class="card__title">
+      Dossier patient
+    </h3>
+
+    {% if patient %}
+      {% if patient.is_complete %}
+        <span class="badge badge--success">
+          <span class="dot"></span>
+          Fiche complète
+        </span>
+      {% else %}
+        <span class="badge badge--warning">
+          <span class="dot"></span>
+          Informations incomplètes
+        </span>
+      {% endif %}
+    {% else %}
+      <span class="badge badge--neutral">
+        <span class="dot"></span>
+        Aucun patient associé
+      </span>
+    {% endif %}
+  </header>
+
+  <!-- CONTENU -->
+  <div class="card__body">
+
+    {% if not patient %}
+      <p class="muted">
+        Aucun patient n’est actuellement associé à cette ordonnance.
+      </p>
+
+    {% elif patient.is_complete %}
+      <dl class="kv">
+        <dt class="k">Nom complet</dt>
+        <dd class="v">{{ patient.full_name }}</dd>
+
+        <dt class="k">Téléphone</dt>
+        <dd class="v">{{ patient.phone_number }}</dd>
+
+        <dt class="k">Adresse email</dt>
+        <dd class="v">{{ patient.email }}</dd>
+
+        <dt class="k">Origine de l’ordonnance</dt>
+        <dd class="v">{{ prescription.get_sender_type_display }}</dd>
+      </dl>
+
+    {% else %}
+      <dl class="kv">
+        <dt class="k">Adresse email</dt>
+        <dd class="v">{{ patient.email }}</dd>
+      </dl>
+
+      <div class="divider"></div>
+
+      <button
+        type="button"
+        class="btn btn--primary"
+        data-modal="patientModal">
+        Compléter la fiche patient
+      </button>
+
+      <p class="hint">
+        Le nom et le numéro de téléphone sont requis pour permettre la poursuite du traitement.
+      </p>
+    {% endif %}
+
+    <div class="divider"></div>
+
+    <!-- ORIGINE DE L’ORDONNANCE -->
+    <form method="post"
+          action="{% url 'core_emails:change_sender_type' prescription.id %}">
+      {% csrf_token %}
+
+      <div class="field">
+        <label for="sender_type">
+          Origine de l’ordonnance
+        </label>
+
+        <select id="sender_type" name="sender_type" required>
+          {% for value, label in sender_types %}
+            <option value="{{ value }}"
+              {% if prescription.sender_type == value %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="btnrow btnrow--left">
+        <button type="submit" class="btn btn--primary btn--sm">
+          Enregistrer la modification
+        </button>
+      </div>
+    </form>
+
+  </div>
+</section>

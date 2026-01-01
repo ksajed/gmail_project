@@ -7,6 +7,8 @@ from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
+from .models import Prescription, SenderType
+
 # =====================================================
 # MODELS
 # =====================================================
@@ -131,6 +133,7 @@ def dashboard(request):
         "count_delivered": counters[PrescriptionStatus.DELIVERED],
         "count_blocked": counters[PrescriptionStatus.BLOCKED],
         "count_archived": counters[PrescriptionStatus.ARCHIVED],
+        "context_sender_types": SenderType.choices,
     }
 
     return render(request, "core_emails/dashboard.html", context)
@@ -185,6 +188,9 @@ def prescription_detail(request, pk):
         "history": history,
         "allowed_statuses": allowed_statuses,
         "persons_nurses": persons_nurses,
+
+        # ✅ AJOUT — nécessaire pour le select "Type d’ordonnance"
+        "context_sender_types": SenderType.choices,
     }
 
     return render(
@@ -192,6 +198,7 @@ def prescription_detail(request, pk):
         "core_emails/prescription_detail.html",
         context,
     )
+
 
 
 # =====================================================
@@ -227,8 +234,11 @@ def change_status(request, pk):
 # =====================================================
 # AFFECTATION INFIRMIER (HISTORIQUE INCLUS)
 # =====================================================
-@login_required
-@require_POST
+
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+
+from .models import Prescription, SenderType
 def assign_nurse(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
@@ -358,3 +368,19 @@ class PharmacyLoginView(LoginView):
 
 class PharmacyLogoutView(LogoutView):
     pass
+# =====================================================
+# CHANGEMENT TYPE ORDONNANCE (EXPÉDITEUR)
+# =====================================================
+
+@login_required
+@require_POST
+def change_sender_type(request, pk):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    sender_type = request.POST.get("sender_type")
+
+    if sender_type in dict(SenderType.choices):
+        prescription.sender_type = sender_type
+        prescription.save(update_fields=["sender_type"])
+
+    return redirect("core_emails:prescription_detail", pk=pk)

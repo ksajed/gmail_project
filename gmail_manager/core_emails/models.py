@@ -29,6 +29,56 @@ class SenderType(models.TextChoices):
     UNKNOWN = "unknown", "Inconnu"
 
 
+class PrescriptionType(models.TextChoices):
+    """
+    Type d'ordonnance (V3 — organisationnel, non médical).
+    """
+
+    # Noyau obligatoire
+    STANDARD = "STANDARD", "Ordonnance classique"
+    RENOUVELLEMENT = "RENOUVELLEMENT", "Renouvellement"
+    ALD = "ALD", "ALD"
+    URGENCE = "URGENCE", "Urgence"
+    SORTIE_HOSPITALISATION = "SORTIE_HOSPITALISATION", "Sortie d’hospitalisation"
+    DISPOSITIF_MEDICAL = "DISPOSITIF_MEDICAL", "Dispositif médical"
+    SOINS_INFIRMIERS = "SOINS_INFIRMIERS", "Soins infirmiers"
+    STUPEFIANT = "STUPEFIANT", "Stupéfiants"
+    INCOMPLETE = "INCOMPLETE", "Incomplète"
+    A_VERIFIER = "A_VERIFIER", "À vérifier"
+
+    # Options
+    PSYCHOTROPE = "PSYCHOTROPE", "Psychotrope"
+    MEDICAMENT_EXCEPTION = "MEDICAMENT_EXCEPTION", "Médicament d’exception"
+    HOSPITALIERE = "HOSPITALIERE", "Hospitalière"
+    RESTRICTIVE = "RESTRICTIVE", "Prescription restreinte"
+    HORS_AMM = "HORS_AMM", "Hors AMM"
+
+    PEDIATRIQUE = "PEDIATRIQUE", "Pédiatrique"
+    PERSONNE_AGEE = "PERSONNE_AGEE", "Personne âgée"
+    EHPAD = "EHPAD", "EHPAD"
+    HAD = "HAD", "HAD"
+    SSIAD = "SSIAD", "SSIAD"
+
+    PANSEMENTS = "PANSEMENTS", "Pansements"
+    OXYGENOTHERAPIE = "OXYGENOTHERAPIE", "Oxygénothérapie"
+    NUTRITION = "NUTRITION", "Nutrition"
+    PERFUSION = "PERFUSION", "Perfusion"
+    ORTHOPEDIQUE = "ORTHOPEDIQUE", "Orthopédique"
+
+    VETERINAIRE = "VETERINAIRE", "Vétérinaire"
+    ORDONNANCE_ETRANGERE = "ORDONNANCE_ETRANGERE", "Ordonnance étrangère"
+    DOM_TOM = "DOM_TOM", "DOM-TOM"
+    ESSAI_CLINIQUE = "ESSAI_CLINIQUE", "Essai clinique"
+    IMPORTATION = "IMPORTATION", "Importation"
+
+    ILLISIBLE = "ILLISIBLE", "Illisible"
+    DUPLICATA = "DUPLICATA", "Duplicata"
+    RECTIFICATIVE = "RECTIFICATIVE", "Rectificative"
+    BLOQUEE_ADMIN = "BLOQUEE_ADMIN", "Bloquée (administratif)"
+    ARCHIVE_PAPIER = "ARCHIVE_PAPIER", "Archivée papier"
+    AUTRE = "AUTRE", "Autre"
+
+
 class Prescription(models.Model):
     """
     Ordonnance reçue par la pharmacie.
@@ -42,6 +92,16 @@ class Prescription(models.Model):
         max_length=20,
         choices=PrescriptionStatus.choices,
         default=PrescriptionStatus.RECEIVED,
+    )
+
+    # ===============================
+    # TYPE ORDONNANCE (V3 — AJOUT)
+    # ===============================
+    type = models.CharField(
+        max_length=40,
+        choices=PrescriptionType.choices,
+        default=PrescriptionType.STANDARD,
+        help_text="Type organisationnel de l’ordonnance (non médical)",
     )
 
     # ===============================
@@ -87,7 +147,6 @@ class Prescription(models.Model):
     )
 
     def __str__(self):
-        # ⚠️ DOIT TOUJOURS FONCTIONNER
         return f"Ordonnance #{self.id} – {self.get_status_display()}"
 
 
@@ -134,5 +193,7 @@ class PrescriptionStatusHistory(models.Model):
             f"Ordonnance #{self.prescription.id} : "
             f"{self.old_status} → {self.new_status}"
         )
+
+
 # Import V2 (obligatoire pour que Django détecte le modèle)
 from .models_assignment import PrescriptionAssignment  # noqa

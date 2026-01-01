@@ -46,12 +46,19 @@ urlpatterns = [
     path(
     "prescription/<int:pk>/unassign-nurse/",
     views.unassign_nurse,
-    name="unassign_nurse",
-),
-path(
+    name="unassign_nurse",  
+    ),
+    path(
     "nurse/create/",
     views.create_nurse,
-    name="create_nurse",
-)
+    name="create_nurse",    
+    ),
+
+    path(
+    "prescription/<int:pk>/change-type/",
+    views.change_sender_type,
+    name="change_sender_type",
+    ),
+
 
 ]
