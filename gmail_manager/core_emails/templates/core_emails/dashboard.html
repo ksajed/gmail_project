@@ -1,4 +1,3 @@
-
 {% load static %}
 {% load prescription_extras %}
 <!DOCTYPE html>
@@ -7,427 +6,10 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Tableau de bord — Pharmacie</title>
-    <!-- CSS externe (modals) -->
-  <link rel="stylesheet" href="{% static 'css/modals.css' %}">
 
-  <style>
-    :root{
-      --bg: #f6f8fb;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e5e7eb;
-
-      --primary: #16a34a;
-      --primary-600:#15803d;
-      --primary-soft: #eafaf0;
-
-      --danger: #dc2626;
-      --danger-600:#b91c1c;
-      --danger-soft:#fee2e2;
-
-      --warning:#b45309;
-      --warning-soft:#ffedd5;
-
-      --info:#3730a3;
-      --info-soft:#eef2ff;
-
-      --shadow: 0 10px 25px rgba(15, 23, 42, .08);
-      --shadow-sm: 0 6px 16px rgba(15, 23, 42, .06);
-
-      --radius: 14px;
-      --radius-sm: 10px;
-
-      --ring: 0 0 0 4px rgba(22, 163, 74, .18);
-
-          /* ===== AJOUT V3 : BADGE TYPE ORDONNANCE ===== */
-    .type-badge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      border:1px solid transparent;
-      white-space:nowrap;
-      background:var(--info-soft);
-      color:var(--info);
-      border-color:rgba(55,48,163,.18);
-    }
-    /* ===== FIN AJOUT V3 ===== */
-
-    }
-
-    *{ box-sizing:border-box; }
-    html, body{ height:100%; }
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-      line-height:1.4;
-    }
-
-    /* APP */
-    .app{ min-height:100%; display:flex; flex-direction:column; }
-
-    /* TOPBAR */
-    .topbar{
-      position:sticky; top:0; z-index:50;
-      background:rgba(255,255,255,.86);
-      backdrop-filter:saturate(180%) blur(10px);
-      border-bottom:1px solid var(--border);
-    }
-    .topbar__inner{
-      max-width:1100px;
-      margin:0 auto;
-      padding:14px 20px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      flex-wrap:wrap;
-    }
-    .titlewrap{ display:flex; flex-direction:column; gap:3px; min-width:0; }
-    .page-title{
-      margin:0;
-      font-size:16px;
-      font-weight:800;
-      letter-spacing:.2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .breadcrumb{
-      font-size:12px;
-      color:var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .userchip{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:#fff;
-      font-size:13px;
-      font-weight:750;
-      color:var(--text);
-      white-space:nowrap;
-    }
-    .avatar{
-      width:26px; height:26px;
-      border-radius:999px;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      background:var(--primary-soft);
-      color:var(--primary-600);
-      font-weight:900;
-      border:1px solid rgba(22,163,74,.18);
-      flex:0 0 auto;
-    }
-
-    /* CONTAINER */
-    .container{
-      max-width:1100px;
-      margin:22px auto;
-      padding:0 20px 28px;
-      width:100%;
-    }
-
-    /* BUTTONS */
-    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      color:#0f172a;
-      font-weight:800;
-      font-size:13px;
-      cursor:pointer;
-      transition: transform .04s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease;
-      text-decoration:none;
-      user-select:none;
-      white-space:nowrap;
-    }
-    .btn:hover{ box-shadow: 0 10px 18px rgba(15,23,42,.07); border-color:#d1d5db; }
-    .btn:active{ transform: translateY(1px); }
-    .btn:focus-visible{ outline:none; box-shadow: var(--ring); border-color: rgba(22,163,74,.45); }
-
-    .btn--primary{
-      background:var(--primary);
-      border-color:rgba(22,163,74,.55);
-      color:#fff;
-    }
-    .btn--primary:hover{ background:var(--primary-600); }
-    .btn--danger{
-      background:var(--danger);
-      border-color:rgba(220,38,38,.55);
-      color:#fff;
-    }
-    .btn--danger:hover{ background:var(--danger-600); }
-    .btn--soft-info{
-      background:var(--info-soft);
-      color:var(--info);
-      border-color:rgba(55,48,163,.18);
-    }
-    .btn--ghost{ background:transparent; }
-
-    /* CARDS */
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow-sm);
-      overflow:hidden;
-    }
-    .card__header{
-      padding:14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      border-bottom:1px solid var(--border);
-      background:linear-gradient(to bottom, rgba(248,250,252,.9), rgba(255,255,255,.8));
-    }
-    .card__title{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-size:13px;
-      font-weight:900;
-      letter-spacing:.25px;
-      text-transform:uppercase;
-      color:#0b1220;
-      margin:0;
-    }
-    .card__body{ padding:16px; }
-
-    /* ICONS */
-    .ico{ width:16px; height:16px; display:inline-block; }
-    .ico svg{ width:16px; height:16px; display:block; }
-
-    /* STATS GRID */
-    .stats-grid{
-      display:grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap:12px;
-      margin-bottom:14px;
-    }
-    @media (max-width: 1100px){
-      .stats-grid{ grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 640px){
-      .stats-grid{ grid-template-columns: repeat(2, 1fr); }
-    }
-
-    .stat{
-      border:1px solid var(--border);
-      border-radius:16px;
-      background:#fff;
-      padding:14px;
-      box-shadow:var(--shadow-sm);
-    }
-    .stat__label{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:900;
-      text-transform:uppercase;
-      letter-spacing:.25px;
-    }
-    .stat__value{
-      margin-top:8px;
-      font-size:24px;
-      font-weight:900;
-      letter-spacing:-.3px;
-    }
-    .stat--info{ background:var(--info-soft); border-color:rgba(55,48,163,.18); color:var(--info); }
-    .stat--warn{ background:var(--warning-soft); border-color:rgba(180,83,9,.18); color:var(--warning); }
-    .stat--success{ background:var(--primary-soft); border-color:rgba(22,163,74,.18); color:var(--primary-600); }
-    .stat--danger{ background:var(--danger-soft); border-color:rgba(220,38,38,.18); color:var(--danger-600); }
-
-    /* FILTER BAR */
-    .bar{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-      margin:12px 0 16px;
-    }
-    .bar-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .bar-right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--muted);
-      white-space:nowrap;
-    }
-
-    /* TABS */
-    .tabs{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin:0;
-      padding:0;
-      list-style:none;
-    }
-    .tab{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:9px 12px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--text);
-      text-decoration:none;
-      font-weight:900;
-      font-size:13px;
-    }
-    .tab:hover{ box-shadow: 0 10px 18px rgba(15,23,42,.07); border-color:#d1d5db; }
-    .tab--active{
-      background:var(--primary);
-      border-color:rgba(22,163,74,.55);
-      color:#fff;
-    }
-
-    /* FORM */
-    form{ margin:0; }
-    label{ display:block; font-size:12px; font-weight:900; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.25px; }
-    select{
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--text);
-      font-size:14px;
-      outline:none;
-      transition: box-shadow .2s ease, border-color .2s ease;
-      min-width: 190px;
-    }
-    select:focus{ border-color: rgba(22,163,74,.55); box-shadow: var(--ring); }
-
-    .filterform{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:end;
-      padding:12px;
-      border:1px solid var(--border);
-      border-radius:16px;
-      background:#fff;
-      box-shadow:var(--shadow-sm);
-    }
-    .field{ display:flex; flex-direction:column; gap:0; }
-
-    /* TABLE */
-    .tablewrap{ overflow:auto; }
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      font-size:13px;
-    }
-    thead th{
-      text-align:left;
-      padding:12px 12px;
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.25px;
-      color:var(--muted);
-      background:#f8fafc;
-      border-bottom:1px solid var(--border);
-      white-space:nowrap;
-    }
-    tbody td{
-      padding:12px 12px;
-      border-bottom:1px solid var(--border);
-      vertical-align:top;
-      background:#fff;
-    }
-    tbody tr:hover td{ background:#fafafa; }
-    tbody tr:last-child td{ border-bottom:none; }
-    .nowrap{ white-space:nowrap; }
-
-    /* STATUS BADGES (compat avec ta class django) */
-    .status-badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      border:1px solid transparent;
-      white-space:nowrap;
-    }
-
-    /* ACTION LINK */
-    .action-link{
-      color:var(--primary-600);
-      font-weight:900;
-      text-decoration:none;
-    }
-    .action-link:hover{ text-decoration:underline; }
-
-    /* PAGINATION */
-    .pagination{
-      display:flex;
-      justify-content:center;
-      gap:6px;
-      padding:14px 16px;
-      border-top:1px solid var(--border);
-      background:#fbfdff;
-      flex-wrap:wrap;
-    }
-    .pagination a,
-    .pagination span{
-      min-width:36px;
-      height:36px;
-      padding:0 12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:13px;
-      text-decoration:none;
-      color:var(--text);
-      background:#fff;
-      font-weight:900;
-    }
-    .pagination .active{
-      background:var(--primary);
-      color:#fff;
-      border-color:rgba(22,163,74,.55);
-    }
-    .pagination .disabled{
-      color:var(--muted);
-      pointer-events:none;
-      background:transparent;
-    }
-  </style>
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=500">
+  <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
 </head>
 
 <body>
@@ -449,28 +31,28 @@
           <span> {{ request.user.get_full_name|default:request.user.username }} </span>
         </div>
 
-
-        <!-- 🔹 AJOUT V3 — OUVERTURE MODAL SAAS -->
-       <button
-           type="button"
-           class="btn btn--primary"
-           id="btnNewPrescription">
-            + Nouvelle ordonnance
+        <!-- OUVERTURE MODAL -->
+        <button type="button" class="btn btn--primary" id="btnNewPrescription">
+          + Nouvelle ordonnance
         </button>
-
-
-        
 
         <a href="{% url 'core_emails:sync_gmail_now' %}" class="btn btn--soft-info">
           <span class="ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 10-3 6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M21 12v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M21 12a9 9 0 10-3 6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M21 12v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </span>
           Synchroniser Gmail
         </a>
 
         <a href="{% url 'core_emails:logout' %}" class="btn btn--danger">
           <span class="ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 21H4a2 2 0 01-2-2V5a2 2 0 012-2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 21H4a2 2 0 01-2-2V5a2 2 0 012-2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </span>
           Déconnexion
         </a>
@@ -553,7 +135,9 @@
       <div class="card__header">
         <h3 class="card__title">
           <span class="ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </span>
           Ordonnances
         </h3>
@@ -564,63 +148,59 @@
       <div class="card__body tablewrap">
         <table>
           <thead>
-           <tr>
-             <th>Réf.</th>
-             <th>Type</th> <!-- AJOUT V3 -->
-             <th>Patient</th>
-              <th>Statut ordonnance</th>
-              <th>Date de réception</th>
-               <th>Action</th>
-            </tr>
-
+          <tr>
+            <th>Réf.</th>
+            <th>Type</th>
+            <th>Patient</th>
+            <th>Statut ordonnance</th>
+            <th>Date de réception</th>
+            <th>Action</th>
+          </tr>
           </thead>
 
           <tbody>
-            {% for p in prescriptions %}
-              <tr>
-                <td class="nowrap">#{{ p.id }}</td>
+          {% for p in prescriptions %}
+            <tr>
+              <td class="nowrap">#{{ p.id }}</td>
 
-                <td class="nowrap">
-                  <span class="type-badge">
-                  {{ p.get_sender_type_display }}
-                  </span>
-                </td>
+              <td class="nowrap">
+                <span class="type-badge">{{ p.get_sender_type_display }}</span>
+              </td>
 
-
-                <td>
-                  {% if p.patient %}
-                    <div style="font-weight:900;">{{ p.patient.email }}</div>
-                    {% if p.patient.full_name %}
-                      <div style="color:var(--muted); font-weight:700; font-size:12px; margin-top:2px;">
-                        {{ p.patient.full_name }}
-                      </div>
-                    {% endif %}
-                  {% else %}
-                    —
+              <td>
+                {% if p.patient %}
+                  <div style="font-weight:900;">{{ p.patient.email }}</div>
+                  {% if p.patient.full_name %}
+                    <div style="color:var(--muted); font-weight:700; font-size:12px; margin-top:2px;">
+                      {{ p.patient.full_name }}
+                    </div>
                   {% endif %}
-                </td>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
 
-                <td>
-                  <span class="status-badge {% prescription_status_class p.status %}">
-                    {{ p.get_status_display }}
-                  </span>
-                </td>
+              <td>
+                <span class="status-badge {% prescription_status_class p.status %}">
+                  {{ p.get_status_display }}
+                </span>
+              </td>
 
-                <td class="nowrap">{{ p.received_at|date:"d/m/Y H:i" }}</td>
+              <td class="nowrap">{{ p.received_at|date:"d/m/Y H:i" }}</td>
 
-                <td class="nowrap">
-                  <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">
-                    Ouvrir →
-                  </a>
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="5" style="text-align:center; color:var(--muted); font-weight:800; padding:18px;">
-                  Aucune ordonnance disponible
-                </td>
-              </tr>
-            {% endfor %}
+              <td class="nowrap">
+                <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">
+                  Ouvrir →
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align:center; color:var(--muted); font-weight:800; padding:18px;">
+                Aucune ordonnance disponible
+              </td>
+            </tr>
+          {% endfor %}
           </tbody>
         </table>
       </div>
@@ -653,124 +233,11 @@
   </div>
 </div>
 
-<script src="{% static 'js/modals.js' %}"></script>
+<!-- MODAL -->
+{% include "core_emails/modals/create_prescription_modal.html" %}
 
-<!-- ================= MODAL — NOUVELLE ORDONNANCE ================= -->
-<div class="modal-overlay" id="createPrescriptionModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); align-items:center; justify-content:center; z-index:9999;">
-  <div class="modal-card" style="background:#fff; width:460px; max-width:92%; border-radius:16px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.35);">
-
-    <div class="modal-header" style="padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #e5e7eb;">
-      <h2 style="margin:0; font-size:16px;">Nouvelle ordonnance</h2>
-      <button type="button" id="modalCloseBtn" style="border:none; background:transparent; font-size:18px; cursor:pointer;">✕</button>
-    </div>
-
-    <div class="modal-body" style="padding:16px;">
-      <form method="post" 
-            action="{% url 'core_emails:prescription_create' %}" 
-            enctype="multipart/form-data">
-        
-        {% csrf_token %}
-
-        <label style="display:block; font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.2px; margin-bottom:6px;">
-          Origine
-        </label>
-        <select name="sender_type" required style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid #e5e7eb;">
-          <option value="patient">Patient</option>
-          <option value="nurse">Infirmier</option>
-          <option value="doctor">Médecin</option>
-        </select>
-
-        <div style="height:12px;"></div>
-
-        <label style="display:block; font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.2px; margin-bottom:6px;">
-          Email patient (optionnel)
-        </label>
-        <input type="email" name="email" placeholder="patient@email.fr"
-               style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid #e5e7eb;">
-
-
-        <div style="height:12px;"></div>
-        <label style="display:block; font-size:12px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:.2px; margin-bottom:6px;">
-        Fichier ordonnance (PDF ou image)
-        </label>
-
-       <input type="file"
-          name="attachments"
-          multiple
-          accept=".pdf,image/*"
-          required
-          style="width:100%; padding:10px 12px; border-radius:12px; border:1px solid #e5e7eb; background:#fff;">
-
-
-
-
-
-
-        <div style="height:16px;"></div>
-
-        <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; padding-top:10px;">
-          <button type="button" id="modalCancelBtn" class="btn">Annuler</button>
-          <button type="submit" class="btn btn--primary">Créer</button>
-        </div>
-      </form>
-    </div>
-
-  </div>
-</div>
-<!-- =============================================================== -->
-<script>
-(function(){
-  function openModal(id){
-    const modal = document.getElementById(id);
-    if(!modal){
-      console.error("❌ Modal introuvable :", id);
-      return;
-    }
-    modal.style.display = "flex";
-    console.log("✅ Modal ouverte :", id);
-  }
-
-  function closeModal(id){
-    const modal = document.getElementById(id);
-    if(!modal) return;
-    modal.style.display = "none";
-    console.log("✅ Modal fermée :", id);
-  }
-
-  document.addEventListener("DOMContentLoaded", function(){
-    const btn = document.getElementById("btnNewPrescription");
-    const overlay = document.getElementById("createPrescriptionModal");
-    const closeBtn = document.getElementById("modalCloseBtn");
-    const cancelBtn = document.getElementById("modalCancelBtn");
-
-    console.log("DEBUG btnNewPrescription =", btn);
-    console.log("DEBUG createPrescriptionModal =", overlay);
-
-    if(btn){
-      btn.addEventListener("click", function(){
-        openModal("createPrescriptionModal");
-      });
-    } else {
-      console.error("❌ Bouton #btnNewPrescription introuvable");
-    }
-
-    if(closeBtn) closeBtn.addEventListener("click", function(){ closeModal("createPrescriptionModal"); });
-    if(cancelBtn) cancelBtn.addEventListener("click", function(){ closeModal("createPrescriptionModal"); });
-
-    // clic sur fond
-    if(overlay){
-      overlay.addEventListener("click", function(e){
-        if(e.target === overlay) closeModal("createPrescriptionModal");
-      });
-    }
-
-    // ESC
-    document.addEventListener("keydown", function(e){
-      if(e.key === "Escape") closeModal("createPrescriptionModal");
-    });
-  });
-})();
-</script>
+<!-- JS -->
+<script src="{% static 'js/modals.js' %}?v=500" defer></script>
 
 </body>
 </html>

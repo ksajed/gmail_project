@@ -124,17 +124,19 @@ USE_TZ = True
 
 
 # ============================================================
-# FICHIERS STATIQUES ✅ (LOGO ICI)
+# FICHIERS STATIQUES ✅
 # ============================================================
 
 STATIC_URL = "/static/"
 
-# 🔴 BLOC CRITIQUE AJOUTÉ (OBLIGATOIRE POUR LE LOGO)
+# static est ici : /home/ksajed/gmail_project/gmail_manager/static
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
 
 
 # ============================================================
