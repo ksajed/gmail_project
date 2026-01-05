@@ -1,102 +1,49 @@
-<section class="card">
+{% extends "core_emails/base_detail.html" %}
+{% load prescription_extras %}
 
-  <!-- EN-TÊTE -->
-  <header class="card__header card__header--between">
-    <h3 class="card__title">
-      Dossier patient
-    </h3>
+{% block title %}
+Ordonnance n°{{ prescription.id }}
+{% endblock %}
 
-    {% if patient %}
-      {% if patient.is_complete %}
-        <span class="badge badge--success">
-          <span class="dot"></span>
-          Fiche complète
-        </span>
-      {% else %}
-        <span class="badge badge--warning">
-          <span class="dot"></span>
-          Informations incomplètes
-        </span>
-      {% endif %}
-    {% else %}
-      <span class="badge badge--neutral">
-        <span class="dot"></span>
-        Aucun patient associé
-      </span>
-    {% endif %}
-  </header>
+{% block topbar %}
+<div class="topbar">
+  <div class="topbar__inner">
+    <div class="head">
+      <a class="btn btn--ghost" href="{% url 'core_emails:dashboard' %}">← Retour</a>
 
-  <!-- CONTENU -->
-  <div class="card__body">
-
-    {% if not patient %}
-      <p class="muted">
-        Aucun patient n’est actuellement associé à cette ordonnance.
-      </p>
-
-    {% elif patient.is_complete %}
-      <dl class="kv">
-        <dt class="k">Nom complet</dt>
-        <dd class="v">{{ patient.full_name }}</dd>
-
-        <dt class="k">Téléphone</dt>
-        <dd class="v">{{ patient.phone_number }}</dd>
-
-        <dt class="k">Adresse email</dt>
-        <dd class="v">{{ patient.email }}</dd>
-
-        <dt class="k">Origine de l’ordonnance</dt>
-        <dd class="v">{{ prescription.get_sender_type_display }}</dd>
-      </dl>
-
-    {% else %}
-      <dl class="kv">
-        <dt class="k">Adresse email</dt>
-        <dd class="v">{{ patient.email }}</dd>
-      </dl>
-
-      <div class="divider"></div>
-
-      <button
-        type="button"
-        class="btn btn--primary"
-        data-modal="patientModal">
-        Compléter la fiche patient
-      </button>
-
-      <p class="hint">
-        Le nom et le numéro de téléphone sont requis pour permettre la poursuite du traitement.
-      </p>
-    {% endif %}
-
-    <div class="divider"></div>
-
-    <!-- ORIGINE DE L’ORDONNANCE -->
-    <form method="post"
-          action="{% url 'core_emails:change_sender_type' prescription.id %}">
-      {% csrf_token %}
-
-      <div class="field">
-        <label for="sender_type">
-          Origine de l’ordonnance
-        </label>
-
-        <select id="sender_type" name="sender_type" required>
-          {% for value, label in sender_types %}
-            <option value="{{ value }}"
-              {% if prescription.sender_type == value %}selected{% endif %}>
-              {{ label }}
-            </option>
-          {% endfor %}
-        </select>
+      <div class="titlewrap">
+        <h1 class="page-title">Ordonnance n°{{ prescription.id }}</h1>
+        <div class="breadcrumb">Tableau de bord → Ordonnances → Détail</div>
       </div>
+    </div>
 
-      <div class="btnrow btnrow--left">
-        <button type="submit" class="btn btn--primary btn--sm">
-          Enregistrer la modification
-        </button>
-      </div>
-    </form>
-
+    <span class="badge badge--info">
+      {{ prescription.get_sender_type_display|default:"Type non défini" }}
+    </span>
   </div>
-</section>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="grid">
+
+  {% include "core_emails/_patient_card.html" %}
+  {% include "core_emails/_nurse_card.html" %}
+  {% include "core_emails/_attachments_card.html" %}
+
+  {% if allowed_statuses %}
+    {% include "core_emails/_status_card.html" %}
+  {% endif %}
+
+  {% include "core_emails/_history_card.html" %}
+
+</div>
+
+{# MODALS #}
+{% if prescription.patient and not prescription.patient.is_complete %}
+  {% include "core_emails/modals/_patient_modal.html" %}
+{% endif %}
+{% include "core_emails/modals/_unassign_modal.html" %}
+{% include "core_emails/modals/_create_nurse_modal.html" %}
+
+{% endblock %}
