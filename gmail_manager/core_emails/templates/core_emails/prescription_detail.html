@@ -539,12 +539,24 @@
         </div>
       </div>
 
-      <div class="btnrow">
+       <div class="btnrow">
+        <!-- TYPE D’ORDONNANCE -->
+        <span class="badge badge--success">
+         <span class="dot"></span>
+            {{ prescription.get_type_display }}
+
+
+         </span>
+
+       <!-- ORIGINE -->
         <span class="badge badge--info">
           <span class="dot"></span>
-          {{ prescription.get_sender_type_display|default:"Type non défini" }}
+          {{ prescription.get_sender_type_display|default:"Origine non définie" }}
         </span>
-      </div>
+       </div>
+
+
+
     </div>
   </div>
 
@@ -599,12 +611,49 @@
           {% endif %}
 
           <div class="divider"></div>
+              
+
+
+              <!-- TYPE D’ORDONNANCE -->
+<form method="post"
+      action="{% url 'core_emails:change_prescription_type' prescription.id %}">
+  {% csrf_token %}
+
+  <div class="field">
+    <label>Type d’ordonnance</label>
+
+    <select name="type" required>
+      {% for value, label in context_prescription_types %}
+        <option value="{{ value }}"
+                    {% if prescription.type == value %}selected{% endif %}>
+                {{ label }}
+        </option>
+
+      {% endfor %}
+    </select>
+
+    <div class="hint">
+      Qualifie la nature de l’ordonnance (urgence, renouvellement, stupéfiant…).
+    </div>
+  </div>
+
+  <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
+    <button type="submit" class="btn btn--primary btn--sm">
+      Enregistrer
+    </button>
+  </div>
+</form>
+
+<div class="divider"></div>
+
+
+
 
           <!-- TYPE D’ORDONNANCE (EXPÉDITEUR) -->
           <form method="post" action="{% url 'core_emails:change_sender_type' prescription.id %}">
             {% csrf_token %}
             <div class="field">
-              <label>Type d’ordonnance</label>
+              <label>Expéditeur de l’ordonnance</label>
               <select name="sender_type" required>
                 {% for value, label in context_sender_types %}
                   <option value="{{ value }}" {% if prescription.sender_type == value %}selected{% endif %}>
@@ -621,7 +670,7 @@
 
         </div>
       </section>
-
+      
       <!-- INFIRMIER -->
       <section class="card">
         <div class="card__header">

@@ -1,0 +1,31 @@
+{# core_emails/templates/core_emails/base_detail.html #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <title>
+    {% block title %}Ordo{% endblock %}
+  </title>
+
+  <!-- CSS global -->
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/history.css' %}">
+  <link rel="stylesheet" href="{% static 'css/modals.css' %}">
+
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+  {% block content %}{% endblock %}
+
+  <!-- JS global -->
+  <script src="{% static 'js/modals.js' %}"></script>
+
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

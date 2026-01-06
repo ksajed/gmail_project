@@ -24,17 +24,32 @@ urlpatterns = [
         name="sync_gmail_now",
     ),
 
-    # 📄 ORDONNANCES
+    # 📄 ORDONNANCE — DÉTAIL
     path(
         "prescription/<int:pk>/",
         views.prescription_detail,
         name="prescription_detail",
     ),
 
+    # 🔁 CHANGEMENT DE STATUT
     path(
         "prescription/<int:pk>/change-status/",
         views.change_status,
         name="change_status",
+    ),
+
+    # 🧾 TYPE D’ORDONNANCE (V3 — ORGANISATIONNEL)
+    path(
+        "prescription/<int:pk>/change-prescription-type/",
+        views.change_prescription_type,
+        name="change_prescription_type",
+    ),
+
+    # 🧑‍⚕️ ORIGINE / EXPÉDITEUR
+    path(
+        "prescription/<int:pk>/change-sender-type/",
+        views.change_sender_type,
+        name="change_sender_type",
     ),
 
     # 🅰️ AFFECTATION INFIRMIER (V2)
@@ -44,27 +59,20 @@ urlpatterns = [
         name="assign_nurse",
     ),
     path(
-    "prescription/<int:pk>/unassign-nurse/",
-    views.unassign_nurse,
-    name="unassign_nurse",  
+        "prescription/<int:pk>/unassign-nurse/",
+        views.unassign_nurse,
+        name="unassign_nurse",
     ),
     path(
-    "nurse/create/",
-    views.create_nurse,
-    name="create_nurse",    
+        "nurse/create/",
+        views.create_nurse,
+        name="create_nurse",
     ),
 
+    # ➕ CRÉATION ORDONNANCE MANUELLE
     path(
-    "prescription/<int:pk>/change-type/",
-    views.change_sender_type,
-    name="change_sender_type",
+        "prescription/new/",
+        views.prescription_create,
+        name="prescription_create",
     ),
-    
-    path(
-    "prescription/new/",
-    views.prescription_create,
-    name="prescription_create",
-        ),
-
-
 ]

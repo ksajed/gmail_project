@@ -1,4 +1,5 @@
 # gmail_manager/core_gmail/services.py
+
 import imaplib
 import email
 from email.header import decode_header
@@ -9,7 +10,11 @@ from django.utils import timezone
 from django.core.files.base import ContentFile
 
 from core_gmail.models import GmailMessage
-from core_emails.models import Prescription, PrescriptionStatus
+from core_emails.models import (
+    Prescription,
+    PrescriptionStatus,
+    PrescriptionType,   # ✅ IMPORTANT
+)
 from core_attachments.models import PrescriptionAttachment
 
 # ✅ GESTION PATIENT
@@ -23,6 +28,10 @@ def fetch_new_gmail_messages():
     - Prescription liée au patient
     - Pièces jointes
     - GmailMessage (anti-doublon robuste)
+
+    ⚠️ RÈGLE MÉTIER ORDO :
+    - Le système PEUT définir un type à la création
+    - Le système NE DOIT JAMAIS écraser un type défini par un humain
     """
 
     # ============================================================
@@ -76,7 +85,7 @@ def fetch_new_gmail_messages():
         )
 
         # ========================================================
-        # 🔐 ANTI-DOUBLON ROBUSTE
+        # 🔐 ANTI-DOUBLON ROBUSTE (EMAIL)
         # ========================================================
 
         gmail_message, created = GmailMessage.objects.get_or_create(
@@ -89,7 +98,7 @@ def fetch_new_gmail_messages():
         )
 
         if not created:
-            # Email déjà traité
+            # Email déjà traité → on n’écrase RIEN
             continue
 
         # ========================================================
@@ -101,10 +110,13 @@ def fetch_new_gmail_messages():
         # ========================================================
         # 📄 ORDONNANCE
         # ========================================================
+        # ⚠️ ON DÉFINIT EXPLICITEMENT LE TYPE À LA CRÉATION
+        # ⚠️ JAMAIS DE MODIFICATION AUTOMATIQUE APRÈS
 
         prescription = Prescription.objects.create(
             patient=patient,
-            status=PrescriptionStatus.RECEIVED
+            status=PrescriptionStatus.RECEIVED,
+            type=PrescriptionType.INCOMPLETE,  # ✅ EXPLICITE ET SÛR
         )
 
         # ========================================================
@@ -133,7 +145,10 @@ def fetch_new_gmail_messages():
                     save=True
                 )
 
-        # Marquer comme LU sur Gmail
+        # ========================================================
+        # 📬 MARQUER COMME LU
+        # ========================================================
+
         mail.store(num, "+FLAGS", "\\Seen")
 
     mail.logout()

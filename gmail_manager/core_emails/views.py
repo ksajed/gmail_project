@@ -1,3 +1,7 @@
+# =====================================================
+# DJANGO
+# =====================================================
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
@@ -7,37 +11,50 @@ from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
-from .models import Prescription, SenderType
-
-from .models import Prescription, PrescriptionStatusHistory
-from .states import PrescriptionStatusEnum
-from core_attachments.models import PrescriptionAttachment
-
 # =====================================================
-# MODELS
+# MODELS — CORE EMAILS
 # =====================================================
 from .models import (
     Prescription,
     PrescriptionStatus,
     PrescriptionStatusHistory,
+    PrescriptionType,
+    SenderType,
 )
-
 from .models_assignment import PrescriptionAssignment
 
 # =====================================================
-# SERVICES
+# STATES & SERVICES
 # =====================================================
+from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services import change_prescription_status
-from .states import (
-    PrescriptionStatusEnum,
-    PRESCRIPTION_STATUS_TRANSITIONS,
-)
 
 # =====================================================
 # EXTERNES
 # =====================================================
+from core_attachments.models import PrescriptionAttachment
 from core_gmail.services import fetch_new_gmail_messages
 from core_people.models import Person
+
+# (Optionnel) Si tu utilises Patient
+from core_patients.models import Patient
+
+
+# =====================================================
+# CONSTANTES PJ (évite NameError)
+# =====================================================
+MAX_FILE_SIZE = getattr(settings, "PRESCRIPTION_MAX_FILE_SIZE", 10 * 1024 * 1024)  # 10 Mo par défaut
+ALLOWED_MIME_TYPES = tuple(
+    getattr(
+        settings,
+        "PRESCRIPTION_ALLOWED_MIME_TYPES",
+        (
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+        ),
+    )
+)
 
 
 # =====================================================
@@ -51,18 +68,13 @@ def dashboard(request):
     - Vues métier
     - Pagination paramétrable
     """
-
     status_filter = request.GET.get("status")
     view_filter = request.GET.get("view")
     page_number = request.GET.get("page")
 
     allowed_per_page = (10, 25, 50)
 
-    per_page = getattr(
-        getattr(request.user, "profile", None),
-        "per_page",
-        10,
-    )
+    per_page = getattr(getattr(request.user, "profile", None), "per_page", 10)
 
     per_page_param = request.GET.get("per_page")
     if per_page_param:
@@ -76,28 +88,19 @@ def dashboard(request):
         except ValueError:
             pass
 
-    prescriptions_qs = (
-        Prescription.objects
-        .select_related("patient")
-    )
+    prescriptions_qs = Prescription.objects.select_related("patient")
 
     if view_filter == "todo":
         prescriptions_qs = prescriptions_qs.filter(
-            status__in=[
-                PrescriptionStatus.RECEIVED,
-                PrescriptionStatus.IN_PROGRESS,
-            ]
+            status__in=[PrescriptionStatus.RECEIVED, PrescriptionStatus.IN_PROGRESS]
         )
     elif view_filter == "blocked":
-        prescriptions_qs = prescriptions_qs.filter(
-            status=PrescriptionStatus.BLOCKED
-        )
+        prescriptions_qs = prescriptions_qs.filter(status=PrescriptionStatus.BLOCKED)
     elif view_filter == "archived":
-        prescriptions_qs = prescriptions_qs.filter(
-            status=PrescriptionStatus.ARCHIVED
-        )
+        prescriptions_qs = prescriptions_qs.filter(status=PrescriptionStatus.ARCHIVED)
 
-    if status_filter:
+    # Sécurité simple : n'appliquer le filtre que si valeur valide
+    if status_filter and status_filter in dict(PrescriptionStatus.choices):
         prescriptions_qs = prescriptions_qs.filter(status=status_filter)
 
     prescriptions_qs = prescriptions_qs.order_by("-received_at")
@@ -105,11 +108,7 @@ def dashboard(request):
     paginator = Paginator(prescriptions_qs, per_page)
     prescriptions = paginator.get_page(page_number)
 
-    raw_stats = (
-        Prescription.objects
-        .values("status")
-        .annotate(total=Count("id"))
-    )
+    raw_stats = Prescription.objects.values("status").annotate(total=Count("id"))
 
     counters = {
         PrescriptionStatus.RECEIVED: 0,
@@ -156,18 +155,15 @@ def prescription_detail(request, pk):
     - Statut
     - Historique opposable
     """
-
-    prescription = (
-        Prescription.objects
-        .select_related("patient")
-        .get(pk=pk)
+    prescription = get_object_or_404(
+        Prescription.objects.select_related("patient").prefetch_related("attachments"),
+        pk=pk,
     )
 
     attachments = prescription.attachments.all()
 
     history = (
-        PrescriptionStatusHistory.objects
-        .filter(prescription=prescription)
+        PrescriptionStatusHistory.objects.filter(prescription=prescription)
         .select_related("changed_by")
         .order_by("-changed_at")
     )
@@ -176,15 +172,10 @@ def prescription_detail(request, pk):
     allowed_enums = PRESCRIPTION_STATUS_TRANSITIONS.get(current_enum, set())
 
     allowed_statuses = [
-        (enum.value, enum.name.replace("_", " ").title())
-        for enum in allowed_enums
+        (enum.value, enum.name.replace("_", " ").title()) for enum in allowed_enums
     ]
 
-    persons_nurses = (
-        Person.objects
-        .filter(role="nurse")
-        .order_by("last_name", "first_name")
-    )
+    persons_nurses = Person.objects.filter(role="nurse").order_by("last_name", "first_name")
 
     context = {
         "prescription": prescription,
@@ -192,32 +183,24 @@ def prescription_detail(request, pk):
         "history": history,
         "allowed_statuses": allowed_statuses,
         "persons_nurses": persons_nurses,
-
-        # ✅ AJOUT — nécessaire pour le select "Type d’ordonnance"
+        # Expéditeur
         "context_sender_types": SenderType.choices,
+        # Type d’ordonnance
+        "context_prescription_types": PrescriptionType.choices,
     }
 
-    return render(
-        request,
-        "core_emails/prescription_detail.html",
-        context,
-    )
-
+    return render(request, "core_emails/prescription_detail.html", context)
 
 
 # =====================================================
 # CHANGEMENT DE STATUT
 # =====================================================
 @login_required
+@require_POST
 def change_status(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
-    if request.method != "POST":
-        messages.warning(request, "Action non autorisée.")
-        return redirect("core_emails:prescription_detail", pk=pk)
-
     new_status = request.POST.get("status")
-
     if not new_status:
         messages.warning(request, "Aucun statut sélectionné.")
         return redirect("core_emails:prescription_detail", pk=pk)
@@ -238,11 +221,8 @@ def change_status(request, pk):
 # =====================================================
 # AFFECTATION INFIRMIER (HISTORIQUE INCLUS)
 # =====================================================
-
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-
-from .models import Prescription, SenderType
+@login_required
+@require_POST
 def assign_nurse(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
@@ -253,11 +233,9 @@ def assign_nurse(request, pk):
 
     nurse = get_object_or_404(Person, pk=nurse_id, role="nurse")
 
-    assignment, _ = PrescriptionAssignment.objects.get_or_create(
-        prescription=prescription
-    )
+    assignment, _ = PrescriptionAssignment.objects.get_or_create(prescription=prescription)
     assignment.nurse = nurse
-    assignment.save()
+    assignment.save(update_fields=["nurse"])
 
     # 📝 Historique organisationnel
     PrescriptionStatusHistory.objects.create(
@@ -265,10 +243,7 @@ def assign_nurse(request, pk):
         old_status=prescription.status,
         new_status=prescription.status,
         changed_by=request.user,
-        comment=(
-            f"Infirmier affecté à l’ordonnance : "
-            f"{nurse.first_name} {nurse.last_name}"
-        ),
+        comment=f"Infirmier affecté à l’ordonnance : {nurse.first_name} {nurse.last_name}",
     )
 
     messages.success(request, "Infirmier affecté à l’ordonnance.")
@@ -284,9 +259,7 @@ def unassign_nurse(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
     try:
-        assignment = PrescriptionAssignment.objects.get(
-            prescription=prescription
-        )
+        assignment = PrescriptionAssignment.objects.get(prescription=prescription)
     except PrescriptionAssignment.DoesNotExist:
         messages.warning(request, "Aucune affectation à retirer.")
         return redirect("core_emails:prescription_detail", pk=pk)
@@ -300,10 +273,7 @@ def unassign_nurse(request, pk):
         old_status=prescription.status,
         new_status=prescription.status,
         changed_by=request.user,
-        comment=(
-            f"Infirmier retiré de l’ordonnance : "
-            f"{nurse.first_name} {nurse.last_name}"
-        ),
+        comment=f"Infirmier retiré de l’ordonnance : {nurse.first_name} {nurse.last_name}",
     )
 
     messages.success(request, "Infirmier retiré de l’ordonnance.")
@@ -320,7 +290,6 @@ def create_nurse(request):
     Création organisationnelle d’un infirmier
     - Email obligatoire (contrainte DB)
     """
-
     first_name = request.POST.get("first_name", "").strip()
     last_name = request.POST.get("last_name", "").strip()
     email = request.POST.get("email", "").strip().lower()
@@ -328,9 +297,9 @@ def create_nurse(request):
     if not first_name or not last_name or not email:
         messages.error(
             request,
-            "Nom, prénom et email sont obligatoires pour créer un infirmier."
+            "Nom, prénom et email sont obligatoires pour créer un infirmier.",
         )
-        return redirect(request.META.get("HTTP_REFERER", "core_emails:dashboard"))
+        return redirect(request.META.get("HTTP_REFERER") or "core_emails:dashboard")
 
     nurse, created = Person.objects.get_or_create(
         email=email,
@@ -346,7 +315,7 @@ def create_nurse(request):
     else:
         messages.info(request, "Cet infirmier existe déjà.")
 
-    return redirect(request.META.get("HTTP_REFERER", "core_emails:dashboard"))
+    return redirect(request.META.get("HTTP_REFERER") or "core_emails:dashboard")
 
 
 # =====================================================
@@ -372,20 +341,35 @@ class PharmacyLoginView(LoginView):
 
 class PharmacyLogoutView(LogoutView):
     pass
-# =====================================================
-# CHANGEMENT TYPE ORDONNANCE (EXPÉDITEUR)
-# =====================================================
 
+
+# =====================================================
+# CHANGEMENT ORIGINE / EXPÉDITEUR D’ORDONNANCE
+# =====================================================
 @login_required
 @require_POST
 def change_sender_type(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
-    sender_type = request.POST.get("sender_type")
+    new_sender_type = request.POST.get("sender_type")
+    if new_sender_type not in dict(SenderType.choices):
+        return redirect("core_emails:prescription_detail", pk=pk)
 
-    if sender_type in dict(SenderType.choices):
-        prescription.sender_type = sender_type
-        prescription.save(update_fields=["sender_type"])
+    old_sender_type = prescription.sender_type
+    if old_sender_type == new_sender_type:
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    prescription.sender_type = new_sender_type
+    # NOTE: garde updated_at seulement si ton modèle a bien ce champ
+    prescription.save(update_fields=["sender_type", "updated_at"])
+
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment=f"Origine de l’ordonnance modifiée : {old_sender_type} → {new_sender_type}",
+    )
 
     return redirect("core_emails:prescription_detail", pk=pk)
 
@@ -393,7 +377,6 @@ def change_sender_type(request, pk):
 # =====================================================
 # CRÉATION MANUELLE D’ORDONNANCE PAR LE PHARMACIEN
 # =====================================================
-
 @login_required
 def prescription_create(request):
     """
@@ -401,11 +384,13 @@ def prescription_create(request):
     """
     if request.method == "POST":
         sender_type = request.POST.get("sender_type")
-        email = request.POST.get("email")
+        email = request.POST.get("email", "").strip().lower()
 
-        # =====================================================
-        # 1. CRÉATION DE L’ORDONNANCE
-        # =====================================================
+        # Sécurité : sender_type valide
+        if sender_type not in dict(SenderType.choices):
+            messages.error(request, "Type d’expéditeur invalide.")
+            return redirect("core_emails:prescription_create")
+
         prescription = Prescription.objects.create(
             sender_type=sender_type,
             status=PrescriptionStatusEnum.RECEIVED.value,
@@ -413,29 +398,28 @@ def prescription_create(request):
         )
 
         # =====================================================
-        # 2. UPLOAD DES PIÈCES JOINTES (V3 + VALIDATION
+        # UPLOAD DES PIÈCES JOINTES + VALIDATION
         # =====================================================
         files = request.FILES.getlist("attachments")
+        valid_count = 0
 
         for f in files:
             if f.size > MAX_FILE_SIZE:
                 messages.warning(
                     request,
                     f"Le fichier {f.name} dépasse la taille maximale "
-                    f"de {MAX_FILE_SIZE // (1024 * 1024)} Mo et "
-                    "n’a pas été ajouté."
+                    f"de {MAX_FILE_SIZE // (1024 * 1024)} Mo et n’a pas été ajouté."
                 )
                 continue
-                # Type MIME autorisé
+
             if f.content_type not in ALLOWED_MIME_TYPES:
-                messages.error(
+                messages.warning(
                     request,
                     f"Le fichier {f.name} a un type MIME non autorisé "
                     f"({f.content_type}) et n’a pas été ajouté."
                 )
-                return redirect("core_emails:prescription_create")
-            
-            # Création de la pièce jointe
+                continue
+
             PrescriptionAttachment.objects.create(
                 prescription=prescription,
                 file=f,
@@ -443,53 +427,63 @@ def prescription_create(request):
                 mime_type=f.content_type,
                 uploaded_by=request.user,
             )
-            # Optionnel : avertir si aucune PJ valide n’a été ajoutée
-            if files and not prescription.attachments.exists():
-                messages.error(
-                    request,
-                    "Aucune pièce jointe valide n’a été ajoutée "
-                    "à l’ordonnance."
-                )
-                return redirect("core_emails:prescription_create")
-        # =====================================================
-        # 3. ASSOCIATION DU PATIENT (SI FOURNI)
-        # =====================================================
-        if email:
-            from core_patients.models import Patient
-            patient, _ = Patient.objects.get_or_create(email=email)
-            prescription.patient = patient
-            prescription.save()
+            valid_count += 1
+
+        # Si l'utilisateur a sélectionné des fichiers mais aucun n'est valide → on annule proprement
+        if files and valid_count == 0:
+            prescription.delete()
+            messages.error(request, "Aucune pièce jointe valide n’a été ajoutée à l’ordonnance.")
+            return redirect("core_emails:prescription_create")
 
         # =====================================================
-        # 4. HISTORIQUE OPPOSABLE (CRÉATION)
+        # ASSOCIATION DU PATIENT (SI FOURNI)
+        # =====================================================
+        if email:
+            patient, _ = Patient.objects.get_or_create(email=email)
+            prescription.patient = patient
+            prescription.save(update_fields=["patient"])
+
+        # =====================================================
+        # HISTORIQUE OPPOSABLE (CRÉATION)
         # =====================================================
         PrescriptionStatusHistory.objects.create(
             prescription=prescription,
-            old_status=prescription.status,   # NOT NULL → OK
-            new_status=prescription.status,   # statut initial
+            old_status=prescription.status,
+            new_status=prescription.status,
             changed_by=request.user,
         )
 
-        # =====================================================
-        # 5. REDIRECTION VERS LE DÉTAIL
-        # =====================================================
-        return redirect(
-            "core_emails:prescription_detail",
-            pk=prescription.pk,
-        )
+        return redirect("core_emails:prescription_detail", pk=prescription.pk)
 
-    # =====================================================
-    # AFFICHAGE DU FORMULAIRE
-    # =====================================================
-    return render(
-        request,
-        "core_emails/prescription_create.html",
+    return render(request, "core_emails/prescription_create.html")
+
+
+# =====================================================
+# CHANGEMENT TYPE D’ORDONNANCE
+# =====================================================
+@login_required
+@require_POST
+def change_prescription_type(request, pk):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    new_type = request.POST.get("type")
+    if new_type not in dict(PrescriptionType.choices):
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    old_type = prescription.type
+    if old_type == new_type:
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    prescription.type = new_type
+    # NOTE: garde updated_at seulement si ton modèle a bien ce champ
+    prescription.save(update_fields=["type", "updated_at"])
+
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment=f"Type d’ordonnance modifié : {old_type} → {new_type}",
     )
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 Mo
 
-ALLOWED_MIME_TYPES = {
-    "application/pdf",
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-}
+    return redirect("core_emails:prescription_detail", pk=pk)

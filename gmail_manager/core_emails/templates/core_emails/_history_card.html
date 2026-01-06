@@ -1,55 +1,72 @@
 <section class="card full">
   <header class="card__header">
-    <h3 class="card__title">
-      Historique
-    </h3>
+    <h3 class="card__title">Historique de l’ordonnance</h3>
 
     <span class="chip">
-      {{ history|length }} entrée{{ history|length|pluralize }}
+      {{ history|length }} action{{ history|length|pluralize }}
     </span>
   </header>
 
   <div class="card__body">
 
     {% if history %}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="col-date">Date</th>
-              <th class="col-user">Utilisateur</th>
-              <th class="col-action">Action</th>
-              <th class="col-comment">Commentaire</th>
-            </tr>
-          </thead>
+      <ul class="history-list" role="list">
 
-          <tbody>
-            {% for entry in history %}
-              <tr>
-                <td class="nowrap col-date">
-                  {{ entry.changed_at|date:"d/m/Y H:i" }}
-                </td>
+        {% for entry in history %}
+          <li class="history-item" role="listitem">
 
-                <td class="col-user">
-                  {{ entry.changed_by|default:"Système" }}
-                </td>
+            <!-- LIGNE TIMELINE -->
+            <div class="history-row">
 
-                <td class="nowrap col-action">
-                  {{ entry.get_old_status_display }} → {{ entry.get_new_status_display }}
-                </td>
+              <!-- DATE / HEURE -->
+              <div class="history-time">
+                <span class="history-date">
+                  {{ entry.changed_at|date:"d/m/Y" }}
+                </span>
+                <span class="history-hour">
+                  {{ entry.changed_at|date:"H:i" }}
+                </span>
+              </div>
 
-                <td class="comment col-comment">
-                  {{ entry.comment|default:"—" }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+              <!-- CONTENU -->
+              <div class="history-content">
 
+                <!-- ACTION PRINCIPALE -->
+                <div class="history-main">
+
+                  <span class="history-user">
+                    {{ entry.changed_by|default:"Système" }}
+                  </span>
+
+                  <span class="history-label">
+                    a modifié le statut
+                  </span>
+
+                  <span class="history-status">
+                    {{ entry.old_status }}
+                    <span class="history-arrow" aria-hidden="true">→</span>
+                    {{ entry.new_status }}
+                  </span>
+
+                </div>
+
+                <!-- COMMENTAIRE (OPTIONNEL) -->
+                {% if entry.comment %}
+                  <div class="history-comment">
+                    {{ entry.comment }}
+                  </div>
+                {% endif %}
+
+              </div>
+            </div>
+
+          </li>
+        {% endfor %}
+
+      </ul>
     {% else %}
       <p class="v muted">
-        Aucun historique disponible pour cette ordonnance.
+        Aucun événement n’a encore été enregistré pour cette ordonnance.
       </p>
     {% endif %}
 
