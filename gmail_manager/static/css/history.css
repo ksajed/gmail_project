@@ -1,0 +1,103 @@
+/* =====================================================
+   HISTORIQUE ORDONNANCE — SaaS PHARMACIE
+   ===================================================== */
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.history-item + .history-item {
+  border-top: 1px solid var(--border);
+}
+
+.history-row {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+/* COLONNE DATE / HEURE */
+.history-time {
+  width: 90px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* DATE EN COULEUR (REPÈRE VISUEL SAAS) */
+.history-date {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 6px;
+
+  font-weight: 800;
+  font-size: 12px;
+
+  color: var(--info);
+  background: var(--info-soft);
+}
+
+/* HEURE DISCRÈTE */
+.history-hour {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* CONTENU */
+.history-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.history-user {
+  font-weight: 800;
+}
+
+.history-label {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.history-status {
+  font-weight: 700;
+}
+
+.history-arrow {
+  margin: 0 4px;
+  color: var(--muted);
+}
+
+/* COMMENTAIRE */
+.history-comment {
+  margin-top: 6px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .history-time {
+    width: 70px;
+  }
+
+  .history-main {
+    font-size: 13px;
+  }
+}

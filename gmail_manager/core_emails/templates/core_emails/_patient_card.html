@@ -18,7 +18,8 @@ Ordonnance n°{{ prescription.id }}
     </div>
 
     <span class="badge badge--info">
-      {{ prescription.get_sender_type_display|default:"Type non défini" }}
+    {{ prescription.get_sender_type_display }}
+
     </span>
   </div>
 </div>

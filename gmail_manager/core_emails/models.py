@@ -21,12 +21,25 @@ class PrescriptionStatus(models.TextChoices):
 
 class SenderType(models.TextChoices):
     """
-    Type d'expéditeur (V2 — organisationnel, non médical).
+    Type d'expéditeur de l’ordonnance
+    (professionnel de santé — usage pharmacie).
     """
+
+    # 🔹 Médecins
     DOCTOR = "doctor", "Médecin"
+    DENTIST = "dentist", "Chirurgien-dentiste"
+    MIDWIFE = "midwife", "Sage-femme"
+
+    # 🔹 Paramédicaux prescripteurs
     NURSE = "nurse", "Infirmier"
+    PHYSIOTHERAPIST = "physiotherapist", "Masseur-kinésithérapeute"
+    SPEECH_THERAPIST = "speech_therapist", "Orthophoniste"
+    PODIATRIST = "podiatrist", "Pédicure-podologue"
+
+    # 🔹 Compatibilité historique (NE PAS SUPPRIMER)
     PATIENT = "patient", "Patient"
     UNKNOWN = "unknown", "Inconnu"
+
 
 
 class PrescriptionType(models.TextChoices):
@@ -197,3 +210,27 @@ class PrescriptionStatusHistory(models.Model):
 
 # Import V2 (obligatoire pour que Django détecte le modèle)
 from .models_assignment import PrescriptionAssignment  # noqa
+
+
+# =====================================================
+# 🔍 TRACEUR TEMPORAIRE — QUI ÉCRASE Prescription.type ?
+# =====================================================
+
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+
+@receiver(pre_save, sender=Prescription)
+def trace_prescription_type(sender, instance, **kwargs):
+    if not instance.pk:
+        return
+
+    try:
+        old = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        return
+
+    if old.type != instance.type:
+        print("🔥 TYPE CHANGE DETECTED 🔥")
+        print("PK:", instance.pk)
+        print("OLD TYPE:", old.type)
+        print("NEW TYPE:", instance.type)

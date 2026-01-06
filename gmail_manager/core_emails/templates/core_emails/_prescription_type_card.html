@@ -1,0 +1,59 @@
+<section class="card">
+  <div class="card__header">
+    <h3 class="card__title">Ordonnance</h3>
+  </div>
+
+  <div class="card__body">
+
+    <!-- EXPÉDITEUR -->
+    <form method="post"
+          action="{% url 'core_emails:change_sender_type' prescription.id %}">
+      {% csrf_token %}
+
+      <label>Expéditeur</label>
+      <select name="sender_type" required>
+        {% for value, label in context_sender_types %}
+          <option value="{{ value }}"
+            {% if prescription.sender_type == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="hint">
+        Profession de la personne ayant émis l’ordonnance.
+      </div>
+
+      <button type="submit" class="btn btn--primary btn--sm">
+        Enregistrer
+      </button>
+    </form>
+
+    <div class="divider"></div>
+
+    <!-- TYPE D’ORDONNANCE -->
+    <form method="post"
+          action="{% url 'core_emails:change_prescription_type' prescription.id %}">
+      {% csrf_token %}
+
+      <label>Type d’ordonnance</label>
+      <select name="prescription_type" required>
+        {% for value, label in context_prescription_types %}
+          <option value="{{ value }}"
+            {% if prescription.prescription_type == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <div class="hint">
+        ALD, urgence, stupéfiants, soins infirmiers, etc.
+      </div>
+
+      <button type="submit" class="btn btn--primary btn--sm">
+        Enregistrer le type
+      </button>
+    </form>
+
+  </div>
+</section>
