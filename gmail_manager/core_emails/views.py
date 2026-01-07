@@ -6,10 +6,24 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
+
+from .models import PrescriptionRenewalInfo
+
+
+import datetime
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.core.mail import send_mail
+
+from django.core.validators import validate_email
+from django.db import transaction
+
+
 
 # =====================================================
 # MODELS — CORE EMAILS
@@ -122,7 +136,53 @@ def dashboard(request):
     for row in raw_stats:
         if row["status"] in counters:
             counters[row["status"]] = row["total"]
+    # ==========================
+    # V7 — Renouvellement J-5/J-3
+    # ==========================
+    today = timezone.localdate()
+    due_5 = []
+    due_3 = []
+    renewals_qs = (
+        Prescription.objects
+        .select_related("patient")
+        .select_related("renewal_info")
+        .filter(type=PrescriptionType.RENOUVELLEMENT)
+        .filter(established_at__isnull=False)
+                   )
+    for p in renewals_qs:
+          try:
+              info = p.renewal_info
+          except PrescriptionRenewalInfo.DoesNotExist:
+              continue
 
+          end_date = p.established_at + datetime.timedelta(
+              days=(info.renewal_times + 1) * info.period_days
+          )
+          days_left = (end_date - today).days
+
+          # attach pour affichage template
+          p.renewal_end_date = end_date
+          p.renewal_days_left = days_left
+
+          if (
+              days_left == 5
+              and info.reminder_5_patient_email_sent_at is None
+              and info.reminder_5_patient_sms_sent_at is None
+          ):
+              due_5.append(p)
+
+          if (
+              days_left == 3
+              and info.reminder_3_patient_email_sent_at is None
+              and info.reminder_3_patient_sms_sent_at is None
+          ):
+              due_3.append(p)
+
+    
+    
+    
+    
+    
     context = {
         "prescriptions": prescriptions,
         "statuses": PrescriptionStatus.choices,
@@ -137,6 +197,9 @@ def dashboard(request):
         "count_blocked": counters[PrescriptionStatus.BLOCKED],
         "count_archived": counters[PrescriptionStatus.ARCHIVED],
         "context_sender_types": SenderType.choices,
+        "renewals_due_5": due_5,
+        "renewals_due_3": due_3,
+
     }
 
     return render(request, "core_emails/dashboard.html", context)
@@ -177,6 +240,14 @@ def prescription_detail(request, pk):
 
     persons_nurses = Person.objects.filter(role="nurse").order_by("last_name", "first_name")
 
+    renewal_info = None
+    if prescription.type == PrescriptionType.RENOUVELLEMENT:
+        renewal_info = PrescriptionRenewalInfo.objects.filter(
+        prescription=prescription
+      ).first()
+
+    
+    
     context = {
         "prescription": prescription,
         "attachments": attachments,
@@ -187,7 +258,10 @@ def prescription_detail(request, pk):
         "context_sender_types": SenderType.choices,
         # Type d’ordonnance
         "context_prescription_types": PrescriptionType.choices,
-    }
+        # V7 — RENOUVELLEMENT
+        "renewal_info": renewal_info,
+}
+    
 
     return render(request, "core_emails/prescription_detail.html", context)
 
@@ -487,3 +561,274 @@ def change_prescription_type(request, pk):
     )
 
     return redirect("core_emails:prescription_detail", pk=pk)
+
+
+# =====================================================
+# V7 — ACTIONS RENOUVELLEMENT (EMAIL/SMS PATIENT + EMAIL MÉDECIN)
+# =====================================================
+
+def sms_backend_send(phone: str, message: str):
+    """
+    Backend SMS à brancher (Twilio/OVH/etc).
+    Pour l’instant: non configuré => erreur propre.
+    """
+    raise NotImplementedError("SMS non configuré (ajouter un provider SMS).")
+
+
+@login_required
+@require_POST
+def send_renewal_patient_email(request, pk, days):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    if prescription.type != PrescriptionType.RENOUVELLEMENT:
+        messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
+        return redirect("core_emails:dashboard")
+
+    if days not in (5, 3):
+        messages.error(request, "Jour de rappel invalide.")
+        return redirect("core_emails:dashboard")
+
+    patient = prescription.patient
+    if not patient or not patient.email:
+        messages.error(request, "Email patient manquant.")
+        return redirect("core_emails:dashboard")
+
+    info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+
+    if not prescription.established_at:
+        messages.error(request, "Date d’établissement (médecin) manquante.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    end_date = prescription.established_at + datetime.timedelta(
+        days=(info.renewal_times + 1) * info.period_days
+    )
+
+    subject = f"Rappel renouvellement — échéance dans {days} jours"
+    body = (
+        f"Bonjour,\n\n"
+        f"Votre ordonnance arrive à échéance le {end_date:%d/%m/%Y}.\n"
+        f"Merci de contacter la pharmacie pour le renouvellement.\n\n"
+        f"Cordialement,\nPharmacie"
+    )
+
+    send_mail(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [patient.email],
+        fail_silently=False,
+    )
+
+    now = timezone.now()
+    if days == 5:
+        info.reminder_5_patient_email_sent_at = now
+        info.save(update_fields=["reminder_5_patient_email_sent_at"])
+    else:
+        info.reminder_3_patient_email_sent_at = now
+        info.save(update_fields=["reminder_3_patient_email_sent_at"])
+
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment=f"Rappel renouvellement envoyé au patient (EMAIL) — J-{days}.",
+    )
+
+    messages.success(request, f"Email patient envoyé (J-{days}).")
+    return redirect("core_emails:dashboard")
+
+
+@login_required
+@require_POST
+def send_renewal_patient_sms(request, pk, days):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    if prescription.type != PrescriptionType.RENOUVELLEMENT:
+        messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
+        return redirect("core_emails:dashboard")
+
+    if days not in (5, 3):
+        messages.error(request, "Jour de rappel invalide.")
+        return redirect("core_emails:dashboard")
+
+    patient = prescription.patient
+    if not patient or not patient.phone_number:
+        messages.error(request, "Téléphone patient manquant.")
+        return redirect("core_emails:dashboard")
+
+    info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+
+    if not prescription.established_at:
+        messages.error(request, "Date d’établissement (médecin) manquante.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    end_date = prescription.established_at + datetime.timedelta(
+        days=(info.renewal_times + 1) * info.period_days
+    )
+    msg = f"Pharmacie: rappel renouvellement. Échéance le {end_date:%d/%m/%Y}. Merci de nous contacter."
+
+    try:
+        sms_backend_send(patient.phone_number, msg)
+    except NotImplementedError as e:
+        messages.error(request, str(e))
+        return redirect("core_emails:dashboard")
+
+    now = timezone.now()
+    if days == 5:
+        info.reminder_5_patient_sms_sent_at = now
+        info.save(update_fields=["reminder_5_patient_sms_sent_at"])
+    else:
+        info.reminder_3_patient_sms_sent_at = now
+        info.save(update_fields=["reminder_3_patient_sms_sent_at"])
+
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment=f"Rappel renouvellement envoyé au patient (SMS) — J-{days}.",
+    )
+
+    messages.success(request, f"SMS patient envoyé (J-{days}).")
+    return redirect("core_emails:dashboard")
+
+
+@login_required
+@require_POST
+def send_renewal_doctor_email(request, pk):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    if prescription.type != PrescriptionType.RENOUVELLEMENT:
+        messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+
+    if not info.doctor_email:
+        messages.error(request, "Email médecin manquant.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    patient = prescription.patient
+    patient_name = getattr(patient, "full_name", "") if patient else ""
+    patient_email = getattr(patient, "email", "") if patient else ""
+
+    subject = "Demande de renouvellement d’ordonnance"
+    body = (
+        f"Bonjour,\n\n"
+        f"Demande de renouvellement pour l’ordonnance #{prescription.id}.\n"
+        f"Patient: {patient_name or 'N/A'}\n"
+        f"Email patient: {patient_email or 'N/A'}\n\n"
+        f"Cordialement,\nPharmacie"
+    )
+
+    send_mail(
+        subject,
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [info.doctor_email],
+        fail_silently=False,
+    )
+
+    info.doctor_email_sent_at = timezone.now()
+    info.save(update_fields=["doctor_email_sent_at"])
+
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment="Demande renouvellement envoyée au médecin (EMAIL).",
+    )
+
+    messages.success(request, "Email médecin envoyé.")
+    return redirect("core_emails:prescription_detail", pk=pk)
+
+
+# =====================================================
+# V7 — MAJ INFOS RENOUVELLEMENT (depuis la fiche ordonnance)
+# =====================================================
+@login_required
+@require_POST
+def update_renewal_info(request, pk):
+    prescription = get_object_or_404(Prescription, pk=pk)
+
+    if prescription.type != PrescriptionType.RENOUVELLEMENT:
+        messages.error(request, "Cette ordonnance n’est pas de type Renouvellement.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    # ---- champs Prescription
+    established_at_raw = (request.POST.get("established_at") or "").strip()
+    established_at = None
+    if established_at_raw:
+        established_at = parse_date(established_at_raw)
+        if established_at is None:
+            messages.error(request, "Date médecin invalide (format attendu : AAAA-MM-JJ).")
+            return redirect("core_emails:prescription_detail", pk=pk)
+
+    # ---- champs RenewalInfo
+    info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+
+    renewal_times_raw = (request.POST.get("renewal_times") or "").strip()
+    period_days_raw = (request.POST.get("period_days") or "").strip()
+    doctor_email = (request.POST.get("doctor_email") or "").strip().lower()
+    doctor_name = (request.POST.get("doctor_name") or "").strip()
+
+    # conversions sécurisées
+    try:
+        renewal_times = int(renewal_times_raw) if renewal_times_raw != "" else info.renewal_times
+        period_days = int(period_days_raw) if period_days_raw != "" else info.period_days
+    except ValueError:
+        messages.error(request, "Renouvellements / période : valeur numérique invalide.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    if renewal_times < 0:
+        messages.error(request, "Le nombre de renouvellements ne peut pas être négatif.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    if period_days <= 0:
+        messages.error(request, "La durée de période doit être > 0.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    # validation email médecin
+    if doctor_email:
+        try:
+            validate_email(doctor_email)
+        except ValidationError:
+            messages.error(request, "Email médecin invalide.")
+            return redirect("core_emails:prescription_detail", pk=pk)
+
+    # ---- sauvegarde "tout ou rien"
+    with transaction.atomic():
+        # 1) Prescription : on n’écrase pas la date si champ vide
+        if established_at_raw != "":
+            prescription.established_at = established_at
+            prescription.save(update_fields=["established_at", "updated_at"])
+        else:
+            # on bump updated_at même si on ne touche pas established_at
+            prescription.save(update_fields=["updated_at"])
+
+        # 2) RenewalInfo
+        info.renewal_times = renewal_times
+        info.period_days = period_days
+        info.doctor_email = doctor_email
+        info.doctor_name = doctor_name
+        info.save(update_fields=["renewal_times", "period_days", "doctor_email", "doctor_name"])
+
+        # 3) trace opposable
+        PrescriptionStatusHistory.objects.create(
+            prescription=prescription,
+            old_status=prescription.status,
+            new_status=prescription.status,
+            changed_by=request.user,
+            comment=(
+                "Infos renouvellement mises à jour : "
+                f"date médecin={established_at_raw or 'inchangée'}, "
+                f"renewal_times={renewal_times}, period_days={period_days}, "
+                f"doctor_email={doctor_email or '—'}."
+            ),
+        )
+
+    messages.success(request, "Infos renouvellement enregistrées.")
+    return redirect("core_emails:prescription_detail", pk=pk)
+

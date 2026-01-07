@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import (
     Prescription,
     PrescriptionStatusHistory,
-    PrescriptionType,
+    PrescriptionRenewalInfo,  # ✅ V7
 )
 from .models_assignment import PrescriptionAssignment
 
@@ -14,15 +14,17 @@ class PrescriptionAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "status",
-        "type",          # V3
+        "type",
         "sender_type",
+        "patient",
+        "established_at",   # ✅ V7 (visible direct)
         "received_at",
         "updated_at",
     )
 
     list_filter = (
         "status",
-        "type",          # V3
+        "type",
         "sender_type",
         "received_at",
     )
@@ -38,9 +40,10 @@ class PrescriptionAdmin(admin.ModelAdmin):
         (None, {
             "fields": (
                 "status",
-                "type",      # V3
+                "type",
                 "sender_type",
                 "patient",
+                "established_at",   # ✅ V7 (saisie date médecin)
                 "created_by",
             )
         }),
@@ -89,3 +92,16 @@ class PrescriptionAssignmentAdmin(admin.ModelAdmin):
     readonly_fields = (
         "assigned_at",
     )
+
+
+# ✅ V7 — Admin RenewalInfo
+@admin.register(PrescriptionRenewalInfo)
+class PrescriptionRenewalInfoAdmin(admin.ModelAdmin):
+    list_display = (
+        "prescription",
+        "renewal_times",
+        "period_days",
+        "doctor_email",
+        "doctor_email_sent_at",
+    )
+    search_fields = ("prescription__id", "doctor_email", "doctor_name")

@@ -484,7 +484,64 @@
 <div class="divider"></div>
 
 
+      
 
+{% if prescription.type == "RENOUVELLEMENT" %}
+  <div class="divider"></div>
+
+  <h3 class="card__title" style="margin:0 0 10px 0;">
+    Renouvellement
+  </h3>
+
+  <div class="hint">
+    Échéance = date médecin + (renewal_times + 1) × period_days.
+  </div>
+
+  <form method="post" action="{% url 'core_emails:update_renewal_info' prescription.id %}">
+    {% csrf_token %}
+
+    <div class="field">
+      <label>Date d’établissement (médecin)</label>
+      <input
+        type="date"
+        name="established_at"
+        value="{% if prescription.established_at %}{{ prescription.established_at|date:'Y-m-d' }}{% endif %}"
+      />
+      <div class="hint">Base du calcul J-5 / J-3.</div>
+    </div>
+
+    <div class="field">
+      <label>Nombre de renouvellements autorisés</label>
+      <input type="number" name="renewal_times" min="0" value="{{ renewal_info.renewal_times|default:0 }}">
+    </div>
+
+    <div class="field">
+      <label>Durée d’une période (jours)</label>
+      <input type="number" name="period_days" min="1" value="{{ renewal_info.period_days|default:30 }}">
+    </div>
+
+    <div class="field">
+      <label>Nom du médecin (optionnel)</label>
+      <input type="text" name="doctor_name" value="{{ renewal_info.doctor_name|default:'' }}">
+    </div>
+
+    <div class="field">
+      <label>Email du médecin (optionnel)</label>
+      <input type="email" name="doctor_email" value="{{ renewal_info.doctor_email|default:'' }}">
+    </div>
+
+    <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
+      <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
+    </div>
+  </form>
+
+  <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
+    <form method="post" action="{% url 'core_emails:send_renewal_doctor_email' prescription.id %}" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn--sm">Email médecin</button>
+    </form>
+  </div>
+{% endif %}
 
           <!-- TYPE D’ORDONNANCE (EXPÉDITEUR) -->
           <form method="post" action="{% url 'core_emails:change_sender_type' prescription.id %}">
