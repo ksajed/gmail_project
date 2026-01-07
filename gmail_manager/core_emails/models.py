@@ -5,6 +5,12 @@ from django.db import models
 from core_patients.models import Patient
 from .states import PrescriptionStatusEnum
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+from django.db.models.signals import pre_save
+
 
 class PrescriptionStatus(models.TextChoices):
     """
@@ -138,6 +144,17 @@ class Prescription(models.Model):
         related_name="prescriptions",
         help_text="Patient lié à l'ordonnance (créé automatiquement si absent)",
     )
+    
+    
+    # ================================================================
+    # DONNÉES MÉDICALES (EXTRAIT MINIMAL),date de l’établissement ordo
+    # ================================================================
+    established_at = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date d’établissement de l’ordonnance (date médecin) — base des calculs de renouvellement",
+    )
+
 
     # --------------------
     # TRAÇABILITÉ
@@ -162,7 +179,9 @@ class Prescription(models.Model):
     def __str__(self):
         return f"Ordonnance #{self.id} – {self.get_status_display()}"
 
-
+# =====================================================
+# HISTORIQUE DES CHANGEMENTS DE STATUT
+# =====================================================
 class PrescriptionStatusHistory(models.Model):
     """
     Historique légal et opposable
@@ -211,13 +230,46 @@ class PrescriptionStatusHistory(models.Model):
 # Import V2 (obligatoire pour que Django détecte le modèle)
 from .models_assignment import PrescriptionAssignment  # noqa
 
+# =====================================================
+# INFORMATIONS DE RENOUVELLEMENT
+# =====================================================
+class PrescriptionRenewalInfo(models.Model):
+    prescription = models.OneToOneField(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="renewal_info",
+    )
+
+    # nombre de renouvellements autorisés (0,1,2,...)
+    renewal_times = models.PositiveSmallIntegerField(default=0)
+
+    # durée d’une période (par défaut 30 jours)
+    period_days = models.PositiveSmallIntegerField(default=30)
+
+    # contact médecin
+    doctor_email = models.EmailField(blank=True)
+    doctor_name = models.CharField(max_length=120, blank=True)
+
+    # états après envoi
+    reminder_5_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_5_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_3_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_3_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    doctor_email_sent_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"RenewalInfo({self.prescription_id})"
+
+
+
+
+
+
 
 # =====================================================
 # 🔍 TRACEUR TEMPORAIRE — QUI ÉCRASE Prescription.type ?
 # =====================================================
 
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 
 @receiver(pre_save, sender=Prescription)
 def trace_prescription_type(sender, instance, **kwargs):
@@ -234,3 +286,12 @@ def trace_prescription_type(sender, instance, **kwargs):
         print("PK:", instance.pk)
         print("OLD TYPE:", old.type)
         print("NEW TYPE:", instance.type)
+
+
+# =====================================================
+# CRÉATION AUTOMATIQUE DES INFOS DE RENOUVELLEMENT
+# =====================================================
+@receiver(post_save, sender=Prescription)
+def ensure_renewal_info(sender, instance, created, **kwargs):
+    if instance.type == PrescriptionType.RENOUVELLEMENT:
+        PrescriptionRenewalInfo.objects.get_or_create(prescription=instance)

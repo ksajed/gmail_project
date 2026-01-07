@@ -75,4 +75,31 @@ urlpatterns = [
         views.prescription_create,
         name="prescription_create",
     ),
+
+    # =====================================================
+    # V7 — RENOUVELLEMENT (ACTIONS)
+    # =====================================================
+    
+    path(
+    "renewal/<int:pk>/update/",
+    views.update_renewal_info,
+    name="update_renewal_info",
+        ),
+
+    
+    path(
+        "renewal/<int:pk>/patient-email/<int:days>/",
+        views.send_renewal_patient_email,
+        name="send_renewal_patient_email",
+    ),
+    path(
+        "renewal/<int:pk>/patient-sms/<int:days>/",
+        views.send_renewal_patient_sms,
+        name="send_renewal_patient_sms",
+    ),
+    path(
+        "renewal/<int:pk>/doctor-email/",
+        views.send_renewal_doctor_email,
+        name="send_renewal_doctor_email",
+    ),
 ]
