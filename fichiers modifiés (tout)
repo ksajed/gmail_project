@@ -1,0 +1,344 @@
+[1mdiff --git a/gmail_manager/core_emails/models.py b/gmail_manager/core_emails/models.py[m
+[1mindex d7d9473..4d5d852 100644[m
+[1m--- a/gmail_manager/core_emails/models.py[m
+[1m+++ b/gmail_manager/core_emails/models.py[m
+[36m@@ -246,6 +246,13 @@[m [mclass PrescriptionRenewalInfo(models.Model):[m
+     # durée d’une période (par défaut 30 jours)[m
+     period_days = models.PositiveSmallIntegerField(default=30)[m
+ [m
+[32m+[m[32m        # nombre de renouvellements déjà réalisés (0..renewal_times)[m
+[32m+[m[32m    renewal_done_count = models.PositiveSmallIntegerField(default=0)[m
+[32m+[m
+[32m+[m[32m    # date/heure du dernier renouvellement réalisé[m
+[32m+[m[32m    last_renewal_ordered_at = models.DateTimeField(null=True, blank=True)[m
+[32m+[m
+[32m+[m[41m    [m
+     # contact médecin[m
+     doctor_email = models.EmailField(blank=True)[m
+     doctor_name = models.CharField(max_length=120, blank=True)[m
+[36m@@ -266,6 +273,37 @@[m [mclass PrescriptionRenewalInfo(models.Model):[m
+ [m
+ [m
+ [m
+[32m+[m
+[32m+[m
+[32m+[m[32m# =====================================================[m
+[32m+[m[32m# HISTORIQUE DES RENOUVELLEMENTS RÉALISÉS (V7)[m
+[32m+[m[32m# =====================================================[m
+[32m+[m[32mclass PrescriptionRenewalEvent(models.Model):[m
+[32m+[m[32m    prescription = models.ForeignKey([m
+[32m+[m[32m        Prescription,[m
+[32m+[m[32m        on_delete=models.CASCADE,[m
+[32m+[m[32m        related_name="renewal_events",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    number = models.PositiveSmallIntegerField()  # 1..N (ordre du renouvellement)[m
+[32m+[m[32m    ordered_at = models.DateTimeField(auto_now_add=True)[m
+[32m+[m
+[32m+[m[32m    created_by = models.ForeignKey([m
+[32m+[m[32m        settings.AUTH_USER_MODEL,[m
+[32m+[m[32m        null=True,[m
+[32m+[m[32m        blank=True,[m
+[32m+[m[32m        on_delete=models.SET_NULL,[m
+[32m+[m[32m        related_name="created_renewal_events",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    note = models.CharField(max_length=255, blank=True, default="")[m
+[32m+[m
+[32m+[m[32m    class Meta:[m
+[32m+[m[32m        ordering = ["-ordered_at"][m
+[32m+[m[32m        unique_together = [("prescription", "number")][m
+[32m+[m
+[32m+[m[32m    def __str__(self):[m
+[32m+[m[32m        return f"RenewalEvent(p={self.prescription_id}, n={self.number})"[m
+[32m+[m
+[32m+[m
+ # =====================================================[m
+ # 🔍 TRACEUR TEMPORAIRE — QUI ÉCRASE Prescription.type ?[m
+ # =====================================================[m
+[1mdiff --git a/gmail_manager/core_emails/templates/core_emails/prescription_detail.html b/gmail_manager/core_emails/templates/core_emails/prescription_detail.html[m
+[1mindex 9a97308..245d1c2 100644[m
+[1m--- a/gmail_manager/core_emails/templates/core_emails/prescription_detail.html[m
+[1m+++ b/gmail_manager/core_emails/templates/core_emails/prescription_detail.html[m
+[36m@@ -535,7 +535,113 @@[m
+     </div>[m
+   </form>[m
+ [m
+[32m+[m[32m    <form method="post" action="{% url 'core_emails:mark_renewal_done' prescription.id %}" style="margin-top:10px;">[m
+[32m+[m[32m      {% csrf_token %}[m
+[32m+[m[32m      <button type="submit" class="btn btn--sm btn--primary">[m
+[32m+[m[32m        Marquer renouvellement réalisé[m
+[32m+[m[32m      </button>[m
+[32m+[m[32m    </form>[m
+[32m+[m
+[32m+[m[32m    <div class="hint" style="margin-top:8px;">[m
+[32m+[m[32m      <strong>Réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}[m
+[32m+[m[32m      / {{ renewal_info.renewal_times|default:0 }}[m
+[32m+[m[32m      — <strong>Restants :</strong> {{ renewal_remaining|default:0 }}[m
+[32m+[m[32m      {% if renewal_info.last_renewal_ordered_at %}[m
+[32m+[m[32m        — <strong>Dernier :</strong> {{ renewal_info.last_renewal_ordered_at }}[m
+[32m+[m[32m      {% endif %}[m
+[32m+[m[32m    </div>[m
+[32m+[m
+[32m+[m
+   <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">[m
+[32m+[m
+[32m+[m[32m    <button type="button" class="btn btn--sm" id="openRenewalModal" style="margin-top:10px;">[m
+[32m+[m[32m      Historique &amp; récap[m
+[32m+[m[32m    </button>[m
+[32m+[m
+[32m+[m[32m    <div id="renewalModal" class="modal-overlay" style="display:none;">[m
+[32m+[m[32m      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="renewalModalTitle">[m
+[32m+[m[32m        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">[m
+[32m+[m[32m          <h3 id="renewalModalTitle" style="margin:0;">Renouvellement — récap &amp; historique</h3>[m
+[32m+[m[32m          <button type="button" class="btn btn--sm" id="closeRenewalModal">Fermer</button>[m
+[32m+[m[32m        </div>[m
+[32m+[m
+[32m+[m[32m        <div class="divider" style="margin:12px 0;"></div>[m
+[32m+[m
+[32m+[m[32m        <!-- RÉCAP -->[m
+[32m+[m[32m        <div class="hint">[m
+[32m+[m[32m          <div><strong>Date début (médecin) :</strong> {% if prescription.established_at %}{{ prescription.established_at|date:"d/m/Y" }}{% else %}—{% endif %}</div>[m
+[32m+[m[32m          <div><strong>Durée période :</strong> {{ renewal_info.period_days|default:30 }} jours</div>[m
+[32m+[m[32m          <div><strong>Renouvellements autorisés :</strong> {{ renewal_info.renewal_times|default:0 }}</div>[m
+[32m+[m[32m          <div><strong>Renouvellements réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}</div>[m
+[32m+[m[32m          <div><strong>Restants :</strong> {{ renewal_remaining|default:0 }}</div>[m
+[32m+[m
+[32m+[m[32m          {% if renewal_end_date %}[m
+[32m+[m[32m            <div><strong>Date fin estimée :</strong> {{ renewal_end_date|date:"d/m/Y" }}</div>[m
+[32m+[m[32m            <div><strong>Jours restants :</strong> {{ renewal_days_left }}</div>[m
+[32m+[m[32m          {% endif %}[m
+[32m+[m
+[32m+[m[32m          {% if renewal_info.last_renewal_ordered_at %}[m
+[32m+[m[32m            <div><strong>Dernier renouvellement :</strong> {{ renewal_info.last_renewal_ordered_at }}</div>[m
+[32m+[m[32m          {% endif %}[m
+[32m+[m
+[32m+[m[32m          <div><strong>Rappel J-5 Email :</strong> {{ renewal_info.reminder_5_patient_email_sent_at|default:"—" }}</div>[m
+[32m+[m[32m          <div><strong>Rappel J-5 SMS :</strong> {{ renewal_info.reminder_5_patient_sms_sent_at|default:"—" }}</div>[m
+[32m+[m[32m          <div><strong>Rappel J-3 Email :</strong> {{ renewal_info.reminder_3_patient_email_sent_at|default:"—" }}</div>[m
+[32m+[m[32m          <div><strong>Rappel J-3 SMS :</strong> {{ renewal_info.reminder_3_patient_sms_sent_at|default:"—" }}</div>[m
+[32m+[m[32m        </div>[m
+[32m+[m
+[32m+[m[32m        <div class="divider" style="margin:12px 0;"></div>[m
+[32m+[m
+[32m+[m[32m        <!-- HISTORIQUE -->[m
+[32m+[m[32m        <h4 style="margin:0 0 8px 0;">Historique des renouvellements</h4>[m
+[32m+[m
+[32m+[m[32m        {% if renewal_events %}[m
+[32m+[m[32m          <table style="width:100%; border-collapse:collapse;">[m
+[32m+[m[32m            <thead>[m
+[32m+[m[32m              <tr>[m
+[32m+[m[32m                <th style="text-align:left; padding:6px;">#</th>[m
+[32m+[m[32m                <th style="text-align:left; padding:6px;">Date</th>[m
+[32m+[m[32m                <th style="text-align:left; padding:6px;">Utilisateur</th>[m
+[32m+[m[32m                <th style="text-align:left; padding:6px;">Note</th>[m
+[32m+[m[32m              </tr>[m
+[32m+[m[32m            </thead>[m
+[32m+[m[32m            <tbody>[m
+[32m+[m[32m              {% for ev in renewal_events %}[m
+[32m+[m[32m                <tr>[m
+[32m+[m[32m                  <td style="padding:6px;">{{ ev.number }}</td>[m
+[32m+[m[32m                  <td style="padding:6px;">{{ ev.ordered_at }}</td>[m
+[32m+[m[32m                  <td style="padding:6px;">{% if ev.created_by %}{{ ev.created_by }}{% else %}—{% endif %}</td>[m
+[32m+[m[32m                  <td style="padding:6px;">{{ ev.note|default:"" }}</td>[m
+[32m+[m[32m                </tr>[m
+[32m+[m[32m              {% endfor %}[m
+[32m+[m[32m            </tbody>[m
+[32m+[m[32m          </table>[m
+[32m+[m[32m        {% else %}[m
+[32m+[m[32m          <div class="hint">Aucun renouvellement enregistré.</div>[m
+[32m+[m[32m        {% endif %}[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m
+[32m+[m[32m    <style>[m
+[32m+[m[32m      .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); padding:20px; z-index:9999; }[m
+[32m+[m[32m      .modal-card{ background:#fff; width:min(900px,95vw); max-height:85vh; overflow:auto; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }[m
+[32m+[m[32m    </style>[m
+[32m+[m
+[32m+[m[32m    <script>[m
+[32m+[m[32m      (function () {[m
+[32m+[m[32m        const modal = document.getElementById("renewalModal");[m
+[32m+[m[32m        const openBtn = document.getElementById("openRenewalModal");[m
+[32m+[m[32m        const closeBtn = document.getElementById("closeRenewalModal");[m
+[32m+[m[32m        if (!modal || !openBtn || !closeBtn) return;[m
+[32m+[m[32m        function open(){ modal.style.display = "block"; }[m
+[32m+[m[32m        function close(){ modal.style.display = "none"; }[m
+[32m+[m[32m        openBtn.addEventListener("click", open);[m
+[32m+[m[32m        closeBtn.addEventListener("click", close);[m
+[32m+[m[32m        modal.addEventListener("click", function(e){ if (e.target === modal) close(); });[m
+[32m+[m[32m        document.addEventListener("keydown", function(e){ if (e.key === "Escape") close(); });[m
+[32m+[m[32m      })();[m
+[32m+[m[32m    </script>[m
+[32m+[m
+     <form method="post" action="{% url 'core_emails:send_renewal_doctor_email' prescription.id %}" style="margin:0;">[m
+       {% csrf_token %}[m
+       <button type="submit" class="btn btn--sm">Email médecin</button>[m
+[1mdiff --git a/gmail_manager/core_emails/urls.py b/gmail_manager/core_emails/urls.py[m
+[1mindex 655fc3e..5fc2426 100644[m
+[1m--- a/gmail_manager/core_emails/urls.py[m
+[1m+++ b/gmail_manager/core_emails/urls.py[m
+[36m@@ -86,6 +86,12 @@[m [murlpatterns = [[m
+     name="update_renewal_info",[m
+         ),[m
+ [m
+[32m+[m[32m          path([m
+[32m+[m[32m          "renewal/<int:pk>/done/",[m
+[32m+[m[32m          views.mark_renewal_done,[m
+[32m+[m[32m          name="mark_renewal_done",[m
+[32m+[m[32m      ),[m
+[32m+[m
+     [m
+     path([m
+         "renewal/<int:pk>/patient-email/<int:days>/",[m
+[1mdiff --git a/gmail_manager/core_emails/views.py b/gmail_manager/core_emails/views.py[m
+[1mindex 0050caa..97aa588 100644[m
+[1m--- a/gmail_manager/core_emails/views.py[m
+[1m+++ b/gmail_manager/core_emails/views.py[m
+[36m@@ -36,6 +36,7 @@[m [mfrom .models import ([m
+     SenderType,[m
+ )[m
+ from .models_assignment import PrescriptionAssignment[m
+[32m+[m[32mfrom core_emails.models import PrescriptionRenewalEvent[m
+ [m
+ # =====================================================[m
+ # STATES & SERVICES[m
+[36m@@ -139,7 +140,7 @@[m [mdef dashboard(request):[m
+     # ==========================[m
+     # V7 — Renouvellement J-5/J-3[m
+     # ==========================[m
+[31m-    today = timezone.localdate()[m
+[32m+[m[32m    today = timezone.localtime(timezone.now()).date()[m
+     due_5 = [][m
+     due_3 = [][m
+     renewals_qs = ([m
+[36m@@ -166,15 +167,19 @@[m [mdef dashboard(request):[m
+ [m
+           if ([m
+               days_left == 5[m
+[31m-              and info.reminder_5_patient_email_sent_at is None[m
+[31m-              and info.reminder_5_patient_sms_sent_at is None[m
+[32m+[m[32m              and ([m
+[32m+[m[32m                  info.reminder_5_patient_email_sent_at is None[m
+[32m+[m[32m                  or info.reminder_5_patient_sms_sent_at is None[m
+[32m+[m[32m              )[m
+           ):[m
+               due_5.append(p)[m
+ [m
+           if ([m
+               days_left == 3[m
+[31m-              and info.reminder_3_patient_email_sent_at is None[m
+[31m-              and info.reminder_3_patient_sms_sent_at is None[m
+[32m+[m[32m              and ([m
+[32m+[m[32m                  info.reminder_3_patient_email_sent_at is None[m
+[32m+[m[32m                  or info.reminder_3_patient_sms_sent_at is None[m
+[32m+[m[32m              )[m
+           ):[m
+               due_3.append(p)[m
+ [m
+[36m@@ -239,15 +244,31 @@[m [mdef prescription_detail(request, pk):[m
+     ][m
+ [m
+     persons_nurses = Person.objects.filter(role="nurse").order_by("last_name", "first_name")[m
+[31m-[m
+     renewal_info = None[m
+[32m+[m[32m    renewal_remaining = None[m
+[32m+[m
+[32m+[m[32m    renewal_end_date = None[m
+[32m+[m[32m    renewal_days_left = None[m
+[32m+[m[32m    renewal_events = [][m
+     if prescription.type == PrescriptionType.RENOUVELLEMENT:[m
+[31m-        renewal_info = PrescriptionRenewalInfo.objects.filter([m
+[31m-        prescription=prescription[m
+[31m-      ).first()[m
+[32m+[m[32m        renewal_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)[m
+[32m+[m[32m        renewal_remaining = max([m
+[32m+[m[32m            0,[m
+[32m+[m[32m            int(renewal_info.renewal_times) - int(renewal_info.renewal_done_count),[m
+[32m+[m[32m        )[m
+ [m
+[31m-    [m
+[31m-    [m
+[32m+[m[32m        # Récap (fin estimée + jours restants)[m
+[32m+[m[32m        if prescription.established_at:[m
+[32m+[m[32m            today = timezone.localtime(timezone.now()).date()[m
+[32m+[m[32m            renewal_end_date = prescription.established_at + datetime.timedelta([m
+[32m+[m[32m                days=(renewal_info.renewal_times + 1) * renewal_info.period_days[m
+[32m+[m[32m            )[m
+[32m+[m[32m            renewal_days_left = (renewal_end_date - today).days[m
+[32m+[m
+[32m+[m[32m        # Historique des renouvellements (ordre 1..N)[m
+[32m+[m[32m        renewal_events = list([m
+[32m+[m[32m            prescription.renewal_events.select_related('created_by').order_by('number')[m
+[32m+[m[32m        )[m
+     context = {[m
+         "prescription": prescription,[m
+         "attachments": attachments,[m
+[36m@@ -260,6 +281,10 @@[m [mdef prescription_detail(request, pk):[m
+         "context_prescription_types": PrescriptionType.choices,[m
+         # V7 — RENOUVELLEMENT[m
+         "renewal_info": renewal_info,[m
+[32m+[m[32m          "renewal_remaining": renewal_remaining,[m
+[32m+[m[32m          "renewal_end_date": renewal_end_date,[m
+[32m+[m[32m          "renewal_days_left": renewal_days_left,[m
+[32m+[m[32m          "renewal_events": renewal_events,[m
+ }[m
+     [m
+ [m
+[36m@@ -574,7 +599,45 @@[m [mdef sms_backend_send(phone: str, message: str):[m
+     """[m
+     raise NotImplementedError("SMS non configuré (ajouter un provider SMS).")[m
+ [m
+[32m+[m[32m#====================================================[m
+[32m+[m[32m# V7 — MARQUER RENOUVELLEMENT COMME RÉALISÉ[m
+[32m+[m[32m#====================================================[m
+[32m+[m[32m@login_required[m
+[32m+[m[32m@require_POST[m
+[32m+[m[32mdef mark_renewal_done(request, pk):[m
+[32m+[m[32m    prescription = get_object_or_404(Prescription, pk=pk)[m
+[32m+[m
+[32m+[m[32m    if prescription.type != PrescriptionType.RENOUVELLEMENT:[m
+[32m+[m[32m        messages.error(request, "Cette ordonnance n’est pas un renouvellement.")[m
+[32m+[m[32m        return redirect("core_emails:prescription_detail", pk=pk)[m
+[32m+[m
+[32m+[m[32m    info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)[m
+[32m+[m
+[32m+[m[32m    # Guard: ne pas dépasser le nombre autorisé[m
+[32m+[m[32m    if info.renewal_done_count >= info.renewal_times:[m
+[32m+[m[32m        messages.info(request, "Nombre de renouvellements autorisés déjà atteint.")[m
+[32m+[m[32m        return redirect("core_emails:prescription_detail", pk=pk)[m
+[32m+[m
+[32m+[m[32m    info.renewal_done_count += 1[m
+[32m+[m[32m    info.last_renewal_ordered_at = timezone.now()[m
+[32m+[m[32m    info.save(update_fields=["renewal_done_count", "last_renewal_ordered_at"])[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    PrescriptionRenewalEvent.objects.create([m
+[32m+[m[32m        prescription=prescription,[m
+[32m+[m[32m        number=info.renewal_done_count,[m
+[32m+[m[32m        created_by=request.user,[m
+[32m+[m[32m        note=request.POST.get("note", "").strip(),[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    messages.success([m
+[32m+[m[32m        request,[m
+[32m+[m[32m        f"Renouvellement #{info.renewal_done_count} marqué comme réalisé.",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    return redirect("core_emails:prescription_detail", pk=pk)[m
+[32m+[m
+ [m
+[32m+[m[32m#====================================================[m
+ @login_required[m
+ @require_POST[m
+ def send_renewal_patient_email(request, pk, days):[m
+[1mdiff --git a/gmail_manager/gmail_manager/settings.py b/gmail_manager/gmail_manager/settings.py[m
+[1mindex 8331447..f22424b 100644[m
+[1m--- a/gmail_manager/gmail_manager/settings.py[m
+[1m+++ b/gmail_manager/gmail_manager/settings.py[m
+[36m@@ -118,7 +118,7 @@[m [mAUTH_PASSWORD_VALIDATORS = [[m
+ # ============================================================[m
+ [m
+ LANGUAGE_CODE = 'en-us'[m
+[31m-TIME_ZONE = 'UTC'[m
+[32m+[m[32mTIME_ZONE = "Europe/Paris"[m
+ USE_I18N = True[m
+ USE_TZ = True[m
+ [m

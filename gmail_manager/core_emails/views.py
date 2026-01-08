@@ -36,6 +36,7 @@ from .models import (
     SenderType,
 )
 from .models_assignment import PrescriptionAssignment
+from core_emails.models import PrescriptionRenewalEvent
 
 # =====================================================
 # STATES & SERVICES
@@ -139,7 +140,7 @@ def dashboard(request):
     # ==========================
     # V7 — Renouvellement J-5/J-3
     # ==========================
-    today = timezone.localdate()
+    today = timezone.localtime(timezone.now()).date()
     due_5 = []
     due_3 = []
     renewals_qs = (
@@ -166,15 +167,19 @@ def dashboard(request):
 
           if (
               days_left == 5
-              and info.reminder_5_patient_email_sent_at is None
-              and info.reminder_5_patient_sms_sent_at is None
+              and (
+                  info.reminder_5_patient_email_sent_at is None
+                  or info.reminder_5_patient_sms_sent_at is None
+              )
           ):
               due_5.append(p)
 
           if (
               days_left == 3
-              and info.reminder_3_patient_email_sent_at is None
-              and info.reminder_3_patient_sms_sent_at is None
+              and (
+                  info.reminder_3_patient_email_sent_at is None
+                  or info.reminder_3_patient_sms_sent_at is None
+              )
           ):
               due_3.append(p)
 
@@ -239,15 +244,31 @@ def prescription_detail(request, pk):
     ]
 
     persons_nurses = Person.objects.filter(role="nurse").order_by("last_name", "first_name")
-
     renewal_info = None
-    if prescription.type == PrescriptionType.RENOUVELLEMENT:
-        renewal_info = PrescriptionRenewalInfo.objects.filter(
-        prescription=prescription
-      ).first()
+    renewal_remaining = None
 
-    
-    
+    renewal_end_date = None
+    renewal_days_left = None
+    renewal_events = []
+    if prescription.type == PrescriptionType.RENOUVELLEMENT:
+        renewal_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+        renewal_remaining = max(
+            0,
+            int(renewal_info.renewal_times) - int(renewal_info.renewal_done_count),
+        )
+
+        # Récap (fin estimée + jours restants)
+        if prescription.established_at:
+            today = timezone.localtime(timezone.now()).date()
+            renewal_end_date = prescription.established_at + datetime.timedelta(
+                days=(renewal_info.renewal_times + 1) * renewal_info.period_days
+            )
+            renewal_days_left = (renewal_end_date - today).days
+
+        # Historique des renouvellements (ordre 1..N)
+        renewal_events = list(
+            prescription.renewal_events.select_related('created_by').order_by('number')
+        )
     context = {
         "prescription": prescription,
         "attachments": attachments,
@@ -260,6 +281,10 @@ def prescription_detail(request, pk):
         "context_prescription_types": PrescriptionType.choices,
         # V7 — RENOUVELLEMENT
         "renewal_info": renewal_info,
+          "renewal_remaining": renewal_remaining,
+          "renewal_end_date": renewal_end_date,
+          "renewal_days_left": renewal_days_left,
+          "renewal_events": renewal_events,
 }
     
 
@@ -574,7 +599,45 @@ def sms_backend_send(phone: str, message: str):
     """
     raise NotImplementedError("SMS non configuré (ajouter un provider SMS).")
 
+#====================================================
+# V7 — MARQUER RENOUVELLEMENT COMME RÉALISÉ
+#====================================================
+@login_required
+@require_POST
+def mark_renewal_done(request, pk):
+    prescription = get_object_or_404(Prescription, pk=pk)
 
+    if prescription.type != PrescriptionType.RENOUVELLEMENT:
+        messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+
+    # Guard: ne pas dépasser le nombre autorisé
+    if info.renewal_done_count >= info.renewal_times:
+        messages.info(request, "Nombre de renouvellements autorisés déjà atteint.")
+        return redirect("core_emails:prescription_detail", pk=pk)
+
+    info.renewal_done_count += 1
+    info.last_renewal_ordered_at = timezone.now()
+    info.save(update_fields=["renewal_done_count", "last_renewal_ordered_at"])
+
+
+    PrescriptionRenewalEvent.objects.create(
+        prescription=prescription,
+        number=info.renewal_done_count,
+        created_by=request.user,
+        note=request.POST.get("note", "").strip(),
+    )
+
+    messages.success(
+        request,
+        f"Renouvellement #{info.renewal_done_count} marqué comme réalisé.",
+    )
+    return redirect("core_emails:prescription_detail", pk=pk)
+
+
+#====================================================
 @login_required
 @require_POST
 def send_renewal_patient_email(request, pk, days):

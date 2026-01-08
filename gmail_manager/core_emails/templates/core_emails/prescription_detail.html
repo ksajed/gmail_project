@@ -535,7 +535,113 @@
     </div>
   </form>
 
+    <form method="post" action="{% url 'core_emails:mark_renewal_done' prescription.id %}" style="margin-top:10px;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn--sm btn--primary">
+        Marquer renouvellement réalisé
+      </button>
+    </form>
+
+    <div class="hint" style="margin-top:8px;">
+      <strong>Réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}
+      / {{ renewal_info.renewal_times|default:0 }}
+      — <strong>Restants :</strong> {{ renewal_remaining|default:0 }}
+      {% if renewal_info.last_renewal_ordered_at %}
+        — <strong>Dernier :</strong> {{ renewal_info.last_renewal_ordered_at }}
+      {% endif %}
+    </div>
+
+
   <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
+
+    <button type="button" class="btn btn--sm" id="openRenewalModal" style="margin-top:10px;">
+      Historique &amp; récap
+    </button>
+
+    <div id="renewalModal" class="modal-overlay" style="display:none;">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="renewalModalTitle">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <h3 id="renewalModalTitle" style="margin:0;">Renouvellement — récap &amp; historique</h3>
+          <button type="button" class="btn btn--sm" id="closeRenewalModal">Fermer</button>
+        </div>
+
+        <div class="divider" style="margin:12px 0;"></div>
+
+        <!-- RÉCAP -->
+        <div class="hint">
+          <div><strong>Date début (médecin) :</strong> {% if prescription.established_at %}{{ prescription.established_at|date:"d/m/Y" }}{% else %}—{% endif %}</div>
+          <div><strong>Durée période :</strong> {{ renewal_info.period_days|default:30 }} jours</div>
+          <div><strong>Renouvellements autorisés :</strong> {{ renewal_info.renewal_times|default:0 }}</div>
+          <div><strong>Renouvellements réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}</div>
+          <div><strong>Restants :</strong> {{ renewal_remaining|default:0 }}</div>
+
+          {% if renewal_end_date %}
+            <div><strong>Date fin estimée :</strong> {{ renewal_end_date|date:"d/m/Y" }}</div>
+            <div><strong>Jours restants :</strong> {{ renewal_days_left }}</div>
+          {% endif %}
+
+          {% if renewal_info.last_renewal_ordered_at %}
+            <div><strong>Dernier renouvellement :</strong> {{ renewal_info.last_renewal_ordered_at }}</div>
+          {% endif %}
+
+          <div><strong>Rappel J-5 Email :</strong> {{ renewal_info.reminder_5_patient_email_sent_at|default:"—" }}</div>
+          <div><strong>Rappel J-5 SMS :</strong> {{ renewal_info.reminder_5_patient_sms_sent_at|default:"—" }}</div>
+          <div><strong>Rappel J-3 Email :</strong> {{ renewal_info.reminder_3_patient_email_sent_at|default:"—" }}</div>
+          <div><strong>Rappel J-3 SMS :</strong> {{ renewal_info.reminder_3_patient_sms_sent_at|default:"—" }}</div>
+        </div>
+
+        <div class="divider" style="margin:12px 0;"></div>
+
+        <!-- HISTORIQUE -->
+        <h4 style="margin:0 0 8px 0;">Historique des renouvellements</h4>
+
+        {% if renewal_events %}
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th style="text-align:left; padding:6px;">#</th>
+                <th style="text-align:left; padding:6px;">Date</th>
+                <th style="text-align:left; padding:6px;">Utilisateur</th>
+                <th style="text-align:left; padding:6px;">Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ev in renewal_events %}
+                <tr>
+                  <td style="padding:6px;">{{ ev.number }}</td>
+                  <td style="padding:6px;">{{ ev.ordered_at }}</td>
+                  <td style="padding:6px;">{% if ev.created_by %}{{ ev.created_by }}{% else %}—{% endif %}</td>
+                  <td style="padding:6px;">{{ ev.note|default:"" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="hint">Aucun renouvellement enregistré.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <style>
+      .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); padding:20px; z-index:9999; }
+      .modal-card{ background:#fff; width:min(900px,95vw); max-height:85vh; overflow:auto; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    </style>
+
+    <script>
+      (function () {
+        const modal = document.getElementById("renewalModal");
+        const openBtn = document.getElementById("openRenewalModal");
+        const closeBtn = document.getElementById("closeRenewalModal");
+        if (!modal || !openBtn || !closeBtn) return;
+        function open(){ modal.style.display = "block"; }
+        function close(){ modal.style.display = "none"; }
+        openBtn.addEventListener("click", open);
+        closeBtn.addEventListener("click", close);
+        modal.addEventListener("click", function(e){ if (e.target === modal) close(); });
+        document.addEventListener("keydown", function(e){ if (e.key === "Escape") close(); });
+      })();
+    </script>
+
     <form method="post" action="{% url 'core_emails:send_renewal_doctor_email' prescription.id %}" style="margin:0;">
       {% csrf_token %}
       <button type="submit" class="btn btn--sm">Email médecin</button>
