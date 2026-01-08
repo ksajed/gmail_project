@@ -246,6 +246,13 @@ class PrescriptionRenewalInfo(models.Model):
     # durée d’une période (par défaut 30 jours)
     period_days = models.PositiveSmallIntegerField(default=30)
 
+        # nombre de renouvellements déjà réalisés (0..renewal_times)
+    renewal_done_count = models.PositiveSmallIntegerField(default=0)
+
+    # date/heure du dernier renouvellement réalisé
+    last_renewal_ordered_at = models.DateTimeField(null=True, blank=True)
+
+    
     # contact médecin
     doctor_email = models.EmailField(blank=True)
     doctor_name = models.CharField(max_length=120, blank=True)
@@ -264,6 +271,37 @@ class PrescriptionRenewalInfo(models.Model):
 
 
 
+
+
+
+
+# =====================================================
+# HISTORIQUE DES RENOUVELLEMENTS RÉALISÉS (V7)
+# =====================================================
+class PrescriptionRenewalEvent(models.Model):
+    prescription = models.ForeignKey(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="renewal_events",
+    )
+    number = models.PositiveSmallIntegerField()  # 1..N (ordre du renouvellement)
+    ordered_at = models.DateTimeField(auto_now_add=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_renewal_events",
+    )
+    note = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        ordering = ["-ordered_at"]
+        unique_together = [("prescription", "number")]
+
+    def __str__(self):
+        return f"RenewalEvent(p={self.prescription_id}, n={self.number})"
 
 
 # =====================================================

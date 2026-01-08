@@ -86,6 +86,12 @@ urlpatterns = [
     name="update_renewal_info",
         ),
 
+          path(
+          "renewal/<int:pk>/done/",
+          views.mark_renewal_done,
+          name="mark_renewal_done",
+      ),
+
     
     path(
         "renewal/<int:pk>/patient-email/<int:days>/",
