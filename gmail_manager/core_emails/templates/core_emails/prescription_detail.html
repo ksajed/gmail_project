@@ -807,6 +807,8 @@
 
     <form method="post" action="{% url 'core_emails:send_renewal_doctor_email' prescription.id %}" style="margin:0;">
       {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
       <button type="submit" class="btn btn--sm">Email médecin</button>
     </form>
   </div>
@@ -1123,6 +1125,76 @@
     });
   });
 </script>
+
+
+<!-- MSG_MODAL:BEGIN -->
+<div id="msgModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="msgModalTitle" style="display:none;" data-show="{% if messages %}1{% else %}0{% endif %}">
+  <div class="modal" style="width:min(720px, calc(100vw - 24px)); margin:auto;">
+    <div class="modal__head" style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); background:var(--surface-2);">
+      <div class="modal__title" id="msgModalTitle" style="font-weight:700;">Notification</div>
+      <button type="button" class="btn" onclick="closeModal('msgModal')">Fermer</button>
+    </div>
+
+    <div class="modal__body" style="padding:14px 16px;">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="msg {% if message.tags %}msg--{{ message.tags }}{% endif %}" style="padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; margin-bottom:10px;">
+            {{ message }}
+          </div>
+        {% endfor %}
+
+        <div class="allowed-box" style="margin-top:12px; padding:12px; border:1px dashed var(--border); border-radius:12px; background:#fff;">
+          <strong>Choix autorisés :</strong>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            {% for value, label in allowed_statuses %}
+              <li><strong>{{ label }}</strong> <span style="color:var(--muted);">({{ value }})</span></li>
+            {% empty %}
+              <li>Aucun choix disponible.</li>
+            {% endfor %}
+          </ul>
+          <div style="margin-top:10px; color:var(--muted); font-size:.95em;">
+            Si le changement est interdit, sélectionne un statut dans cette liste puis clique “Valider”.
+          </div>
+        </div>
+      {% else %}
+        <div class="msg" style="padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff;">
+          Aucun message.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<!-- MSG_MODAL:END -->
+
+<!-- MSG_MODAL_AUTO:BEGIN -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("msgModal");
+    if (!modal) return;
+
+    const show = (modal.getAttribute("data-show") || "0") === "1";
+    if (!show) return;
+
+    // Ouvrir
+    openModal("msgModal");
+
+    // Si aucune erreur -> fermer automatiquement après 3s
+    const hasError = !!modal.querySelector(".msg--error");
+    const allowedBox = modal.querySelector(".allowed-box");
+
+    // Cacher "Choix autorisés" si ce n'est pas une erreur
+    if (allowedBox && !hasError) {
+      allowedBox.style.display = "none";
+    }
+
+    if (!hasError) {
+      setTimeout(function () {
+        closeModal("msgModal");
+      }, 3000);
+    }
+  });
+</script>
+<!-- MSG_MODAL_AUTO:END -->
 
 </body>
 </html>

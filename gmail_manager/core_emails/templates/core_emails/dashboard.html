@@ -148,7 +148,7 @@
             Renouvellements à surveiller
           </h3>
 
-          <span class="chip">J-5: {{ renewals_due_5|length }} · J-3: {{ renewals_due_3|length }}</span>
+          <span class="chip">J-5: {{ renewals_due_5|length }} · J-3: {{ renewals_due_3|length }} · Retard: {{ renewals_overdue|length }}</span>
         </div>
 
         <div class="card__body">
@@ -195,12 +195,14 @@
                     <td class="nowrap" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 5 %}" style="margin:0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn--sm">Email patient</button>
+                        
+                          <input type="hidden" name="next" value="/dashboard/"><button type="submit" class="btn btn--sm">Email patient</button>
                       </form>
 
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 5 %}" style="margin:0;">
                           {% csrf_token %}
-                          <button type="submit" class="btn btn--sm">SMS patient</button>
+                          
+                          <input type="hidden" name="next" value="/dashboard/"><button type="submit" class="btn btn--sm">SMS patient</button>
                       </form>
 
                      <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir →</a>
@@ -259,12 +261,14 @@
                     <td class="nowrap" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 3 %}" style="margin:0;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn--sm">Email patient</button>
+                        
+                          <input type="hidden" name="next" value="/dashboard/"><button type="submit" class="btn btn--sm">Email patient</button>
                      </form>
 
                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 3 %}" style="margin:0;">
                        {% csrf_token %}
-                       <button type="submit" class="btn btn--sm">SMS patient</button>
+                       
+                          <input type="hidden" name="next" value="/dashboard/"><button type="submit" class="btn btn--sm">SMS patient</button>
                       </form>
 
                       <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir →</a>
@@ -353,7 +357,7 @@
                   Ouvrir →
                 </a>
               </td>
-            </tr>
+           </tr>
           {% empty %}
             <tr>
               <td colspan="6" style="text-align:center; color:var(--muted); font-weight:800; padding:18px;">
