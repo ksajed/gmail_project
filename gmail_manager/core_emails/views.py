@@ -143,18 +143,27 @@ def dashboard(request):
     today = timezone.localtime(timezone.now()).date()
     due_5 = []
     due_3 = []
+    overdue = []
     renewals_qs = (
         Prescription.objects
         .select_related("patient")
         .select_related("renewal_info")
         .filter(type=PrescriptionType.RENOUVELLEMENT)
         .filter(established_at__isnull=False)
+        .exclude(status=PrescriptionStatus.ARCHIVED)
                    )
     for p in renewals_qs:
           try:
               info = p.renewal_info
           except PrescriptionRenewalInfo.DoesNotExist:
               continue
+
+          # Exclure les renouvellements terminés (plus de renouvellement restant)
+
+          if int(info.renewal_done_count) >= int(info.renewal_times):
+
+              continue
+
 
           end_date = p.established_at + datetime.timedelta(
               days=(info.renewal_times + 1) * info.period_days
@@ -164,6 +173,9 @@ def dashboard(request):
           # attach pour affichage template
           p.renewal_end_date = end_date
           p.renewal_days_left = days_left
+
+          if days_left < 0:
+              overdue.append(p)
 
           if (
               days_left == 5
@@ -203,6 +215,7 @@ def dashboard(request):
         "renewals_due_3": due_3,
         
 
+        "renewals_overdue": overdue,
     }
 
     return render(request, "core_emails/dashboard.html", context)
@@ -734,7 +747,8 @@ def send_renewal_patient_email(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect("core_emails:dashboard")
 
-    if days not in (5, 3):
+    # 5 / 3 / 0 (RETARD)
+    if days not in (5, 3, 0):
         messages.error(request, "Jour de rappel invalide.")
         return redirect("core_emails:dashboard")
 
@@ -753,13 +767,25 @@ def send_renewal_patient_email(request, pk, days):
         days=(info.renewal_times + 1) * info.period_days
     )
 
-    subject = f"Rappel renouvellement — échéance dans {days} jours"
-    body = (
-        f"Bonjour,\n\n"
-        f"Votre ordonnance arrive à échéance le {end_date:%d/%m/%Y}.\n"
-        f"Merci de contacter la pharmacie pour le renouvellement.\n\n"
-        f"Cordialement,\nPharmacie"
+    subject = (
+        "Renouvellement en retard — échéance dépassée"
+        if days == 0
+        else f"Rappel renouvellement — échéance dans {days} jours"
     )
+
+    body = "\n".join([
+        "Bonjour,",
+        "",
+        (
+            f"Votre ordonnance est en retard depuis le {end_date:%d/%m/%Y}."
+            if days == 0
+            else f"Votre ordonnance arrive à échéance le {end_date:%d/%m/%Y}."
+        ),
+        "Merci de contacter la pharmacie pour le renouvellement.",
+        "",
+        "Cordialement,",
+        "Pharmacie",
+    ])
 
     send_mail(
         subject,
@@ -773,24 +799,30 @@ def send_renewal_patient_email(request, pk, days):
     if days == 5:
         info.reminder_5_patient_email_sent_at = now
         info.save(update_fields=["reminder_5_patient_email_sent_at"])
-    else:
+    elif days == 3:
         info.reminder_3_patient_email_sent_at = now
         info.save(update_fields=["reminder_3_patient_email_sent_at"])
+    # days == 0 => RETARD : on ne touche pas les champs J-5/J-3
 
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
         old_status=prescription.status,
         new_status=prescription.status,
         changed_by=request.user,
-        comment=f"Rappel renouvellement envoyé au patient (EMAIL) — J-{days}.",
+        comment=(
+            "Rappel renouvellement envoyé au patient (EMAIL) — RETARD."
+            if days == 0
+            else f"Rappel renouvellement envoyé au patient (EMAIL) — J-{days}."
+        ),
     )
 
-    messages.success(request, f"Email patient envoyé (J-{days}).")
+    messages.success(
+        request,
+        ("Email patient envoyé (RETARD)." if days == 0 else f"Email patient envoyé (J-{days}).")
+    )
     return redirect("core_emails:dashboard")
 
 
-@login_required
-@require_POST
 def send_renewal_patient_sms(request, pk, days):
     prescription = get_object_or_404(Prescription, pk=pk)
 
@@ -798,7 +830,7 @@ def send_renewal_patient_sms(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect("core_emails:dashboard")
 
-    if days not in (5, 3):
+    if days not in (5, 3, 0):
         messages.error(request, "Jour de rappel invalide.")
         return redirect("core_emails:dashboard")
 
@@ -816,7 +848,7 @@ def send_renewal_patient_sms(request, pk, days):
     end_date = prescription.established_at + datetime.timedelta(
         days=(info.renewal_times + 1) * info.period_days
     )
-    msg = f"Pharmacie: rappel renouvellement. Échéance le {end_date:%d/%m/%Y}. Merci de nous contacter."
+    msg = (f"Pharmacie: renouvellement en retard. Échéance dépassée ({end_date:%d/%m/%Y}). Merci de nous contacter." if days == 0 else f"Pharmacie: rappel renouvellement. Échéance le {end_date:%d/%m/%Y}. Merci de nous contacter.")
 
     try:
         sms_backend_send(patient.phone_number, msg)
@@ -828,19 +860,21 @@ def send_renewal_patient_sms(request, pk, days):
     if days == 5:
         info.reminder_5_patient_sms_sent_at = now
         info.save(update_fields=["reminder_5_patient_sms_sent_at"])
-    else:
+    elif days == 3:
         info.reminder_3_patient_sms_sent_at = now
         info.save(update_fields=["reminder_3_patient_sms_sent_at"])
-
+    else:
+        # Retard: on ne renseigne pas les champs J-5/J-3
+        pass
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
         old_status=prescription.status,
         new_status=prescription.status,
         changed_by=request.user,
-        comment=f"Rappel renouvellement envoyé au patient (SMS) — J-{days}.",
+        comment=("Rappel renouvellement envoyé au patient (SMS) — RETARD." if days == 0 else f"Rappel renouvellement envoyé au patient (SMS) — J-{days}."),
     )
 
-    messages.success(request, f"SMS patient envoyé (J-{days}).")
+    messages.success(request, ("SMS patient envoyé (RETARD)." if days == 0 else f"SMS patient envoyé (J-{days})."))
     return redirect("core_emails:dashboard")
 
 
