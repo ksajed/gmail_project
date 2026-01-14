@@ -22,9 +22,6 @@ from django.core.mail import send_mail
 
 from django.core.validators import validate_email
 from django.db import transaction
-
-
-
 # =====================================================
 # MODELS — CORE EMAILS
 # =====================================================
@@ -43,6 +40,7 @@ from core_emails.models import PrescriptionRenewalEvent
 # =====================================================
 from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services import change_prescription_status
+from core_emails.services import compute_renewals_watch
 
 # =====================================================
 # EXTERNES
@@ -53,6 +51,8 @@ from core_people.models import Person
 
 # (Optionnel) Si tu utilises Patient
 from core_patients.models import Patient
+from core_notifications.services import send_sms_logged
+from core_notifications.models import SmsPurpose
 
 
 # =====================================================
@@ -183,10 +183,7 @@ def dashboard(request):
           ):
               due_3.append(p)
 
-    
-    
-    
-    
+   
     
     context = {
         "prescriptions": prescriptions,
@@ -204,6 +201,7 @@ def dashboard(request):
         "context_sender_types": SenderType.choices,
         "renewals_due_5": due_5,
         "renewals_due_3": due_3,
+        
 
     }
 
@@ -227,6 +225,18 @@ def prescription_detail(request, pk):
         Prescription.objects.select_related("patient").prefetch_related("attachments"),
         pk=pk,
     )
+    # =====================================================
+    # INFIRMIER AFFECTÉ (SI EXISTE)
+    # =====================================================
+    
+    assignment = (
+        PrescriptionAssignment.objects
+        .select_related("nurse")
+        .filter(prescription=prescription)
+        .first()
+    )
+    assigned_nurse = assignment.nurse if assignment and assignment.nurse else None
+
 
     attachments = prescription.attachments.all()
 
@@ -270,23 +280,27 @@ def prescription_detail(request, pk):
             prescription.renewal_events.select_related('created_by').order_by('number')
         )
     context = {
-        "prescription": prescription,
-        "attachments": attachments,
-        "history": history,
-        "allowed_statuses": allowed_statuses,
-        "persons_nurses": persons_nurses,
-        # Expéditeur
-        "context_sender_types": SenderType.choices,
-        # Type d’ordonnance
-        "context_prescription_types": PrescriptionType.choices,
-        # V7 — RENOUVELLEMENT
-        "renewal_info": renewal_info,
-          "renewal_remaining": renewal_remaining,
-          "renewal_end_date": renewal_end_date,
-          "renewal_days_left": renewal_days_left,
-          "renewal_events": renewal_events,
-}
-    
+    "prescription": prescription,
+    "attachments": attachments,
+    "history": history,
+    "allowed_statuses": allowed_statuses,
+    "persons_nurses": persons_nurses,
+    "assigned_nurse": assigned_nurse,
+
+    # Expéditeur
+    "context_sender_types": SenderType.choices,
+
+    # Type d’ordonnance
+    "context_prescription_types": PrescriptionType.choices,
+
+    # V7 — RENOUVELLEMENT
+    "renewal_info": renewal_info,
+    "renewal_remaining": renewal_remaining,
+    "renewal_end_date": renewal_end_date,
+    "renewal_days_left": renewal_days_left,
+    "renewal_events": renewal_events,
+            }
+
 
     return render(request, "core_emails/prescription_detail.html", context)
 
@@ -299,11 +313,19 @@ def prescription_detail(request, pk):
 def change_status(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
+    # SMS_POST:BEGIN
+    send_sms = request.POST.get("send_sms") in ("1", "true", "True", "on", "yes")
+    sms_target = request.POST.get("sms_target", "").strip()  # patient|nurse|both
+    if send_sms and sms_target not in ("patient", "nurse", "both"):
+        send_sms = False
+    # SMS_POST:END
+
     new_status = request.POST.get("status")
     if not new_status:
         messages.warning(request, "Aucun statut sélectionné.")
         return redirect("core_emails:prescription_detail", pk=pk)
 
+    status_changed = False
     try:
         change_prescription_status(
             prescription=prescription,
@@ -311,13 +333,78 @@ def change_status(request, pk):
             user=request.user,
         )
         messages.success(request, "Statut mis à jour avec succès.")
+        status_changed = True
     except ValidationError as e:
-        messages.error(request, str(e))
+        # Message plus clair + liste des choix autorisés
+        try:
+            current_enum = PrescriptionStatusEnum(prescription.status)
+            allowed = PRESCRIPTION_STATUS_TRANSITIONS.get(current_enum, set())
+            allowed_labels = ", ".join(
+                [enum.name.replace("_", " ").title() for enum in allowed]
+            ) or "Aucun"
+            messages.error(
+                request,
+                f"Changement de statut interdit. Choix possibles : {allowed_labels}."
+            )
+        except Exception:
+            messages.error(request, str(e))
+
+    # SMS_SEND:BEGIN
+    if status_changed and send_sms:
+        # Patient phone
+        patient = getattr(prescription, "patient", None)
+        patient_phone = None
+        if patient:
+            patient_phone = getattr(patient, "phone", None) or getattr(patient, "mobile", None)
+
+        # Nurse phone (si affectée)
+        nurse_phone = None
+        try:
+            assignment = (
+                PrescriptionAssignment.objects
+                .select_related("nurse")
+                .filter(prescription=prescription)
+                .first()
+            )
+            nurse = assignment.nurse if assignment and assignment.nurse else None
+            if nurse:
+                nurse_phone = getattr(nurse, "phone", None) or getattr(nurse, "mobile", None)
+        except Exception:
+            nurse_phone = None
+
+        recipients = []
+        if sms_target == "patient" and patient_phone:
+            recipients.append(("patient", str(patient_phone)))
+        elif sms_target == "nurse" and nurse_phone:
+            recipients.append(("nurse", str(nurse_phone)))
+        elif sms_target == "both":
+            if patient_phone:
+                recipients.append(("patient", str(patient_phone)))
+            if nurse_phone:
+                recipients.append(("nurse", str(nurse_phone)))
+
+        label = prescription.get_status_display() if hasattr(prescription, "get_status_display") else str(prescription.status)
+        msg_patient = f"Votre ordonnance est maintenant : {label}."
+        msg_nurse = f"Statut ordonnance mis à jour : {label}."
+
+        for who, phone in recipients:
+            # On envoie seulement si format international (+33...)
+            if phone.startswith("+"):
+                text = msg_patient if who == "patient" else msg_nurse
+                try:
+                    send_sms_logged(
+                        to_e164=phone,
+                        text=text,
+                        purpose=SmsPurpose.STATUS_UPDATE,
+                        template_key=f"PRESCRIPTION_STATUS_{prescription.status}_{who}".upper(),
+                        prescription=prescription,
+                    )
+                except Exception:
+                    pass
+    # SMS_SEND:END
 
     return redirect("core_emails:prescription_detail", pk=pk)
 
-
-# =====================================================
 # AFFECTATION INFIRMIER (HISTORIQUE INCLUS)
 # =====================================================
 @login_required
