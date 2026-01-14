@@ -271,6 +271,25 @@
       white-space:nowrap;
     }
 
+      .chip--danger{
+        background:var(--danger-soft);
+        border-color:rgba(220,38,38,.18);
+        color:var(--danger-600);
+      }
+
+      /* RENOUVELLEMENTS: éviter la coupure du chip (flex + overflow:hidden sur .card) */
+      .card--renewals .card__header{
+        flex-wrap:wrap;
+        row-gap:10px;
+      }
+      .card--renewals .chips{
+        margin-left:auto;
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+      }
+
     /* TABS */
     .tabs{
       display:flex;
