@@ -4,3 +4,6 @@ media/
 
 V4-complete.zip
 *.patch
+
+# backups
+*.bak_*
