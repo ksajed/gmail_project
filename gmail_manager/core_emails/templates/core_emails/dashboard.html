@@ -135,7 +135,7 @@
           <!-- ==========================
            V7 — RENOUVELLEMENTS J-5 / J-3
            ========================== -->
-      <section class="card" style="margin-bottom:16px;">
+      <section class="card card--renewals" style="margin-bottom:16px;">
         <div class="card__header">
           <h3 class="card__title">
             <span class="ico" aria-hidden="true">
@@ -148,7 +148,12 @@
             Renouvellements à surveiller
           </h3>
 
-          <span class="chip">J-5: {{ renewals_due_5|length }} · J-3: {{ renewals_due_3|length }} · Retard: {{ renewals_overdue|length }}</span>
+          <div class="chips">
+              <span class="chip">J-5: {{ renewals_due_5|length }}</span>
+              <span class="chip">J-3: {{ renewals_due_3|length }}</span>
+              <span class="chip chip--danger">Retard: {{ renewals_overdue|length }}</span>
+
+            </div>
         </div>
 
         <div class="card__body">
@@ -249,6 +254,7 @@
                             {{ p.patient.full_name }}
                           </div>
                         {% endif %}
+
                       {% else %}
                         —
                       {% endif %}
@@ -287,13 +293,98 @@
           {% else %}
             <div style="color:var(--muted); font-weight:800;">Aucune ordonnance à J-3.</div>
           {% endif %}
-        </div>
+        
+
+            
+</div>
       </section>
 
 
 
 
 
+    <!-- ==========================
+      V7 — RENOUVELLEMENTS EN RETARD
+      ========================== -->
+    <section class="card" style="margin-bottom:16px;">
+      <div class="card__header">
+        <h3 class="card__title">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 12a9 9 0 11-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M3 3v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          Renouvellements en retard
+        </h3>
+
+        <span class="chip" chip--danger">
+          Retard: {{ renewals_overdue|length }}
+        </span>
+      </div>
+
+      <div class="card__body">
+        {% if renewals_overdue %}
+                      <div class="tablewrap">
+                        <table>
+                          <thead>
+                          <tr>
+                            <th>Réf.</th>
+                            <th>Patient</th>
+                            <th>Date médecin</th>
+                            <th>Échéance</th>
+                            <th>Jours restants</th>
+                            <th>Action</th>
+                          </tr>
+                          </thead>
+                          <tbody>
+                          {% for p in renewals_overdue %}
+                            <tr>
+                              <td class="nowrap">#{{ p.id }}</td>
+
+                              <td>
+                                {% if p.patient %}
+                                  <div style="font-weight:900;">{{ p.patient.email }}</div>
+                                  {% if p.patient.full_name %}
+                                    <div style="color:var(--muted); font-weight:700; font-size:12px; margin-top:2px;">
+                                      {{ p.patient.full_name }}
+                                    </div>
+                                  {% endif %}
+                                {% else %}
+                                  —
+                                {% endif %}
+                              </td>
+
+                              <td class="nowrap">{{ p.established_at|date:"d/m/Y" }}</td>
+                              <td class="nowrap">{{ p.renewal_end_date|date:"d/m/Y" }}</td>
+                              <td class="nowrap">{{ p.renewal_days_left }}</td>
+
+                              <td class="nowrap" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
+                                  {% csrf_token %}
+                                  <input type="hidden" name="next" value="/dashboard/">
+                                  <button type="submit" class="btn btn--sm">Email patient</button>
+                                </form>
+
+                                <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
+                                  {% csrf_token %}
+                                  <input type="hidden" name="next" value="/dashboard/">
+                                  <button type="submit" class="btn btn--sm">SMS patient</button>
+                                </form>
+
+                                <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir →</a>
+                              </td>
+                            </tr>
+                          {% endfor %}
+                          </tbody>
+                        </table>
+                      </div>
+                    {% else %}
+                      <div style="color:var(--muted); font-weight:800;">Aucune ordonnance en retard.</div>
+                    {% endif %}
+      </div>
+    </section>
     <!-- TABLE CARD -->
     <section class="card">
       <div class="card__header">
