@@ -138,7 +138,7 @@ def dashboard(request):
         if row["status"] in counters:
             counters[row["status"]] = row["total"]
     # ==========================
-    # V7 — Renouvellement J-5/J-3
+    # V7 — Renouvellement J-5/J-3 (basé sur 1er retrait / DELIVERED)
     # ==========================
     today = timezone.localtime(timezone.now()).date()
     due_5 = []
@@ -146,56 +146,56 @@ def dashboard(request):
     overdue = []
     renewals_qs = (
         Prescription.objects
-        .select_related("patient")
-        .select_related("renewal_info")
+        .select_related('patient', 'renewal_info')
+        .prefetch_related('status_history')
         .filter(type=PrescriptionType.RENOUVELLEMENT)
         .filter(established_at__isnull=False)
         .exclude(status=PrescriptionStatus.ARCHIVED)
-                   )
+    )
     for p in renewals_qs:
-          try:
-              info = p.renewal_info
-          except PrescriptionRenewalInfo.DoesNotExist:
-              continue
-
-          # Exclure les renouvellements terminés (plus de renouvellement restant)
-
-          if int(info.renewal_done_count) >= int(info.renewal_times):
-
-              continue
-
-
-          end_date = p.established_at + datetime.timedelta(
-              days=(info.renewal_times + 1) * info.period_days
-          )
-          days_left = (end_date - today).days
-
-          # attach pour affichage template
-          p.renewal_end_date = end_date
-          p.renewal_days_left = days_left
-
-          if days_left < 0:
-              overdue.append(p)
-
-          if (
-              days_left == 5
-              and (
-                  info.reminder_5_patient_email_sent_at is None
-                  or info.reminder_5_patient_sms_sent_at is None
-              )
-          ):
-              due_5.append(p)
-
-          if (
-              days_left == 3
-              and (
-                  info.reminder_3_patient_email_sent_at is None
-                  or info.reminder_3_patient_sms_sent_at is None
-              )
-          ):
-              due_3.append(p)
-
-   
+        try:
+            info = p.renewal_info
+        except PrescriptionRenewalInfo.DoesNotExist:
+            continue
+    
+        # Exclure les renouvellements terminés
+        if int(info.renewal_done_count) >= int(info.renewal_times):
+            continue
+    
+        # Date de départ = 1er retrait (1er statut DELIVERED)
+        delivered_dt = None
+        for h in p.status_history.all().order_by('changed_at'):
+            if h.new_status == PrescriptionStatus.DELIVERED:
+                delivered_dt = h.changed_at
+                break
+        if delivered_dt is None:
+            # Pas encore retirée => pas de rappel à calculer
+            continue
+    
+        start_date = timezone.localtime(delivered_dt).date()
+        next_due_date = start_date + datetime.timedelta(
+            days=(int(info.renewal_done_count) + 1) * int(info.period_days)
+        )
+        days_left = (next_due_date - today).days
+    
+        # attach pour affichage template
+        p.renewal_end_date = next_due_date
+        p.renewal_days_left = days_left
+    
+        if days_left < 0:
+            overdue.append(p)
+    
+        if days_left == 5 and (
+            info.reminder_5_patient_email_sent_at is None
+            or info.reminder_5_patient_sms_sent_at is None
+        ):
+            due_5.append(p)
+    
+        if days_left == 3 and (
+            info.reminder_3_patient_email_sent_at is None
+            or info.reminder_3_patient_sms_sent_at is None
+        ):
+            due_3.append(p)
     
     context = {
         "prescriptions": prescriptions,
@@ -758,13 +758,35 @@ def send_renewal_patient_email(request, pk, days):
         return redirect("core_emails:dashboard")
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+    # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
+    if days == 5 and info.reminder_5_patient_email_sent_at is not None:
+        messages.info(request, "Email J-5 déjà envoyé.")
+        return redirect("core_emails:dashboard")
+    if days == 3 and info.reminder_3_patient_email_sent_at is not None:
+        messages.info(request, "Email J-3 déjà envoyé.")
+        return redirect("core_emails:dashboard")
+    # Base = date du 1er retrait (1ère délivrance)
+    first_delivered_at = (
+        PrescriptionStatusHistory.objects
+        .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
+        .order_by("changed_at")
+        .values_list("changed_at", flat=True)
+        .first()
+    )
 
-    if not prescription.established_at:
-        messages.error(request, "Date d’établissement (médecin) manquante.")
+    if not first_delivered_at:
+        messages.error(
+            request,
+            "Première délivrance (retrait) introuvable. "
+            "Passez l’ordonnance en statut 'Délivrée' pour démarrer les rappels."
+        )
         return redirect("core_emails:prescription_detail", pk=pk)
 
-    end_date = prescription.established_at + datetime.timedelta(
-        days=(info.renewal_times + 1) * info.period_days
+    start_date = timezone.localtime(first_delivered_at).date()
+
+    # Échéance du prochain renouvellement = start_date + (done_count + 1) * period_days
+    end_date = start_date + datetime.timedelta(
+        days=(int(info.renewal_done_count) + 1) * int(info.period_days)
     )
 
     subject = (
@@ -795,6 +817,33 @@ def send_renewal_patient_email(request, pk, days):
         fail_silently=False,
     )
 
+    # Historique renouvellement (event) — éviter doublons (unique_together)
+    next_number = int(info.renewal_done_count) + 1
+    note = (
+        "Rappel renouvellement patient (EMAIL) — RETARD."
+        if days == 0
+        else "Rappel renouvellement patient (EMAIL) — J-%s." % days
+    )
+    ev, created = PrescriptionRenewalEvent.objects.get_or_create(
+        prescription=prescription,
+        number=next_number,
+        defaults={"created_by": request.user, "note": note},
+    )
+    if not created:
+        current = (ev.note or "").strip()
+        merged = current
+        if note and note not in merged:
+            merged = (merged + ("\n" if merged else "") + note).strip()
+        update_fields = []
+        if merged != (ev.note or ""):
+            ev.note = merged
+            update_fields.append("note")
+        if request.user and ev.created_by_id is None:
+            ev.created_by = request.user
+            update_fields.append("created_by")
+        if update_fields:
+            ev.save(update_fields=update_fields)
+
     now = timezone.now()
     if days == 5:
         info.reminder_5_patient_email_sent_at = now
@@ -823,6 +872,8 @@ def send_renewal_patient_email(request, pk, days):
     return redirect("core_emails:dashboard")
 
 
+@login_required
+@require_POST
 def send_renewal_patient_sms(request, pk, days):
     prescription = get_object_or_404(Prescription, pk=pk)
 
@@ -840,13 +891,35 @@ def send_renewal_patient_sms(request, pk, days):
         return redirect("core_emails:dashboard")
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+    # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
+    if days == 5 and info.reminder_5_patient_sms_sent_at is not None:
+        messages.info(request, "SMS J-5 déjà envoyé.")
+        return redirect("core_emails:dashboard")
+    if days == 3 and info.reminder_3_patient_sms_sent_at is not None:
+        messages.info(request, "SMS J-3 déjà envoyé.")
+        return redirect("core_emails:dashboard")
+    # Base = date du 1er retrait (1ère délivrance)
+    first_delivered_at = (
+        PrescriptionStatusHistory.objects
+        .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
+        .order_by("changed_at")
+        .values_list("changed_at", flat=True)
+        .first()
+    )
 
-    if not prescription.established_at:
-        messages.error(request, "Date d’établissement (médecin) manquante.")
+    if not first_delivered_at:
+        messages.error(
+            request,
+            "Première délivrance (retrait) introuvable. "
+            "Passez l’ordonnance en statut 'Délivrée' pour démarrer les rappels."
+        )
         return redirect("core_emails:prescription_detail", pk=pk)
 
-    end_date = prescription.established_at + datetime.timedelta(
-        days=(info.renewal_times + 1) * info.period_days
+    start_date = timezone.localtime(first_delivered_at).date()
+
+    # Échéance du prochain renouvellement = start_date + (done_count + 1) * period_days
+    end_date = start_date + datetime.timedelta(
+        days=(int(info.renewal_done_count) + 1) * int(info.period_days)
     )
     msg = (f"Pharmacie: renouvellement en retard. Échéance dépassée ({end_date:%d/%m/%Y}). Merci de nous contacter." if days == 0 else f"Pharmacie: rappel renouvellement. Échéance le {end_date:%d/%m/%Y}. Merci de nous contacter.")
 
@@ -855,6 +928,33 @@ def send_renewal_patient_sms(request, pk, days):
     except NotImplementedError as e:
         messages.error(request, str(e))
         return redirect("core_emails:dashboard")
+
+    # Historique renouvellement (event) — éviter doublons (unique_together)
+    next_number = int(info.renewal_done_count) + 1
+    note = (
+        "Rappel renouvellement patient (SMS) — RETARD."
+        if days == 0
+        else "Rappel renouvellement patient (SMS) — J-%s." % days
+    )
+    ev, created = PrescriptionRenewalEvent.objects.get_or_create(
+        prescription=prescription,
+        number=next_number,
+        defaults={"created_by": request.user, "note": note},
+    )
+    if not created:
+        current = (ev.note or "").strip()
+        merged = current
+        if note and note not in merged:
+            merged = (merged + ("\n" if merged else "") + note).strip()
+        update_fields = []
+        if merged != (ev.note or ""):
+            ev.note = merged
+            update_fields.append("note")
+        if request.user and ev.created_by_id is None:
+            ev.created_by = request.user
+            update_fields.append("created_by")
+        if update_fields:
+            ev.save(update_fields=update_fields)
 
     now = timezone.now()
     if days == 5:
