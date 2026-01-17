@@ -40,7 +40,7 @@ from core_emails.models import PrescriptionRenewalEvent
 # =====================================================
 from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services import change_prescription_status
-from core_emails.services import compute_renewals_watch
+from core_emails.services import compute_renewals_watch_from_delivered
 
 # =====================================================
 # EXTERNES
@@ -137,66 +137,6 @@ def dashboard(request):
     for row in raw_stats:
         if row["status"] in counters:
             counters[row["status"]] = row["total"]
-    # ==========================
-    # V7 — Renouvellement J-5/J-3 (basé sur 1er retrait / DELIVERED)
-    # ==========================
-    today = timezone.localtime(timezone.now()).date()
-    due_5 = []
-    due_3 = []
-    overdue = []
-    renewals_qs = (
-        Prescription.objects
-        .select_related('patient', 'renewal_info')
-        .prefetch_related('status_history')
-        .filter(type=PrescriptionType.RENOUVELLEMENT)
-        .filter(established_at__isnull=False)
-        .exclude(status=PrescriptionStatus.ARCHIVED)
-    )
-    for p in renewals_qs:
-        try:
-            info = p.renewal_info
-        except PrescriptionRenewalInfo.DoesNotExist:
-            continue
-    
-        # Exclure les renouvellements terminés
-        if int(info.renewal_done_count) >= int(info.renewal_times):
-            continue
-    
-        # Date de départ = 1er retrait (1er statut DELIVERED)
-        delivered_dt = None
-        for h in p.status_history.all().order_by('changed_at'):
-            if h.new_status == PrescriptionStatus.DELIVERED:
-                delivered_dt = h.changed_at
-                break
-        if delivered_dt is None:
-            # Pas encore retirée => pas de rappel à calculer
-            continue
-    
-        start_date = timezone.localtime(delivered_dt).date()
-        next_due_date = start_date + datetime.timedelta(
-            days=(int(info.renewal_done_count) + 1) * int(info.period_days)
-        )
-        days_left = (next_due_date - today).days
-    
-        # attach pour affichage template
-        p.renewal_end_date = next_due_date
-        p.renewal_days_left = days_left
-    
-        if days_left < 0:
-            overdue.append(p)
-    
-        if days_left == 5 and (
-            info.reminder_5_patient_email_sent_at is None
-            or info.reminder_5_patient_sms_sent_at is None
-        ):
-            due_5.append(p)
-    
-        if days_left == 3 and (
-            info.reminder_3_patient_email_sent_at is None
-            or info.reminder_3_patient_sms_sent_at is None
-        ):
-            due_3.append(p)
-    
     context = {
         "prescriptions": prescriptions,
         "statuses": PrescriptionStatus.choices,
@@ -211,11 +151,6 @@ def dashboard(request):
         "count_blocked": counters[PrescriptionStatus.BLOCKED],
         "count_archived": counters[PrescriptionStatus.ARCHIVED],
         "context_sender_types": SenderType.choices,
-        "renewals_due_5": due_5,
-        "renewals_due_3": due_3,
-        
-
-        "renewals_overdue": overdue,
     }
 
     return render(request, "core_emails/dashboard.html", context)
@@ -224,6 +159,24 @@ def dashboard(request):
 # =====================================================
 # DÉTAIL ORDONNANCE
 # =====================================================
+
+@login_required
+def renewals_dashboard(request):
+    """
+    Page dédiée au suivi des renouvellements (J-5/J-3/retard).
+    """
+    due_5, due_3, overdue = compute_renewals_watch_from_delivered()
+
+    context = {
+        "renewals_due_5": due_5,
+        "renewals_due_3": due_3,
+        "renewals_overdue": overdue,
+    }
+
+    return render(request, "core_emails/renewals_dashboard.html", context)
+
+
+
 @login_required
 def prescription_detail(request, pk):
     """
