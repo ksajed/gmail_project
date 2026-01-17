@@ -62,6 +62,9 @@
 
   <div class="container">
 
+      
+
+
     <!-- STATS -->
     <div class="stats-grid">
       <div class="stat">
@@ -200,13 +203,13 @@
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 5 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="/dashboard/">
-                        <button type="submit" class="btn btn--sm">Email patient</button>
+                        <button type="button" class="btn btn--sm js-confirm-send" data-channel="EMAIL" data-days="5" data-prescription="{{ p.id }}">Email patient</button>
                       </form>
 
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 5 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="/dashboard/">
-                        <button type="submit" class="btn btn--sm">SMS patient</button>
+                        <button type="button" class="btn btn--sm js-confirm-send" data-channel="SMS" data-days="5" data-prescription="{{ p.id }}">SMS patient</button>
                       </form>
 
                       <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir →</a>
@@ -262,13 +265,13 @@
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 3 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="/dashboard/">
-                        <button type="submit" class="btn btn--sm">Email patient</button>
+                        <button type="button" class="btn btn--sm js-confirm-send" data-channel="EMAIL" data-days="3" data-prescription="{{ p.id }}">Email patient</button>
                       </form>
 
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 3 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="/dashboard/">
-                        <button type="submit" class="btn btn--sm">SMS patient</button>
+                        <button type="button" class="btn btn--sm js-confirm-send" data-channel="SMS" data-days="3" data-prescription="{{ p.id }}">SMS patient</button>
                       </form>
 
                       <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir →</a>
@@ -344,13 +347,13 @@
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="/dashboard/">
-                        <button type="submit" class="btn btn--sm">Email patient</button>
+                        <button type="button" class="btn btn--sm js-confirm-send" data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">Email patient</button>
                       </form>
 
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="/dashboard/">
-                        <button type="submit" class="btn btn--sm">SMS patient</button>
+                        <button type="button" class="btn btn--sm js-confirm-send" data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">SMS patient</button>
                       </form>
 
                       <a class="action-link" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir →</a>
@@ -469,10 +472,199 @@
 </div>
 
 <!-- MODAL -->
+
+  <!-- CONFIRM_SEND_MODAL:BEGIN -->
+  <div id="confirmSendModal" class="modal-overlay" aria-hidden="true" style="display:none;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmSendTitle">
+      <div class="modal-header">
+        <div class="modal-titlewrap">
+          <div class="modal-badge" aria-hidden="true">!</div>
+          <div>
+            <div id="confirmSendTitle" style="font-weight:900;">Confirmation</div>
+            <div id="confirmSendText" style="color:var(--muted); font-weight:700; font-size:12px; margin-top:4px;"></div>
+          </div>
+        </div>
+        <button type="button" class="modal-close" id="confirmSendClose" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end;">
+        <button type="button" class="btn" id="confirmSendCancel">Annuler</button>
+        <button type="button" class="btn btn--primary" id="confirmSendOk">Envoyer</button>
+      </div>
+    </div>
+  </div>
+<!-- CONFIRM_SEND_MODAL:END -->
+
+
 {% include "core_emails/modals/create_prescription_modal.html" %}
 
 <!-- JS -->
 <script src="{% static 'js/modals.js' %}?v=500" defer></script>
+
+
+  <!-- CONFIRM_SEND_JS:BEGIN -->
+  <script>
+    (function () {
+      const modal = document.getElementById("confirmSendModal");
+      if (!modal) return;
+
+      const txt = document.getElementById("confirmSendText");
+      const btnOk = document.getElementById("confirmSendOk");
+      const btnCancel = document.getElementById("confirmSendCancel");
+      const btnClose = document.getElementById("confirmSendClose");
+
+      let pendingForm = null;
+
+      function openConfirm(message, canSend) {
+        if (txt) txt.textContent = message || "";
+        if (btnOk) {
+          btnOk.style.display = canSend ? "" : "none";
+          btnOk.disabled = !canSend;
+        }
+        modal.style.display = "flex";
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeConfirm() {
+        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
+        pendingForm = null;
+        if (btnOk) {
+          btnOk.style.display = "";
+          btnOk.disabled = false;
+        }
+      }
+
+      function pushInlineMessage(level, message) {
+        const box = document.getElementById("dashMessagesBox");
+        if (!box) return;
+
+        const div = document.createElement("div");
+        div.className = "msg msg--" + (level || "info");
+        div.style.padding = "10px 12px";
+        div.style.border = "1px solid var(--border)";
+        div.style.borderRadius = "12px";
+        div.style.background = "#fff";
+        div.style.marginBottom = "10px";
+        div.textContent = message;
+
+        box.prepend(div);
+        box.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      document.addEventListener("click", function (e) {
+        const btn = e.target.closest(".js-confirm-send");
+        if (!btn) return;
+
+        const form = btn.closest("form");
+        if (!form) return;
+
+        const channel = (btn.getAttribute("data-channel") || "ACTION").toUpperCase();
+        const days = String(btn.getAttribute("data-days") || "");
+        const pid = String(btn.getAttribute("data-prescription") || "");
+        const sent = (btn.getAttribute("data-sent") || "0") === "1";
+        const when = (days === "0") ? "RETARD" : ("J-" + days);
+
+        if (sent) {
+          const msg = `Déjà envoyé : ${channel} — Ordonnance #${pid} (${when}).`;
+          openConfirm(msg, false);
+          pushInlineMessage("warning", msg);
+          return;
+        }
+
+        pendingForm = form;
+        openConfirm(`Confirmer l’envoi ${channel} au patient — Ordonnance #${pid} (${when}) ?`, true);
+      });
+
+      if (btnOk) {
+        btnOk.addEventListener("click", function () {
+          if (pendingForm) pendingForm.submit();
+          closeConfirm();
+        });
+      }
+      if (btnCancel) btnCancel.addEventListener("click", closeConfirm);
+      if (btnClose) btnClose.addEventListener("click", closeConfirm);
+
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) closeConfirm();
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && modal.style.display !== "none") closeConfirm();
+      });
+    })();
+  </script>
+<!-- CONFIRM_SEND_JS:END -->
+
+
+
+<!-- DASH_MSG_MODAL:BEGIN -->
+  <div id="dashMsgModal" class="modal-overlay" role="dialog" aria-modal="true"
+       aria-labelledby="dashMsgModalTitle"
+       style="display:none;"
+       data-show="{% if messages %}1{% else %}0{% endif %}">
+    <div class="modal-card" style="width:min(760px, calc(100vw - 24px)); margin:auto;">
+      <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between;">
+        <div id="dashMsgModalTitle" style="font-weight:900;">Notifications</div>
+        <button type="button" class="btn" id="dashMsgCloseBtn" aria-label="Fermer">Fermer</button>
+      </div>
+
+      <div class="modal-body" style="padding:14px 16px;">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="msg {% if message.tags %}msg--{{ message.tags }}{% endif %}"
+                 style="padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; margin-bottom:10px;">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div style="color:var(--muted); font-weight:800;">Aucune notification.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+<!-- DASH_MSG_MODAL:END -->
+
+<!-- DASH_MSG_MODAL_JS:BEGIN -->
+  <script>
+    (function () {
+      const modal = document.getElementById("dashMsgModal");
+      if (!modal) return;
+
+      const closeBtn = document.getElementById("dashMsgCloseBtn");
+
+      function openDashMsgModal() {
+        modal.style.display = "flex";
+      }
+
+      function closeDashMsgModal() {
+        modal.style.display = "none";
+      }
+
+      if (closeBtn) {
+        closeBtn.addEventListener("click", closeDashMsgModal);
+      }
+
+      // Click خارج الكارت = close
+      modal.addEventListener("click", function(e) {
+        if (e.target === modal) closeDashMsgModal();
+      });
+
+      // ESC = close
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape" && modal.style.display !== "none") {
+          closeDashMsgModal();
+        }
+      });
+
+      // Auto-open si messages موجودة
+      document.addEventListener("DOMContentLoaded", function () {
+        const show = (modal.getAttribute("data-show") || "0") === "1";
+        if (show) openDashMsgModal();
+      });
+    })();
+  </script>
+<!-- DASH_MSG_MODAL_JS:END -->
 
 </body>
 </html>
