@@ -223,3 +223,84 @@ def compute_renewals_watch():
     overdue.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
 
     return due_5, due_3, overdue
+
+
+def compute_renewals_watch_from_delivered():
+    """
+    Renvoie (due_5, due_3, overdue) en se basant sur la première délivrance.
+
+    Logique:
+      - date de départ = 1er statut DELIVERED
+      - prochaine échéance = delivered_at + (renewal_done_count + 1) * period_days
+      - due_5/due_3 seulement si rappel J-5/J-3 pas encore envoyé
+      - overdue si échéance dépassée alors qu'il reste des renouvellements
+    """
+    import datetime
+    from django.utils import timezone
+    from core_emails.models import (
+        Prescription,
+        PrescriptionRenewalInfo,
+        PrescriptionStatus,
+        PrescriptionType,
+    )
+
+    today = timezone.localtime(timezone.now()).date()
+    due_5 = []
+    due_3 = []
+    overdue = []
+
+    qs = (
+        Prescription.objects
+        .select_related("patient", "renewal_info")
+        .prefetch_related("status_history")
+        .filter(type=PrescriptionType.RENOUVELLEMENT)
+        .filter(established_at__isnull=False)
+        .exclude(status=PrescriptionStatus.ARCHIVED)
+    )
+
+    for p in qs:
+        try:
+            info = p.renewal_info
+        except PrescriptionRenewalInfo.DoesNotExist:
+            continue
+
+        if int(info.renewal_done_count) >= int(info.renewal_times):
+            continue
+
+        delivered_dt = None
+        for h in p.status_history.all().order_by("changed_at"):
+            if h.new_status == PrescriptionStatus.DELIVERED:
+                delivered_dt = h.changed_at
+                break
+        if delivered_dt is None:
+            continue
+
+        start_date = timezone.localtime(delivered_dt).date()
+        next_due_date = start_date + datetime.timedelta(
+            days=(int(info.renewal_done_count) + 1) * int(info.period_days)
+        )
+        days_left = (next_due_date - today).days
+
+        p.renewal_end_date = next_due_date
+        p.renewal_days_left = days_left
+
+        if days_left < 0:
+            overdue.append(p)
+
+        if days_left == 5 and (
+            info.reminder_5_patient_email_sent_at is None
+            or info.reminder_5_patient_sms_sent_at is None
+        ):
+            due_5.append(p)
+
+        if days_left == 3 and (
+            info.reminder_3_patient_email_sent_at is None
+            or info.reminder_3_patient_sms_sent_at is None
+        ):
+            due_3.append(p)
+
+    due_5.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
+    due_3.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
+    overdue.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
+
+    return due_5, due_3, overdue
