@@ -16,6 +16,7 @@ urlpatterns = [
 
     # 🏠 DASHBOARD
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboard/renewals/", views.renewals_dashboard, name="renewals_dashboard"),
 
     # 🔄 SYNC GMAIL
     path(
@@ -79,20 +80,16 @@ urlpatterns = [
     # =====================================================
     # V7 — RENOUVELLEMENT (ACTIONS)
     # =====================================================
-    
     path(
-    "renewal/<int:pk>/update/",
-    views.update_renewal_info,
-    name="update_renewal_info",
-        ),
-
-          path(
-          "renewal/<int:pk>/done/",
-          views.mark_renewal_done,
-          name="mark_renewal_done",
-      ),
-
-    
+        "renewal/<int:pk>/update/",
+        views.update_renewal_info,
+        name="update_renewal_info",
+    ),
+    path(
+        "renewal/<int:pk>/done/",
+        views.mark_renewal_done,
+        name="mark_renewal_done",
+    ),
     path(
         "renewal/<int:pk>/patient-email/<int:days>/",
         views.send_renewal_patient_email,
