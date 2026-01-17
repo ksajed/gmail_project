@@ -16,6 +16,7 @@ urlpatterns = [
 
     # 🏠 DASHBOARD
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboard/renewals/", views.renewals_dashboard, name="renewals_dashboard"),
 
     # 🔄 SYNC GMAIL
     path(
