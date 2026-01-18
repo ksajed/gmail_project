@@ -10,3 +10,6 @@ db.sqlite3
 
 # Archives
 *.zip
+
+# Auto-generated local backup files (patch scripts)
+*.bak.*
