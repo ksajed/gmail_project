@@ -732,26 +732,102 @@
 
         <!-- RÉCAP -->
         <div class="hint">
-          <div><strong>Date début (médecin) :</strong> {% if prescription.established_at %}{{ prescription.established_at|date:"d/m/Y" }}{% else %}—{% endif %}</div>
-          <div><strong>Durée période :</strong> {{ renewal_info.period_days|default:30 }} jours</div>
-          <div><strong>Renouvellements autorisés :</strong> {{ renewal_info.renewal_times|default:0 }}</div>
-          <div><strong>Renouvellements réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}</div>
-          <div><strong>Restants :</strong> {{ renewal_remaining|default:0 }}</div>
+  <div style="display:grid; gap:12px;">
 
-          {% if renewal_end_date %}
-            <div><strong>Date fin estimée :</strong> {{ renewal_end_date|date:"d/m/Y" }}</div>
-            <div><strong>Jours restants :</strong> {{ renewal_days_left }}</div>
-          {% endif %}
+    <!-- BLOC 1 : VALIDITÉ ORDONNANCE (DATE MÉDECIN) -->
+    <div style="padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2);">
+      <div style="font-weight:950; margin-bottom:8px;">
+        Validité ordonnance (date médecin)
+      </div>
 
-          {% if renewal_info.last_renewal_ordered_at %}
-            <div><strong>Dernier renouvellement :</strong> {{ renewal_info.last_renewal_ordered_at }}</div>
-          {% endif %}
+      <div>
+        <strong>Début médecin :</strong>
+        {% if prescription.established_at %}{{ prescription.established_at|date:"d/m/Y" }}{% else %}—{% endif %}
+      </div>
 
-          <div><strong>Rappel J-5 Email :</strong> {{ renewal_info.reminder_5_patient_email_sent_at|default:"—" }}</div>
-          <div><strong>Rappel J-5 SMS :</strong> {{ renewal_info.reminder_5_patient_sms_sent_at|default:"—" }}</div>
-          <div><strong>Rappel J-3 Email :</strong> {{ renewal_info.reminder_3_patient_email_sent_at|default:"—" }}</div>
-          <div><strong>Rappel J-3 SMS :</strong> {{ renewal_info.reminder_3_patient_sms_sent_at|default:"—" }}</div>
-        </div>
+      <div>
+        <strong>Durée totale :</strong>
+        {% if renewal_validity_total_days or renewal_validity_total_days == 0 %}
+          {{ renewal_validity_total_days }} jour(s)
+        {% else %}
+          —
+        {% endif %}
+        <span style="color:var(--muted); font-weight:700;">
+          (={{ renewal_info.period_days|default:30 }} × ({{ renewal_info.renewal_times|default:0 }} + 1))
+        </span>
+      </div>
+
+      <div>
+        <strong>Fin estimée :</strong>
+        {% if renewal_end_date %}{{ renewal_end_date|date:"d/m/Y" }}{% else %}—{% endif %}
+      </div>
+
+      <div>
+        <strong>Jours restants :</strong>
+        {% if renewal_days_left or renewal_days_left == 0 %}{{ renewal_days_left }}{% else %}—{% endif %}
+      </div>
+
+      <div class="divider" style="margin:10px 0;"></div>
+
+      <div><strong>Renouvellements autorisés :</strong> {{ renewal_info.renewal_times|default:0 }}</div>
+      <div><strong>Réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}</div>
+      <div><strong>Restants :</strong> {{ renewal_remaining|default:0 }}</div>
+
+      {% if renewal_info.last_renewal_ordered_at %}
+        <div><strong>Dernier renouvellement :</strong> {{ renewal_info.last_renewal_ordered_at }}</div>
+      {% endif %}
+    </div>
+
+    <!-- BLOC 2 : RAPPELS PATIENT (1ER RETRAIT = 1ÈRE DÉLIVRANCE) -->
+    <div style="padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2);">
+      <div style="font-weight:950; margin-bottom:8px;">
+        Rappels patient (1er retrait = 1ère délivrance)
+      </div>
+
+      <div>
+        <strong>1er retrait (DELIVERED) :</strong>
+        {% if renewal_patient_first_delivered_at %}
+          {{ renewal_patient_first_delivered_at|date:"d/m/Y H:i" }}
+        {% else %}
+          —
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Prochain cycle :</strong>
+        {% if renewal_patient_next_number or renewal_patient_next_number == 0 %}
+          #{{ renewal_patient_next_number }}
+        {% else %}
+          —
+        {% endif %}
+      </div>
+
+      <div>
+        <strong>Échéance (cycle patient) :</strong>
+        {% if renewal_patient_end_date %}{{ renewal_patient_end_date|date:"d/m/Y" }}{% else %}—{% endif %}
+      </div>
+
+      <div>
+        <strong>Jours restants :</strong>
+        {% if renewal_patient_days_left or renewal_patient_days_left == 0 %}{{ renewal_patient_days_left }}{% else %}—{% endif %}
+      </div>
+
+      <div>
+        <strong>Liste :</strong>
+        {{ renewal_patient_bucket|default:"—" }}
+      </div>
+
+      <div class="divider" style="margin:10px 0;"></div>
+
+      <div style="font-weight:900; margin-bottom:6px;">Rappels envoyés (anti-doublon)</div>
+      <div><strong>J-5 Email :</strong> {{ renewal_info.reminder_5_patient_email_sent_at|default:"—" }}</div>
+      <div><strong>J-5 SMS :</strong> {{ renewal_info.reminder_5_patient_sms_sent_at|default:"—" }}</div>
+      <div><strong>J-3 Email :</strong> {{ renewal_info.reminder_3_patient_email_sent_at|default:"—" }}</div>
+      <div><strong>J-3 SMS :</strong> {{ renewal_info.reminder_3_patient_sms_sent_at|default:"—" }}</div>
+    </div>
+
+  </div>
+</div>
 
         <div class="divider" style="margin:12px 0;"></div>
 
@@ -1133,15 +1209,57 @@
   <div style="margin:16px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff;">
     <div style="font-weight:950; margin-bottom:10px;">Notifications</div>
     {% for message in messages %}
+  {% if 'modal_renewal_done' not in message.tags %}
       <div style="padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; margin-bottom:10px; font-weight:800;">
         {{ message }}
       </div>
-    {% endfor %}
+    
+  {% endif %}
+{% endfor %}
   </div>
 {% endif %}
 <!-- MSG_INLINE:END -->
 
 
+
+
+<!-- RENEWAL_DONE_MODAL:BEGIN -->
+{% for message in messages %}
+  {% if 'modal_renewal_done' in message.tags %}
+    <div id="renewalDoneModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="renewalDoneModalTitle" style="display:none;">
+      <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <h3 id="renewalDoneModalTitle" style="margin:0;">Renouvellement</h3>
+          <button type="button" class="btn btn--sm" onclick="closeModal('renewalDoneModal')">Fermer</button>
+        </div>
+
+        <div class="divider" style="margin:12px 0;"></div>
+
+        <div style="white-space:pre-line; font-weight:850;">
+          {{ message }}
+        </div>
+
+        <div class="divider" style="margin:12px 0;"></div>
+
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" class="btn btn--sm btn--primary" onclick="closeModal('renewalDoneModal')">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        try {
+          openModal("renewalDoneModal");
+        } catch (e) {
+          const el = document.getElementById("renewalDoneModal");
+          if (el) el.style.display = "flex";
+        }
+      });
+    </script>
+  {% endif %}
+{% endfor %}
+<!-- RENEWAL_DONE_MODAL:END -->
+
 </body>
 </html>
-
