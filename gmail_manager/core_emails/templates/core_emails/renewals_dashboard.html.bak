@@ -9,123 +9,7 @@
   <!-- CSS -->
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=500">
   <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
-
-  <!-- POLISH: Renewals page (SaaS look) -->
-  <style>
-    .page-subtitle{
-      color:var(--muted);
-      font-weight:700;
-      font-size:13px;
-      margin-top:4px;
-    }
-    .kpi-grid{
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0,1fr));
-      gap:12px;
-      margin: 0 0 14px 0;
-    }
-    .kpi{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:14px 14px;
-      box-shadow: 0 1px 0 rgba(15,23,42,.04);
-    }
-    .kpi__label{
-      color:var(--muted);
-      font-weight:900;
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.02em;
-    }
-    .kpi__value{
-      font-weight:900;
-      font-size:28px;
-      margin-top:6px;
-      display:flex;
-      align-items:baseline;
-      gap:10px;
-    }
-    .kpi__hint{
-      color:var(--muted);
-      font-weight:700;
-      font-size:12px;
-      margin-top:6px;
-    }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:3px 10px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      white-space:nowrap;
-    }
-    .badge--warn{
-      background:#fff7ed;
-      border-color:rgba(234,88,12,.22);
-      color:#9a3412;
-    }
-    .badge--danger{
-      background:#fef2f2;
-      border-color:rgba(220,38,38,.18);
-      color:#991b1b;
-    }
-    .badge--ok{
-      background:#f0fdf4;
-      border-color:rgba(22,163,74,.18);
-      color:#166534;
-    }
-    .note{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      padding:12px 12px;
-      border:1px dashed var(--border);
-      border-radius:14px;
-      background:rgba(15,23,42,.02);
-      margin-bottom:14px;
-    }
-    .note__text{
-      color:var(--muted);
-      font-weight:700;
-      font-size:13px;
-      line-height:1.35;
-    }
-    .section-title{
-      font-weight:900;
-      margin:14px 0 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .actionbar{
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-    }
-    .actionbar .btn{ white-space:nowrap; }
-    .pillbtn{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-    .patient-sub{
-      color:var(--muted);
-      font-weight:700;
-      font-size:12px;
-      margin-top:2px;
-    }
-    @media (max-width: 900px){
-      .kpi-grid{ grid-template-columns:1fr; }
-    }
-  </style>
 </head>
-
 <body>
 <div class="app">
 
@@ -133,9 +17,8 @@
   <div class="topbar">
     <div class="topbar__inner">
       <div class="titlewrap">
-        <h1 class="page-title">Renouvellements</h1>
+        <h1 class="page-title">Renouvellements — Pharmacie</h1>
         <div class="breadcrumb">Dashboard → Renouvellements</div>
-        <div class="page-subtitle">Suivi J-5 / J-3 / Retard — actions Email/SMS centralisées.</div>
       </div>
 
       <div class="btnrow">
@@ -147,7 +30,7 @@
         </div>
 
         <a href="{% url 'core_emails:dashboard' %}" class="btn btn--soft-info">
-          ← Retour dashboard
+          Retour au dashboard
         </a>
 
         <a href="{% url 'core_emails:sync_gmail_now' %}" class="btn btn--soft-info">
@@ -176,62 +59,20 @@
 
   <div class="container">
 
-    <!-- KPI -->
-    <div class="kpi-grid">
-      <div class="kpi">
-        <div class="kpi__label">J-5 à traiter</div>
-        <div class="kpi__value">
-          {{ renewals_due_5|length }}
-          <span class="badge badge--warn">Pré-échéance</span>
-        </div>
-        <div class="kpi__hint">Relances planifiées à 5 jours de l’échéance.</div>
-      </div>
-
-      <div class="kpi">
-        <div class="kpi__label">J-3 à traiter</div>
-        <div class="kpi__value">
-          {{ renewals_due_3|length }}
-          <span class="badge badge--warn">Urgent</span>
-        </div>
-        <div class="kpi__hint">Relances planifiées à 3 jours de l’échéance.</div>
-      </div>
-
-      <div class="kpi">
-        <div class="kpi__label">En retard</div>
-        <div class="kpi__value">
-          {{ renewals_overdue|length }}
-          <span class="badge badge--danger">Priorité</span>
-        </div>
-        <div class="kpi__hint">Échéance dépassée — action recommandée.</div>
-      </div>
-    </div>
-
-    <!-- Note -->
-    <div class="note">
-      <span class="ico" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
-          <path d="M12 9v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M12 17h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      </span>
-      <div class="note__text">
-        Les échéances sont calculées depuis <b>la date du premier retrait</b> (premier statut <b>Délivrée</b>).
-        Les actions Email/SMS passent par <b>un seul système de popup</b> (confirmation + notifications).
-      </div>
-    </div>
-
-    <!-- À surveiller -->
+    <!-- ==========================
+         RENOUVELLEMENTS À SURVEILLER
+         ========================== -->
     <section class="card" style="margin-bottom:16px;">
       <div class="card__header">
         <h3 class="card__title">
           <span class="ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+              <path d="M21 12a9 9 0 11-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M3 3v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
-          À surveiller
+          Renouvellements à surveiller
         </h3>
 
         <div class="chips">
@@ -241,12 +82,11 @@
       </div>
 
       <div class="card__body">
-
-        <div class="section-title">
-          <div>Échéance dans 5 jours</div>
-          <span class="badge badge--warn">J-5</span>
+        <div style="color:var(--muted); font-weight:700; font-size:12px; margin-bottom:12px;">
+          Calculés depuis la date du premier retrait (statut délivré).
         </div>
 
+        <div style="font-weight:900; margin:10px 0;">Échéance dans 5 jours (J-5)</div>
         {% if renewals_due_5 %}
           <div class="tablewrap">
             <table>
@@ -256,7 +96,7 @@
                 <th>Patient</th>
                 <th>Date médecin</th>
                 <th>Échéance</th>
-                <th>Statut</th>
+                <th>Jours restants</th>
                 <th>Action</th>
               </tr>
               </thead>
@@ -264,45 +104,33 @@
               {% for p in renewals_due_5 %}
                 <tr>
                   <td class="nowrap">#{{ p.id }}</td>
-
                   <td>
                     {% if p.patient %}
                       <div style="font-weight:900;">{{ p.patient.email }}</div>
                       {% if p.patient.full_name %}
-                        <div class="patient-sub">{{ p.patient.full_name }}</div>
+                        <div style="color:var(--muted); font-weight:700; font-size:12px; margin-top:2px;">
+                          {{ p.patient.full_name }}
+                        </div>
                       {% endif %}
                     {% else %}
                       —
                     {% endif %}
                   </td>
-
                   <td class="nowrap">{{ p.established_at|date:"d/m/Y" }}</td>
                   <td class="nowrap">{{ p.renewal_end_date|date:"d/m/Y" }}</td>
-
-                  <td class="nowrap">
-                    <span class="badge badge--warn">J-{{ p.renewal_days_left }}</span>
-                  </td>
-
+                  <td class="nowrap">{{ p.renewal_days_left }}</td>
                   <td>
-                    <div class="actionbar">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 5 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="5" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send" data-channel="EMAIL" data-days="5" data-prescription="{{ p.id }}">Email J-5</button>
                       </form>
-
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 5 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="5" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send" data-channel="SMS" data-days="5" data-prescription="{{ p.id }}">SMS J-5</button>
                       </form>
-
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
                   </td>
@@ -315,13 +143,7 @@
           <div class="hint">Aucun renouvellement J-5.</div>
         {% endif %}
 
-        <div style="height:1px; background:var(--border); margin:16px 0;"></div>
-
-        <div class="section-title">
-          <div>Échéance dans 3 jours</div>
-          <span class="badge badge--warn">J-3</span>
-        </div>
-
+        <div style="font-weight:900; margin:18px 0 10px;">Échéance dans 3 jours (J-3)</div>
         {% if renewals_due_3 %}
           <div class="tablewrap">
             <table>
@@ -331,7 +153,7 @@
                 <th>Patient</th>
                 <th>Date médecin</th>
                 <th>Échéance</th>
-                <th>Statut</th>
+                <th>Jours restants</th>
                 <th>Action</th>
               </tr>
               </thead>
@@ -339,45 +161,33 @@
               {% for p in renewals_due_3 %}
                 <tr>
                   <td class="nowrap">#{{ p.id }}</td>
-
                   <td>
                     {% if p.patient %}
                       <div style="font-weight:900;">{{ p.patient.email }}</div>
                       {% if p.patient.full_name %}
-                        <div class="patient-sub">{{ p.patient.full_name }}</div>
+                        <div style="color:var(--muted); font-weight:700; font-size:12px; margin-top:2px;">
+                          {{ p.patient.full_name }}
+                        </div>
                       {% endif %}
                     {% else %}
                       —
                     {% endif %}
                   </td>
-
                   <td class="nowrap">{{ p.established_at|date:"d/m/Y" }}</td>
                   <td class="nowrap">{{ p.renewal_end_date|date:"d/m/Y" }}</td>
-
-                  <td class="nowrap">
-                    <span class="badge badge--warn">J-{{ p.renewal_days_left }}</span>
-                  </td>
-
+                  <td class="nowrap">{{ p.renewal_days_left }}</td>
                   <td>
-                    <div class="actionbar">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 3 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="3" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send" data-channel="EMAIL" data-days="3" data-prescription="{{ p.id }}">Email J-3</button>
                       </form>
-
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 3 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="3" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send" data-channel="SMS" data-days="3" data-prescription="{{ p.id }}">SMS J-3</button>
                       </form>
-
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
                   </td>
@@ -389,11 +199,12 @@
         {% else %}
           <div class="hint">Aucun renouvellement J-3.</div>
         {% endif %}
-
       </div>
     </section>
 
-    <!-- Retard -->
+    <!-- ==========================
+         RENOUVELLEMENTS EN RETARD
+         ========================== -->
     <section class="card">
       <div class="card__header">
         <h3 class="card__title">
@@ -403,7 +214,7 @@
               <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
             </svg>
           </span>
-          En retard
+          Renouvellements en retard
         </h3>
 
         <div class="chips">
@@ -421,7 +232,7 @@
                 <th>Patient</th>
                 <th>Date médecin</th>
                 <th>Échéance</th>
-                <th>Statut</th>
+                <th>Jours restants</th>
                 <th>Action</th>
               </tr>
               </thead>
@@ -429,45 +240,33 @@
               {% for p in renewals_overdue %}
                 <tr>
                   <td class="nowrap">#{{ p.id }}</td>
-
                   <td>
                     {% if p.patient %}
                       <div style="font-weight:900;">{{ p.patient.email }}</div>
                       {% if p.patient.full_name %}
-                        <div class="patient-sub">{{ p.patient.full_name }}</div>
+                        <div style="color:var(--muted); font-weight:700; font-size:12px; margin-top:2px;">
+                          {{ p.patient.full_name }}
+                        </div>
                       {% endif %}
                     {% else %}
                       —
                     {% endif %}
                   </td>
-
                   <td class="nowrap">{{ p.established_at|date:"d/m/Y" }}</td>
                   <td class="nowrap">{{ p.renewal_end_date|date:"d/m/Y" }}</td>
-
-                  <td class="nowrap">
-                    <span class="badge badge--danger">RETARD</span>
-                  </td>
-
+                  <td class="nowrap">{{ p.renewal_days_left }}</td>
                   <td>
-                    <div class="actionbar">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send" data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">Email retard</button>
                       </form>
-
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send" data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">SMS retard</button>
                       </form>
-
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
                   </td>
@@ -490,14 +289,16 @@
        aria-labelledby="renewalsModalTitle"
        style="display:none;"
        data-has-messages="{% if messages %}1{% else %}0{% endif %}">
-    <div class="modal-card" style="width:min(720px, calc(100vw - 24px)); margin:auto;">
+    <div class="modal-card" style="width:min(760px, calc(100vw - 24px)); margin:auto;">
       <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between;">
         <div id="renewalsModalTitle" style="font-weight:900;">Confirmation</div>
         <button type="button" class="btn" id="renewalsModalCloseBtn" aria-label="Fermer">Fermer</button>
       </div>
 
       <div class="modal-body" style="padding:14px 16px;">
-        <div id="renewalsModalBody"></div>
+        <div id="renewalsModalBody">
+          <!-- contenu injecté via JS -->
+        </div>
 
         <div id="renewalsModalActions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
           <button type="button" class="btn btn--primary" id="renewalsModalOkBtn">OK</button>
@@ -533,7 +334,7 @@
         pendingForm = null;
       }
 
-      // Confirmation envoi Email/SMS
+      // 1) Confirmation envoi Email/SMS
       document.addEventListener("click", function (e) {
         const btn = e.target.closest(".js-confirm-send");
         if (!btn) return;
@@ -572,7 +373,7 @@
         if (e.key === "Escape" && modal.style.display !== "none") closeModal();
       });
 
-      // Notifications Django messages => même modal, sans actions
+      // 2) Notifications Django messages => même modal, sans actions
       const hasMessages = (modal.getAttribute("data-has-messages") || "0") === "1";
       if (hasMessages) {
         const html = `
