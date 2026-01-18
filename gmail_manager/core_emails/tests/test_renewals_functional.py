@@ -274,8 +274,15 @@ class RenewalsFunctionalTests(TestCase):
         self.assertIn('id="renewalDoneModal"', html)
         self.assertIn("Renouvellement marqué comme réalisé.", html)
         self.assertTrue(
-            ('openModal("renewalDoneModal")' in html)
-            or ("openModal('renewalDoneModal')" in html)
+            (
+                'id="renewalDoneModal"' in html
+                and (
+                    'data-auto-open="1"' in html
+                    or 'openModal("renewalDoneModal")' in html
+                    or "openModal('renewalDoneModal')" in html
+                )
+            ),
+            "renewalDoneModal should exist and be auto-opened (data-auto-open=1 or openModal call).",
         )
 
     def test_mark_done_limit_reached_shows_modal_popup(self):
