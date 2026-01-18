@@ -10,6 +10,7 @@ from django.core.validators import validate_email
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .models import PrescriptionRenewalInfo
@@ -17,6 +18,7 @@ from .models import PrescriptionRenewalInfo
 
 import datetime
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.dateparse import parse_date
 from django.core.mail import send_mail
 
@@ -163,19 +165,113 @@ def dashboard(request):
 @login_required
 def renewals_dashboard(request):
     """
-    Page dédiée au suivi des renouvellements (J-5/J-3/retard).
+    Dashboard Renouvellements — J-5 / J-3 / Retard
+    Base = 1ère délivrance (premier statut DELIVERED)
+    due_date = start_date + (done_count + 1) * period_days
+    Catégories :
+      - J-5 : days_left == 5
+      - J-3 : days_left == 3
+      - Retard : days_left <= 0
     """
-    due_5, due_3, overdue = compute_renewals_watch_from_delivered()
+    import datetime
+    from django.utils import timezone
+    from django.shortcuts import render
+
+    from .models import (
+        Prescription,
+        PrescriptionType,
+        PrescriptionStatus,
+        PrescriptionStatusHistory,
+        PrescriptionRenewalInfo,
+    )
+
+    today = timezone.localdate()
+
+    # On ne calcule des échéances que si on a une 1ère délivrance => status DELIVERED
+    qs = (
+        Prescription.objects
+        .filter(type=PrescriptionType.RENOUVELLEMENT, status=PrescriptionStatus.DELIVERED)
+        .select_related("patient")
+        .order_by("-id")
+    )
+
+    j5_items, j3_items, late_items = [], [], []
+
+    for p in qs:
+        info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=p)
+
+        # conversions robustes
+        try:
+            done_count = int(info.renewal_done_count or 0)
+            renewal_times = int(info.renewal_times or 0)
+            period_days = int(info.period_days or 30)
+        except Exception:
+            done_count = int(info.renewal_done_count or 0) if str(info.renewal_done_count or "").isdigit() else 0
+            renewal_times = int(info.renewal_times or 0) if str(info.renewal_times or "").isdigit() else 0
+            period_days = 30
+
+        # actif uniquement si cycles restants
+        if renewal_times <= 0 or done_count >= renewal_times:
+            continue
+
+        first_delivered_at = (
+            PrescriptionStatusHistory.objects
+            .filter(prescription=p, new_status=PrescriptionStatus.DELIVERED)
+            .order_by("changed_at")
+            .values_list("changed_at", flat=True)
+            .first()
+        )
+        if not first_delivered_at:
+            continue
+
+        start_date = timezone.localtime(first_delivered_at).date()
+        due_date = start_date + datetime.timedelta(days=(done_count + 1) * period_days)
+        days_left = (due_date - today).days
+
+        item = {
+            "prescription": p,
+            "info": info,
+            "patient": getattr(p, "patient", None),
+            "start_date": start_date,
+            "due_date": due_date,
+            "days_left": days_left,
+            "done_count": done_count,
+            "renewal_times": renewal_times,
+            "period_days": period_days,
+            "email_j5_sent": bool(getattr(info, "reminder_5_patient_email_sent_at", None)),
+            "sms_j5_sent": bool(getattr(info, "reminder_5_patient_sms_sent_at", None)),
+            "email_j3_sent": bool(getattr(info, "reminder_3_patient_email_sent_at", None)),
+            "sms_j3_sent": bool(getattr(info, "reminder_3_patient_sms_sent_at", None)),
+        }
+
+        if days_left == 5:
+            j5_items.append(item)
+        elif days_left == 3:
+            j3_items.append(item)
+        elif days_left <= 0:
+            late_items.append(item)
+
+    # tri : plus urgent d’abord
+    j5_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
+    j3_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
+    late_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
 
     context = {
-        "renewals_due_5": due_5,
-        "renewals_due_3": due_3,
-        "renewals_overdue": overdue,
+        "today": today,
+
+        # alias multiples pour matcher ton template quel que soit le nom attendu
+        "j5_items": j5_items, "j5_list": j5_items, "items_j5": j5_items,
+        "j3_items": j3_items, "j3_list": j3_items, "items_j3": j3_items,
+        "late_items": late_items, "late_list": late_items,
+        "retard_items": late_items, "retard_list": late_items,
+        "overdue_items": late_items, "overdue_list": late_items,
+
+        "count_j5": len(j5_items),
+        "count_j3": len(j3_items),
+        "count_late": len(late_items),
     }
 
     return render(request, "core_emails/renewals_dashboard.html", context)
-
-
 
 @login_required
 def prescription_detail(request, pk):
@@ -225,6 +321,14 @@ def prescription_detail(request, pk):
 
     renewal_end_date = None
     renewal_days_left = None
+    renewal_validity_total_days = None
+
+    renewal_patient_first_delivered_at = None
+    renewal_patient_end_date = None
+    renewal_patient_days_left = None
+    renewal_patient_bucket = None
+    renewal_patient_next_number = None
+
     renewal_events = []
     if prescription.type == PrescriptionType.RENOUVELLEMENT:
         renewal_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
@@ -233,13 +337,47 @@ def prescription_detail(request, pk):
             int(renewal_info.renewal_times) - int(renewal_info.renewal_done_count),
         )
 
-        # Récap (fin estimée + jours restants)
+        # --------------------------
+        # A) Validité ordonnance (date médecin)
+        # --------------------------
+        today = timezone.localtime(timezone.now()).date()
         if prescription.established_at:
-            today = timezone.localtime(timezone.now()).date()
+            renewal_validity_total_days = (
+                (int(renewal_info.renewal_times) + 1) * int(renewal_info.period_days)
+            )
             renewal_end_date = prescription.established_at + datetime.timedelta(
-                days=(renewal_info.renewal_times + 1) * renewal_info.period_days
+                days=renewal_validity_total_days
             )
             renewal_days_left = (renewal_end_date - today).days
+
+        # --------------------------
+        # B) Rappels patient (1er retrait = 1ère DELIVERED)
+        # --------------------------
+        first_delivered_at = (
+            PrescriptionStatusHistory.objects
+            .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
+            .order_by('changed_at')
+            .values_list('changed_at', flat=True)
+            .first()
+        )
+        if first_delivered_at:
+            renewal_patient_first_delivered_at = timezone.localtime(first_delivered_at)
+            start_date = renewal_patient_first_delivered_at.date()
+            renewal_patient_next_number = int(renewal_info.renewal_done_count) + 1
+            renewal_patient_end_date = start_date + datetime.timedelta(
+                days=renewal_patient_next_number * int(renewal_info.period_days)
+            )
+            renewal_patient_days_left = (renewal_patient_end_date - today).days
+            if renewal_patient_days_left == 5:
+                renewal_patient_bucket = 'J-5'
+            elif renewal_patient_days_left == 3:
+                renewal_patient_bucket = 'J-3'
+            elif renewal_patient_days_left < 0:
+                renewal_patient_bucket = 'RETARD'
+            else:
+                renewal_patient_bucket = 'HORS_LISTE'
+        else:
+            renewal_patient_bucket = 'NON_DEMARRE'
 
         # Historique des renouvellements (ordre 1..N)
         renewal_events = list(
@@ -264,6 +402,12 @@ def prescription_detail(request, pk):
     "renewal_remaining": renewal_remaining,
     "renewal_end_date": renewal_end_date,
     "renewal_days_left": renewal_days_left,
+    "renewal_validity_total_days": renewal_validity_total_days,
+    "renewal_patient_first_delivered_at": renewal_patient_first_delivered_at,
+    "renewal_patient_end_date": renewal_patient_end_date,
+    "renewal_patient_days_left": renewal_patient_days_left,
+    "renewal_patient_bucket": renewal_patient_bucket,
+    "renewal_patient_next_number": renewal_patient_next_number,
     "renewal_events": renewal_events,
             }
 
@@ -655,6 +799,36 @@ def sms_backend_send(phone: str, message: str):
 #====================================================
 # V7 — MARQUER RENOUVELLEMENT COMME RÉALISÉ
 #====================================================
+
+# RENEWAL_NOTE_HELPERS:BEGIN
+def _renewal_note_max_len(default: int = 255) -> int:
+    try:
+        v = PrescriptionRenewalEvent._meta.get_field("note").max_length
+        return int(v or default)
+    except Exception:
+        return int(default)
+
+
+def _renewal_truncate(text: str, max_len: int = 255) -> str:
+    text = (text or "").strip()
+    if not max_len:
+        return text
+    if len(text) <= max_len:
+        return text
+    if max_len <= 3:
+        return text[:max_len]
+    return (text[: max_len - 3].rstrip() + "...")[:max_len]
+
+
+def _renewal_merge_notes(existing: str, addition: str, max_len: int = 255) -> str:
+    existing = (existing or "").strip()
+    addition = (addition or "").strip()
+    merged = existing
+    if addition and addition not in merged:
+        # chr(10) = newline (évite tout risque de string cassée)
+        merged = (merged + (chr(10) if merged else "") + addition).strip()
+    return _renewal_truncate(merged, max_len)
+# RENEWAL_NOTE_HELPERS:END
 @login_required
 @require_POST
 def mark_renewal_done(request, pk):
@@ -666,58 +840,100 @@ def mark_renewal_done(request, pk):
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
 
-    # Guard: ne pas dépasser le nombre autorisé
-    if info.renewal_done_count >= info.renewal_times:
+    # Prochain cycle (1..N)
+    next_number = int(info.renewal_done_count) + 1
+    if next_number > int(info.renewal_times):
         messages.info(request, "Nombre de renouvellements autorisés déjà atteint.")
         return redirect("core_emails:prescription_detail", pk=pk)
 
-    info.renewal_done_count += 1
-    info.last_renewal_ordered_at = timezone.now()
-    info.save(update_fields=["renewal_done_count", "last_renewal_ordered_at"])
+    max_len = _renewal_note_max_len()
+    note_user = (request.POST.get("note") or "").strip()
+    note_done = "Renouvellement marqué comme réalisé."
+    note = _renewal_truncate((note_done + ("\n" + note_user if note_user else "")).strip(), max_len)
 
+    from django.db import transaction
 
-    PrescriptionRenewalEvent.objects.create(
-        prescription=prescription,
-        number=info.renewal_done_count,
-        created_by=request.user,
-        note=request.POST.get("note", "").strip(),
-    )
+    with transaction.atomic():
+        # Event idempotent (pas de crash UNIQUE)
+        ev, created = PrescriptionRenewalEvent.objects.get_or_create(
+            prescription=prescription,
+            number=next_number,
+            defaults={"created_by": request.user, "note": note},
+        )
 
-    messages.success(
-        request,
-        f"Renouvellement #{info.renewal_done_count} marqué comme réalisé.",
-    )
+        # Si l'event existe déjà (ex: rappel email/sms), on fusionne la note
+        if not created:
+            current = (ev.note or "").strip()
+            merged = current
+
+            # Toujours conserver la mention "réalisé" en tête (survit à la troncature)
+            if note_done not in merged:
+                merged = (note_done + ("\n" + merged if merged else "")).strip()
+
+            # Ajouter la note utilisateur (sans doublon)
+            if note_user and note_user not in merged:
+                merged = (merged + ("\n" if merged else "") + note_user).strip()
+
+            merged = _renewal_truncate(merged, max_len)
+
+            update_fields = []
+            if merged != (ev.note or ""):
+                ev.note = merged
+                update_fields.append("note")
+            if request.user and ev.created_by_id is None:
+                ev.created_by = request.user
+                update_fields.append("created_by")
+            if update_fields:
+                ev.save(update_fields=update_fields)
+        # Aligner RenewalInfo (idempotent)
+        if int(info.renewal_done_count) < next_number:
+            info.renewal_done_count = next_number
+        info.last_renewal_ordered_at = timezone.now()
+        info.save(update_fields=["renewal_done_count", "last_renewal_ordered_at"])
+
+    if created:
+        messages.success(request, f"Renouvellement #{next_number} marqué comme réalisé.")
+    else:
+        messages.info(request, f"Renouvellement #{next_number} déjà enregistré (merge).")
+
     return redirect("core_emails:prescription_detail", pk=pk)
 
-
-#====================================================
 @login_required
 @require_POST
 def send_renewal_patient_email(request, pk, days):
     prescription = get_object_or_404(Prescription, pk=pk)
 
+    next_url = request.POST.get("next") or request.GET.get("next") or reverse("core_emails:renewals_dashboard")
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = reverse("core_emails:renewals_dashboard")
+
+
     if prescription.type != PrescriptionType.RENOUVELLEMENT:
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
 
     # 5 / 3 / 0 (RETARD)
     if days not in (5, 3, 0):
         messages.error(request, "Jour de rappel invalide.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
 
     patient = prescription.patient
     if not patient or not patient.email:
         messages.error(request, "Email patient manquant.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
     if days == 5 and info.reminder_5_patient_email_sent_at is not None:
         messages.info(request, "Email J-5 déjà envoyé.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
     if days == 3 and info.reminder_3_patient_email_sent_at is not None:
         messages.info(request, "Email J-3 déjà envoyé.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
         PrescriptionStatusHistory.objects
@@ -772,21 +988,20 @@ def send_renewal_patient_email(request, pk, days):
 
     # Historique renouvellement (event) — éviter doublons (unique_together)
     next_number = int(info.renewal_done_count) + 1
+    max_len = _renewal_note_max_len()
     note = (
         "Rappel renouvellement patient (EMAIL) — RETARD."
         if days == 0
         else "Rappel renouvellement patient (EMAIL) — J-%s." % days
     )
+    note = _renewal_truncate(note, max_len)
     ev, created = PrescriptionRenewalEvent.objects.get_or_create(
         prescription=prescription,
         number=next_number,
         defaults={"created_by": request.user, "note": note},
     )
     if not created:
-        current = (ev.note or "").strip()
-        merged = current
-        if note and note not in merged:
-            merged = (merged + ("\n" if merged else "") + note).strip()
+        merged = _renewal_merge_notes(ev.note, note, max_len)
         update_fields = []
         if merged != (ev.note or ""):
             ev.note = merged
@@ -822,7 +1037,7 @@ def send_renewal_patient_email(request, pk, days):
         request,
         ("Email patient envoyé (RETARD)." if days == 0 else f"Email patient envoyé (J-{days}).")
     )
-    return redirect("core_emails:dashboard")
+    return redirect(next_url)
 
 
 @login_required
@@ -830,27 +1045,36 @@ def send_renewal_patient_email(request, pk, days):
 def send_renewal_patient_sms(request, pk, days):
     prescription = get_object_or_404(Prescription, pk=pk)
 
+    next_url = request.POST.get("next") or request.GET.get("next") or reverse("core_emails:renewals_dashboard")
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = reverse("core_emails:renewals_dashboard")
+
+
     if prescription.type != PrescriptionType.RENOUVELLEMENT:
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
 
     if days not in (5, 3, 0):
         messages.error(request, "Jour de rappel invalide.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
 
     patient = prescription.patient
     if not patient or not patient.phone_number:
         messages.error(request, "Téléphone patient manquant.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
     if days == 5 and info.reminder_5_patient_sms_sent_at is not None:
         messages.info(request, "SMS J-5 déjà envoyé.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
     if days == 3 and info.reminder_3_patient_sms_sent_at is not None:
         messages.info(request, "SMS J-3 déjà envoyé.")
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
         PrescriptionStatusHistory.objects
@@ -880,25 +1104,24 @@ def send_renewal_patient_sms(request, pk, days):
         sms_backend_send(patient.phone_number, msg)
     except NotImplementedError as e:
         messages.error(request, str(e))
-        return redirect("core_emails:dashboard")
+        return redirect(next_url)
 
     # Historique renouvellement (event) — éviter doublons (unique_together)
     next_number = int(info.renewal_done_count) + 1
+    max_len = _renewal_note_max_len()
     note = (
         "Rappel renouvellement patient (SMS) — RETARD."
         if days == 0
         else "Rappel renouvellement patient (SMS) — J-%s." % days
     )
+    note = _renewal_truncate(note, max_len)
     ev, created = PrescriptionRenewalEvent.objects.get_or_create(
         prescription=prescription,
         number=next_number,
         defaults={"created_by": request.user, "note": note},
     )
     if not created:
-        current = (ev.note or "").strip()
-        merged = current
-        if note and note not in merged:
-            merged = (merged + ("\n" if merged else "") + note).strip()
+        merged = _renewal_merge_notes(ev.note, note, max_len)
         update_fields = []
         if merged != (ev.note or ""):
             ev.note = merged
@@ -928,7 +1151,7 @@ def send_renewal_patient_sms(request, pk, days):
     )
 
     messages.success(request, ("SMS patient envoyé (RETARD)." if days == 0 else f"SMS patient envoyé (J-{days})."))
-    return redirect("core_emails:dashboard")
+    return redirect(next_url)
 
 
 @login_required
