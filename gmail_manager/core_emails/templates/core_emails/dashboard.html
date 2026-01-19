@@ -40,7 +40,7 @@
             Renouvellements
           </a>
 
-<a href="{% url 'core_emails:sync_gmail_now' %}" class="btn btn--soft-info">
+<a href="{% url 'core_emails:sync_gmail_now' %}" class="btn btn--soft-info js-confirm-nav" data-confirm="Synchroniser Gmail maintenant ? Cette action va récupérer les nouveaux emails." data-ok-text="Synchroniser">
           <span class="ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M21 12a9 9 0 10-3 6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -50,7 +50,7 @@
           Synchroniser Gmail
         </a>
 
-        <a href="{% url 'core_emails:logout' %}" class="btn btn--danger">
+        <a href="{% url 'core_emails:logout' %}" class="btn btn--danger js-confirm-nav" data-confirm="Se déconnecter maintenant ?" data-ok-text="Déconnexion">
           <span class="ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -290,13 +290,19 @@
       const btnClose = document.getElementById("confirmSendClose");
 
       let pendingForm = null;
+      let pendingHref = null;
 
-      function openConfirm(message, canSend) {
+      const defaultOkLabel = btnOk ? (btnOk.textContent || "Valider") : "Valider";
+
+      function openConfirm(message, canProceed, okLabel) {
         if (txt) txt.textContent = message || "";
+
         if (btnOk) {
-          btnOk.style.display = canSend ? "" : "none";
-          btnOk.disabled = !canSend;
+          btnOk.textContent = okLabel || defaultOkLabel;
+          btnOk.style.display = canProceed ? "" : "none";
+          btnOk.disabled = !canProceed;
         }
+
         modal.style.display = "flex";
         modal.setAttribute("aria-hidden", "false");
       }
@@ -304,30 +310,36 @@
       function closeConfirm() {
         modal.style.display = "none";
         modal.setAttribute("aria-hidden", "true");
+
         pendingForm = null;
+        pendingHref = null;
+
         if (btnOk) {
+          btnOk.textContent = defaultOkLabel;
           btnOk.style.display = "";
           btnOk.disabled = false;
         }
       }
 
-      function pushInlineMessage(level, message) {
-        const box = document.getElementById("dashMessagesBox");
-        if (!box) return;
+      // 1) Confirmation navigation (liens à effet de bord: sync / logout)
+      document.addEventListener("click", function (e) {
+        const link = e.target.closest("a.js-confirm-nav");
+        if (!link) return;
 
-        const div = document.createElement("div");
-        div.className = "msg msg--" + (level || "info");
-        div.style.padding = "10px 12px";
-        div.style.border = "1px solid var(--border)";
-        div.style.borderRadius = "12px";
-        div.style.background = "#fff";
-        div.style.marginBottom = "10px";
-        div.textContent = message;
+        e.preventDefault();
 
-        box.prepend(div);
-        box.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+        const href = link.getAttribute("href");
+        if (!href) return;
 
+        pendingHref = href;
+
+        const msg = link.getAttribute("data-confirm") || "Confirmer cette action ?";
+        const okText = link.getAttribute("data-ok-text") || "Valider";
+
+        openConfirm(msg, true, okText);
+      });
+
+      // 2) Confirmation envoi Email/SMS (boutons existants)
       document.addEventListener("click", function (e) {
         const btn = e.target.closest(".js-confirm-send");
         if (!btn) return;
@@ -343,21 +355,25 @@
 
         if (sent) {
           const msg = `Déjà envoyé : ${channel} — Ordonnance #${pid} (${when}).`;
-          openConfirm(msg, false);
-          pushInlineMessage("warning", msg);
+          openConfirm(msg, false, "Envoyer");
           return;
         }
 
         pendingForm = form;
-        openConfirm(`Confirmer l’envoi ${channel} au patient — Ordonnance #${pid} (${when}) ?`, true);
+        openConfirm(`Confirmer l’envoi ${channel} au patient — Ordonnance #${pid} (${when}) ?`, true, "Envoyer");
       });
 
       if (btnOk) {
         btnOk.addEventListener("click", function () {
-          if (pendingForm) pendingForm.submit();
+          if (pendingForm) {
+            pendingForm.submit();
+          } else if (pendingHref) {
+            window.location.href = pendingHref;
+          }
           closeConfirm();
         });
       }
+
       if (btnCancel) btnCancel.addEventListener("click", closeConfirm);
       if (btnClose) btnClose.addEventListener("click", closeConfirm);
 
