@@ -1,3 +1,4 @@
+# gmail_manager/core_attachments/urls.py
 from django.urls import path
 from . import views
 
