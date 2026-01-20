@@ -364,6 +364,10 @@
         border:1px solid var(--border);
         padding:16px;
       }
+
+    /* HIDE SYNC COUNTER/TIMER (no chrono) */
+      display: none !important;
+    }
 </style>
 </head>
 
@@ -1065,6 +1069,10 @@
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('.modal-overlay[data-auto-open="1"]').forEach((el) => {
       try {
+        // messagesModal: n'ouvrir que si au moins 1 notification visible
+        if (el && el.id === "messagesModal" && !el.querySelector('[data-msg-item="1"]')) {
+          return;
+        }
         if (el.id) {
           openModal(el.id);
         } else {
@@ -1075,25 +1083,143 @@
       }
     });
   });
+  // CONFIRM_ACTION_MODAL:BEGIN
+  let __confirmPendingForm = null;
+  let __confirmPendingSubmitter = null;
+
+  document.addEventListener("click", (e) => {
+    const submitter = e.target.closest('button[type="submit"], input[type="submit"]');
+    if (submitter && submitter.form) {
+      __confirmPendingSubmitter = submitter;
+    }
+  });
+
+  document.addEventListener("submit", (e) => {
+    const form = e.target;
+    if (!form || form.tagName !== "FORM") return;
+
+    const method = (form.getAttribute("method") || "").toLowerCase();
+    if (method !== "post") return;
+
+    // Confirmation pour TOUTES les actions (même dans les modales),
+    // sauf si on est dans la modale de confirmation elle-même (évite boucle).
+    if (form.closest("#confirmActionModal")) return;
+    if (form.dataset && form.dataset.confirmSkip === "1") return;
+
+    e.preventDefault();
+    __confirmPendingForm = form;
+
+    const btn =
+      (__confirmPendingSubmitter && __confirmPendingSubmitter.form === form)
+        ? __confirmPendingSubmitter
+        : form.querySelector('button[type="submit"], input[type="submit"]');
+
+    const label = btn ? ((btn.innerText || btn.value || "").trim()) : "";
+    const msgEl = document.getElementById("confirmActionModalMsg");
+    if (msgEl) {
+      msgEl.textContent = label ? ('Confirmer : "' + label + '" ?') : "Confirmer cette action ?";
+    }
+
+    openModal("confirmActionModal");
+  });
+
+  function confirmActionCancel() {
+    __confirmPendingForm = null;
+    __confirmPendingSubmitter = null;
+    closeModal("confirmActionModal");
+  }
+  function confirmActionSubmit() {
+    closeModal("confirmActionModal");
+
+    const form = __confirmPendingForm;
+    const submitter = __confirmPendingSubmitter;
+
+    __confirmPendingForm = null;
+    __confirmPendingSubmitter = null;
+
+    if (!form) return;
+
+    // Évite la boucle de confirmation + conserve la validation HTML5 (required, email, etc.)
+    try {
+      form.dataset.confirmSkip = "1";
+
+      if (typeof form.requestSubmit === "function") {
+        if (submitter && submitter.form === form) {
+          form.requestSubmit(submitter);
+        } else {
+          form.requestSubmit();
+        }
+      } else {
+        // Fallback anciens navigateurs
+        if (typeof form.reportValidity === "function") {
+          if (!form.reportValidity()) return;
+        } else if (typeof form.checkValidity === "function") {
+          if (!form.checkValidity()) return;
+        }
+        form.submit();
+      }
+    } finally {
+      try {
+        delete form.dataset.confirmSkip;
+      } catch (_) {
+        // ignore
+      }
+    }
+  }
+  // CONFIRM_ACTION_MODAL:END
+
 </script>
 
 
 
+<!-- MODAL CONFIRM ACTION:BEGIN -->
+<div id="confirmActionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmActionModalTitle" style="display:none;">
+  <div class="modal" role="document">
+    <div class="modal__header">
+      <h2 id="confirmActionModalTitle">Confirmation</h2>
+      <button class="iconbtn" type="button" aria-label="Fermer" onclick="confirmActionCancel()">×</button>
+    </div>
+
+    <div class="modal__body">
+      <div id="confirmActionModalMsg" style="font-weight:900;">Confirmer cette action ?</div>
+      <div class="hint">Cette action sera appliquée immédiatement.</div>
+    </div>
+
+    <div class="modal__actions">
+      <button type="button" class="btn" onclick="confirmActionCancel()">Annuler</button>
+      <button type="button" class="btn btn--primary" onclick="confirmActionSubmit()">Valider</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL CONFIRM ACTION:END -->
+
 <!-- MSG_INLINE:BEGIN -->
 {% if messages %}
-  <div style="margin:16px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff;">
-    <div style="font-weight:950; margin-bottom:10px;">Notifications</div>
-    {% for message in messages %}
-  {% if 'modal_renewal_done' not in message.tags %}
-      <div style="padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; margin-bottom:10px; font-weight:800;">
-        {{ message }}
+  <div id="messagesModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="messagesModalTitle" style="display:none;" data-auto-open="1">
+    <div class="modal" role="document">
+      <div class="modal__header">
+        <h2 id="messagesModalTitle">Notifications</h2>
+        <button class="iconbtn" type="button" aria-label="Fermer" onclick="closeModal('messagesModal')">×</button>
       </div>
-    
-  {% endif %}
-{% endfor %}
+
+      <div class="modal__body">
+        {% for message in messages %}
+          {% if 'modal_renewal_done' not in message.tags %}
+            <div data-msg-item="1" style="padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; margin-bottom:10px; font-weight:800;">
+              {{ message }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--primary" onclick="closeModal('messagesModal')">OK</button>
+      </div>
+    </div>
   </div>
 {% endif %}
 <!-- MSG_INLINE:END -->
+
 
 
 

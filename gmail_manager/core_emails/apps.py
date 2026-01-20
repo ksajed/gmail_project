@@ -1,3 +1,4 @@
+# gmail_manager/core_emails/apps.py
 from django.apps import AppConfig
 
 

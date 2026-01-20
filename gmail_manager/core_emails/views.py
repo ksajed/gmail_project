@@ -10,7 +10,8 @@ from django.core.validators import validate_email
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
+from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 
 from .models import PrescriptionRenewalInfo
@@ -73,6 +74,21 @@ ALLOWED_MIME_TYPES = tuple(
     )
 )
 
+
+
+# =====================================================
+# AUTH (Login/Logout)
+# =====================================================
+
+class PharmacyLoginView(LoginView):
+    # adapte si ton template est ailleurs
+    template_name = "core_emails/login.html"
+    redirect_authenticated_user = True
+
+
+class PharmacyLogoutView(LogoutView):
+    # redirige vers la page login après logout
+    next_page = reverse_lazy("core_emails:login")
 
 # =====================================================
 # DASHBOARD
@@ -619,31 +635,40 @@ def create_nurse(request):
 # =====================================================
 @login_required
 def sync_gmail_now(request):
-    try:
-        fetch_new_gmail_messages()
-        messages.success(request, "Synchronisation Gmail lancée.")
-    except Exception as e:
-        messages.error(request, f"Erreur Gmail : {e}")
+    """
+    Sync Gmail (UI SaaS: appelé en AJAX depuis le dashboard)
+    - Si XHR: renvoie JSON {ok, message, stats}
+    - Sinon: messages + redirect dashboard
+    """
+    # IMPORTANT: éviter de rater des emails déjà "vus" => on scanne une fenêtre récente et on déduplique en DB
+    criteria = ["X-GM-RAW", "newer_than:7d"]
+
+    stats = fetch_new_gmail_messages(search_criteria=criteria)
+
+    created = int(stats.get("created_messages") or 0)
+    presc = int(stats.get("created_prescriptions") or 0)
+    pj = int(stats.get("saved_attachments") or 0)
+    skipped = int(stats.get("skipped_existing") or 0)
+    missing = int(stats.get("missing_message_id") or 0)
+    duration = stats.get("duration_s")
+
+    msg = (
+        f"Synchronisation Gmail terminée ✅ "
+        f"(nouveaux={created}, ordonnances={presc}, PJ={pj}, doublons={skipped}, sans-id={missing}, durée={duration}s)."
+    )
+
+    is_xhr = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    if is_xhr:
+        return JsonResponse({"ok": True, "message": msg, "stats": stats})
+
+    # mode classique
+    if created:
+        messages.success(request, msg)
+    else:
+        messages.info(request, msg)
 
     return redirect("core_emails:dashboard")
 
-
-# =====================================================
-# AUTH
-# =====================================================
-class PharmacyLoginView(LoginView):
-    template_name = "auth/login.html"
-
-
-class PharmacyLogoutView(LogoutView):
-    pass
-
-
-# =====================================================
-# CHANGEMENT ORIGINE / EXPÉDITEUR D’ORDONNANCE
-# =====================================================
-@login_required
-@require_POST
 def change_sender_type(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 

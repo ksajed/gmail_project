@@ -13,3 +13,12 @@ db.sqlite3
 
 # Auto-generated local backup files (patch scripts)
 *.bak.*
+
+# --- Backups / temporaires ---
+*.bak
+*.bak.*
+*.orig
+*~
+*.swp
+*.swo
+.DS_Store

@@ -105,3 +105,35 @@ class PrescriptionRenewalInfoAdmin(admin.ModelAdmin):
         "doctor_email_sent_at",
     )
     search_fields = ("prescription__id", "doctor_email", "doctor_name")
+    ordering = ("-prescription__received_at",)
+    readonly_fields = (
+        "doctor_email_sent_at",
+        "reminder_5_patient_email_sent_at",
+        "reminder_5_patient_sms_sent_at",
+        "reminder_3_patient_email_sent_at",
+        "reminder_3_patient_sms_sent_at",
+    )
+    fieldsets = (
+        (None, {
+            "fields": (
+                "prescription",
+                "renewal_times",
+                "period_days",
+            )
+        }),
+        ("Contact médecin", {
+            "fields": (
+                "doctor_email",
+                "doctor_name",
+            )
+        }),
+        ("Statut des envois", {
+            "fields": (
+                "doctor_email_sent_at",
+                "reminder_5_patient_email_sent_at",
+                "reminder_5_patient_sms_sent_at",
+                "reminder_3_patient_email_sent_at",
+                "reminder_3_patient_sms_sent_at",
+            )
+        }),
+    )
