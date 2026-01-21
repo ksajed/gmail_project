@@ -42,6 +42,7 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
 
     old_status = prescription.status
 
+
     # =====================================================
     # ⛔ STATUT IDENTIQUE
     # =====================================================
@@ -70,6 +71,12 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
     # =====================================================
     # 🔄 TRANSITION AUTORISÉE
     # =====================================================
+    # DELIVERED_GUARD:BEGIN
+    # Message métier plus clair: on autorise DELIVERED uniquement depuis READY
+    if target_enum == PrescriptionStatusEnum.DELIVERED and current_enum != PrescriptionStatusEnum.READY:
+        raise ValidationError("La délivrance n’est possible que depuis le statut READY.")
+    # DELIVERED_GUARD:END
+
     allowed_transitions = PRESCRIPTION_STATUS_TRANSITIONS.get(
         current_enum, set()
     )
@@ -81,6 +88,29 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         )
 
     # =====================================================
+    # RENEWAL_DELIVERED_RESET:BEGIN
+    renewal_ctx = None
+    if (
+        target_enum == PrescriptionStatusEnum.DELIVERED
+        and getattr(prescription, "type", None) == PrescriptionType.RENOUVELLEMENT
+    ):
+        try:
+            info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+            renewal_times = int(getattr(info, "renewal_times", 0) or 0)
+            delivered_before = PrescriptionStatusHistory.objects.filter(
+                prescription=prescription,
+                old_status=PrescriptionStatusEnum.READY.value,
+                new_status=PrescriptionStatusEnum.DELIVERED.value,
+            ).count()
+            renewal_ctx = {
+                "info": info,
+                "renewal_times": renewal_times,
+                "delivered_before": delivered_before,
+            }
+        except Exception:
+            renewal_ctx = None
+    # RENEWAL_DELIVERED_RESET:END
+
     # ❗ BLOCKED → COMMENTAIRE OBLIGATOIRE
     # =====================================================
     if target_enum == PrescriptionStatusEnum.BLOCKED and not comment.strip():
@@ -138,6 +168,74 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         new_status=new_status,
         user=user,
     )
+
+    # RENEWAL_DELIVERED_RESET_POST:BEGIN
+    if renewal_ctx:
+        info = renewal_ctx.get("info")
+        times = int(renewal_ctx.get("renewal_times") or 0)
+        delivered_before = int(renewal_ctx.get("delivered_before") or 0)
+
+        # cycles = 1ère délivrance + renouvellements
+        total_cycles = max(1, int(times) + 1)
+        cycle_number = int(delivered_before) + 1  # cette délivrance
+        is_last_cycle = cycle_number >= total_cycles
+
+        # done_count = nb de renouvellements déjà réalisés (= cycles - 1), borné à [0..times]
+        try:
+            done_effective = max(0, int(cycle_number) - 1)
+            if times >= 0:
+                done_effective = min(int(times), done_effective)
+        except Exception:
+            done_effective = int(getattr(info, "renewal_done_count", 0) or 0)
+
+        update_fields = []
+        if info is not None and hasattr(info, "renewal_done_count"):
+            current_done = int(getattr(info, "renewal_done_count", 0) or 0)
+            if done_effective != current_done:
+                info.renewal_done_count = done_effective
+                update_fields.append("renewal_done_count")
+
+            # last_renewal_ordered_at à partir du 1er renouvellement (donc done_effective >= 1)
+            if done_effective >= 1 and hasattr(info, "last_renewal_ordered_at"):
+                info.last_renewal_ordered_at = timezone.now()
+                update_fields.append("last_renewal_ordered_at")
+
+        if update_fields:
+            # dedup update_fields
+            update_fields = list(dict.fromkeys(update_fields))
+            try:
+                info.save(update_fields=update_fields)
+            except Exception:
+                try:
+                    info.save()
+                except Exception:
+                    pass
+
+        # ✅ Reset statut uniquement si ce n’est PAS le dernier cycle
+        if not is_last_cycle:
+            try:
+                PrescriptionStatusHistory.objects.create(
+                    prescription=prescription,
+                    old_status=PrescriptionStatusEnum.DELIVERED.value,
+                    new_status=PrescriptionStatusEnum.RECEIVED.value,
+                    changed_by=user,
+                    comment=(
+                        f"Renouvellement: délivrance enregistrée (n°{cycle_number}/{total_cycles}). "
+                        f"Statut réinitialisé pour le prochain cycle."
+                    ),
+                )
+            except Exception:
+                pass
+
+            try:
+                prescription.status = PrescriptionStatusEnum.RECEIVED.value
+                prescription.save(update_fields=["status", "updated_at"])
+            except Exception:
+                pass
+# RENEWAL_DELIVERED_RESET_POST:END
+
+
+
 
     return prescription
 
@@ -254,7 +352,6 @@ def compute_renewals_watch_from_delivered():
         .select_related("patient", "renewal_info")
         .prefetch_related("status_history")
         .filter(type=PrescriptionType.RENOUVELLEMENT)
-        .filter(established_at__isnull=False)
         .exclude(status=PrescriptionStatus.ARCHIVED)
     )
 
@@ -269,7 +366,7 @@ def compute_renewals_watch_from_delivered():
 
         delivered_dt = None
         for h in p.status_history.all().order_by("changed_at"):
-            if h.new_status == PrescriptionStatus.DELIVERED:
+            if h.old_status == PrescriptionStatus.READY and h.new_status == PrescriptionStatus.DELIVERED:
                 delivered_dt = h.changed_at
                 break
         if delivered_dt is None:

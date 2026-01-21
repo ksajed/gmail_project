@@ -4,6 +4,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -178,116 +179,33 @@ def dashboard(request):
 # DÉTAIL ORDONNANCE
 # =====================================================
 
+@ensure_csrf_cookie
 @login_required
 def renewals_dashboard(request):
     """
     Dashboard Renouvellements — J-5 / J-3 / Retard
-    Base = 1ère délivrance (premier statut DELIVERED)
-    due_date = start_date + (done_count + 1) * period_days
-    Catégories :
-      - J-5 : days_left == 5
-      - J-3 : days_left == 3
-      - Retard : days_left <= 0
+
+    ✅ Base = 1ère délivrance (premier statut DELIVERED)
+    ✅ Source unique de vérité: services.compute_renewals_watch_from_delivered()
+       (évite duplication et garde la logique centralisée)
     """
-    import datetime
     from django.utils import timezone
     from django.shortcuts import render
 
-    from .models import (
-        Prescription,
-        PrescriptionType,
-        PrescriptionStatus,
-        PrescriptionStatusHistory,
-        PrescriptionRenewalInfo,
-    )
+    from .services import compute_renewals_watch_from_delivered
 
     today = timezone.localdate()
-
-    # On ne calcule des échéances que si on a une 1ère délivrance => status DELIVERED
-    qs = (
-        Prescription.objects
-        .filter(type=PrescriptionType.RENOUVELLEMENT, status=PrescriptionStatus.DELIVERED)
-        .select_related("patient")
-        .order_by("-id")
-    )
-
-    j5_items, j3_items, late_items = [], [], []
-
-    for p in qs:
-        info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=p)
-
-        # conversions robustes
-        try:
-            done_count = int(info.renewal_done_count or 0)
-            renewal_times = int(info.renewal_times or 0)
-            period_days = int(info.period_days or 30)
-        except Exception:
-            done_count = int(info.renewal_done_count or 0) if str(info.renewal_done_count or "").isdigit() else 0
-            renewal_times = int(info.renewal_times or 0) if str(info.renewal_times or "").isdigit() else 0
-            period_days = 30
-
-        # actif uniquement si cycles restants
-        if renewal_times <= 0 or done_count >= renewal_times:
-            continue
-
-        first_delivered_at = (
-            PrescriptionStatusHistory.objects
-            .filter(prescription=p, new_status=PrescriptionStatus.DELIVERED)
-            .order_by("changed_at")
-            .values_list("changed_at", flat=True)
-            .first()
-        )
-        if not first_delivered_at:
-            continue
-
-        start_date = timezone.localtime(first_delivered_at).date()
-        due_date = start_date + datetime.timedelta(days=(done_count + 1) * period_days)
-        days_left = (due_date - today).days
-
-        item = {
-            "prescription": p,
-            "info": info,
-            "patient": getattr(p, "patient", None),
-            "start_date": start_date,
-            "due_date": due_date,
-            "days_left": days_left,
-            "done_count": done_count,
-            "renewal_times": renewal_times,
-            "period_days": period_days,
-            "email_j5_sent": bool(getattr(info, "reminder_5_patient_email_sent_at", None)),
-            "sms_j5_sent": bool(getattr(info, "reminder_5_patient_sms_sent_at", None)),
-            "email_j3_sent": bool(getattr(info, "reminder_3_patient_email_sent_at", None)),
-            "sms_j3_sent": bool(getattr(info, "reminder_3_patient_sms_sent_at", None)),
-        }
-
-        if days_left == 5:
-            j5_items.append(item)
-        elif days_left == 3:
-            j3_items.append(item)
-        elif days_left <= 0:
-            late_items.append(item)
-
-    # tri : plus urgent d’abord
-    j5_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
-    j3_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
-    late_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
+    renewals_due_5, renewals_due_3, renewals_overdue = compute_renewals_watch_from_delivered()
 
     context = {
         "today": today,
-
-        # alias multiples pour matcher ton template quel que soit le nom attendu
-        "j5_items": j5_items, "j5_list": j5_items, "items_j5": j5_items,
-        "j3_items": j3_items, "j3_list": j3_items, "items_j3": j3_items,
-        "late_items": late_items, "late_list": late_items,
-        "retard_items": late_items, "retard_list": late_items,
-        "overdue_items": late_items, "overdue_list": late_items,
-
-        "count_j5": len(j5_items),
-        "count_j3": len(j3_items),
-        "count_late": len(late_items),
+        "renewals_due_5": renewals_due_5,
+        "renewals_due_3": renewals_due_3,
+        "renewals_overdue": renewals_overdue,
     }
-
     return render(request, "core_emails/renewals_dashboard.html", context)
+
+
 
 @login_required
 def prescription_detail(request, pk):
@@ -327,9 +245,55 @@ def prescription_detail(request, pk):
     current_enum = PrescriptionStatusEnum(prescription.status)
     allowed_enums = PRESCRIPTION_STATUS_TRANSITIONS.get(current_enum, set())
 
-    allowed_statuses = [
-        (enum.value, enum.name.replace("_", " ").title()) for enum in allowed_enums
+    # Labels (FR) depuis les choices du modèle + ordre stable
+    status_label_map = dict(PrescriptionStatus.choices)
+
+    _order = [
+        PrescriptionStatusEnum.IN_PROGRESS.value,
+        PrescriptionStatusEnum.READY.value,
+        PrescriptionStatusEnum.DELIVERED.value,
+        PrescriptionStatusEnum.BLOCKED.value,
+        PrescriptionStatusEnum.ARCHIVED.value,
     ]
+
+    def _order_key(v: str) -> int:
+        try:
+            return _order.index(v)
+        except ValueError:
+            return 999
+
+    allowed_values = sorted((e.value for e in allowed_enums), key=_order_key)
+
+    # STATUS_ORDER_SORT:BEGIN
+    # Ordre stable d'affichage des statuts autorisés (évite l'ordre aléatoire des sets)
+    STATUS_ORDER = [
+        PrescriptionStatusEnum.IN_PROGRESS,
+        PrescriptionStatusEnum.READY,
+        PrescriptionStatusEnum.DELIVERED,
+        PrescriptionStatusEnum.BLOCKED,
+        PrescriptionStatusEnum.ARCHIVED,
+    ]
+
+    # Libellés FR (UI)
+    STATUS_LABELS_FR = {
+        PrescriptionStatusEnum.IN_PROGRESS: "En cours de préparation",
+        PrescriptionStatusEnum.READY: "Prête à être délivrée",
+        PrescriptionStatusEnum.DELIVERED: "Délivrée",
+        PrescriptionStatusEnum.BLOCKED: "Bloquée (problème)",
+        PrescriptionStatusEnum.ARCHIVED: "Archivée",
+        PrescriptionStatusEnum.RECEIVED: "Reçue",
+    }
+
+    allowed_statuses = [
+        (e.value, STATUS_LABELS_FR.get(e, e.name.replace("_", " ").title()))
+        for e in STATUS_ORDER
+        if e in allowed_enums
+    ]
+
+    # Si un enum “nouveau” apparaît un jour, on l'ajoute à la fin proprement
+    for e in sorted((allowed_enums - set(STATUS_ORDER)), key=lambda x: x.value):
+        allowed_statuses.append((e.value, STATUS_LABELS_FR.get(e, e.name.replace("_", " ").title())))
+    # STATUS_ORDER_SORT:END
 
     persons_nurses = Person.objects.filter(role="nurse").order_by("last_name", "first_name")
     renewal_info = None
@@ -371,7 +335,11 @@ def prescription_detail(request, pk):
         # --------------------------
         first_delivered_at = (
             PrescriptionStatusHistory.objects
-            .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
+            .filter(
+                prescription=prescription,
+                old_status=PrescriptionStatus.READY,
+                new_status=PrescriptionStatus.DELIVERED,
+            )
             .order_by('changed_at')
             .values_list('changed_at', flat=True)
             .first()
@@ -458,7 +426,29 @@ def change_status(request, pk):
             new_status=new_status,
             user=request.user,
         )
-        messages.success(request, "Statut mis à jour avec succès.")
+        # ✅ Renouvellement: message clair si auto-réinitialisation après DELIVERED
+        try:
+            prescription.refresh_from_db(fields=["status", "type"])
+        except Exception:
+            prescription.refresh_from_db()
+
+        if (
+            new_status == PrescriptionStatus.DELIVERED
+            and getattr(prescription, "type", None) == PrescriptionType.RENOUVELLEMENT
+        ):
+            if prescription.status == PrescriptionStatus.RECEIVED:
+                messages.success(
+                    request,
+                    "Délivrance enregistrée (renouvellement). Statut réinitialisé pour le prochain cycle."
+                )
+            else:
+                messages.success(
+                    request,
+                    "Délivrance enregistrée (renouvellement). Dernier cycle atteint (aucune réinitialisation)."
+                )
+        else:
+            messages.success(request, "Statut mis à jour avec succès.")
+
         status_changed = True
     except ValidationError as e:
         # Message plus clair + liste des choix autorisés
