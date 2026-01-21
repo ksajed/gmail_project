@@ -14,6 +14,7 @@ db.sqlite3
 # Auto-generated local backup files (patch scripts)
 *.bak.*
 
+<<<<<<< Updated upstream
 # --- Backups / temporaires ---
 *.bak
 *.bak.*
@@ -22,3 +23,12 @@ db.sqlite3
 *.swp
 *.swo
 .DS_Store
+=======
+# Snapshot / exports (local only)
+_export/
+
+# Patch artifacts (local backups/outputs)
+*.bak-*
+*.patched.*
+*.rollback.*
+>>>>>>> Stashed changes
