@@ -8,6 +8,8 @@
   <title>Tableau de bord — Pharmacie</title>
 
   <!-- CSS -->
+
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=500">
   <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
 
@@ -508,30 +510,7 @@
 
 
 <!-- DASH_MSG_MODAL:BEGIN -->
-  <div id="dashMsgModal" class="modal-overlay" role="dialog" aria-modal="true"
-       aria-labelledby="dashMsgModalTitle"
-       style="display:none;"
-       data-show="{% if messages %}1{% else %}0{% endif %}">
-    <div class="modal-card" style="width:min(760px, calc(100vw - 24px)); margin:auto;">
-      <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between;">
-        <div id="dashMsgModalTitle" style="font-weight:900;">Notifications</div>
-        <button type="button" class="btn" id="dashMsgCloseBtn" aria-label="Fermer">Fermer</button>
-      </div>
-
-      <div class="modal-body" style="padding:14px 16px;">
-        {% if messages %}
-          {% for message in messages %}
-            <div class="msg {% if message.tags %}msg--{{ message.tags }}{% endif %}"
-                 style="padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:#fff; margin-bottom:10px;">
-              {{ message }}
-            </div>
-          {% endfor %}
-        {% else %}
-          <div style="color:var(--muted); font-weight:800;">Aucune notification.</div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
+  {% include "core_emails/modals/messages_modal.html" %}
 <!-- DASH_MSG_MODAL:END -->
 
 <!-- DASH_MSG_MODAL_JS:BEGIN -->

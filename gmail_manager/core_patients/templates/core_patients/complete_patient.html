@@ -1,20 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Compléter le patient</title>
 
-    <style>
-        :root {
-            --primary: #1f9d55;
-            --border: #dee2e6;
-            --bg: #f4f6f8;
-            --card: #ffffff;
-            --text: #212529;
-            --muted: #6c757d;
-        }
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
 
-        body {
+    <style>
+
+          body {
             margin: 0;
             background: var(--bg);
             font-family: "Inter", "Segoe UI", Arial, sans-serif;
@@ -80,8 +75,8 @@
         }
 
         .btn-cancel {
-            background: #e5e7eb;
-            color: #374151;
+            background: var(--border);
+            color: var(--text);
             text-decoration: none;
             display: inline-flex;
             align-items: center;

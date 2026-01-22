@@ -396,7 +396,36 @@ def prescription_detail(request, pk):
             }
 
 
-    return render(request, "core_emails/prescription_detail.html", context)
+    # MODAL_RENEWAL_DONE_EXTRACT:BEGIN
+    renewal_done_message = None
+    try:
+        _storage = messages.get_messages(request)
+        _kept = []
+        for _m in _storage:
+            _kept.append(_m)
+            if 'modal_renewal_done' in getattr(_m, 'tags', ''):
+                renewal_done_message = str(_m)
+        for _m in _kept:
+            messages.add_message(
+                request,
+                _m.level,
+                _m.message,
+                extra_tags=getattr(_m, 'extra_tags', '') or '',
+            )
+    except Exception:
+        renewal_done_message = None
+    # MODAL_RENEWAL_DONE_EXTRACT:END
+    __ctx = context
+    try:
+        if __ctx is None:
+            __ctx = {}
+        elif not isinstance(__ctx, dict):
+            __ctx = dict(__ctx)
+    except Exception:
+        __ctx = {}
+    __ctx['renewal_done_message'] = renewal_done_message
+
+    return render(request, "core_emails/prescription_detail.html", __ctx)
 
 
 # =====================================================

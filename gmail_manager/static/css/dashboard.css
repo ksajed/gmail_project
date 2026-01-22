@@ -1,35 +1,7 @@
-  
-    :root{
-      --bg: #f6f8fb;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e5e7eb;
+/* NOTE: Variables CSS déplacées vers css/theme.css */
 
-      --primary: #16a34a;
-      --primary-600:#15803d;
-      --primary-soft: #eafaf0;
-
-      --danger: #dc2626;
-      --danger-600:#b91c1c;
-      --danger-soft:#fee2e2;
-
-      --warning:#b45309;
-      --warning-soft:#ffedd5;
-
-      --info:#3730a3;
-      --info-soft:#eef2ff;
-
-      --shadow: 0 10px 25px rgba(15, 23, 42, .08);
-      --shadow-sm: 0 6px 16px rgba(15, 23, 42, .06);
-
-      --radius: 14px;
-      --radius-sm: 10px;
-
-      --ring: 0 0 0 4px rgba(22, 163, 74, .18);
-
-          /* ===== AJOUT V3 : BADGE TYPE ORDONNANCE ===== */
-    .type-badge{
+/* ===== BADGE TYPE ORDONNANCE (déplacé hors :root) ===== */
+.type-badge{
       display:inline-flex;
       align-items:center;
       gap:6px;
@@ -43,11 +15,8 @@
       color:var(--info);
       border-color:rgba(55,48,163,.18);
     }
-    /* ===== FIN AJOUT V3 ===== */
 
-    }
-
-    *{ box-sizing:border-box; }
+*{ box-sizing:border-box; }
     html, body{ height:100%; }
     body{
       margin:0;

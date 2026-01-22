@@ -1,6 +1,12 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
+
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=500">
+  <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
+
   <meta charset="UTF-8">
   <title>Nouvelle ordonnance</title>
 </head>
@@ -11,15 +17,8 @@
 {# ============================= #}
 {# AFFICHAGE DES MESSAGES ERREUR #}
 {# ============================= #}
-{% if messages %}
-  <ul>
-    {% for message in messages %}
-      <li style="color:#b91c1c; font-weight:700; margin-bottom:6px;">
-        {{ message }}
-      </li>
-    {% endfor %}
-  </ul>
-{% endif %}
+
+
 
 <form method="post" enctype="multipart/form-data">
   {% csrf_token %}
@@ -61,5 +60,10 @@
   </button>
 </form>
 
+
+
+  {% include "core_emails/modals/messages_modal.html" %}
+
+  <script src="{% static 'js/dashboard_msg_modal.js' %}?v=501" defer></script>
 </body>
 </html>

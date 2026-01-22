@@ -1,0 +1,40 @@
+/* THEME:BEGIN
+   Charte graphique unique — Ordo (globale)
+THEME:END */
+
+:root{
+  --bg:#f6f8fb;
+  --card:#ffffff;
+
+  /* alias utilisés dans certains templates */
+  --surface:#ffffff;
+  --surface-2:#fbfdff;
+  --panel:#ffffff;
+
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e5e7eb;
+
+  --primary:#16a34a;
+  --primary-600:#15803d;
+  --primary-dark: var(--primary-600);
+  --primary-soft:#eafaf0;
+
+  --danger:#dc2626;
+  --danger-600:#b91c1c;
+  --danger-soft:#fee2e2;
+
+  --warning:#b45309;
+  --warning-soft:#ffedd5;
+
+  --info:#3730a3;
+  --info-soft:#eef2ff;
+
+  --shadow: 0 10px 25px rgba(15, 23, 42, .08);
+  --shadow-sm: 0 6px 16px rgba(15, 23, 42, .06);
+
+  --radius:14px;
+  --radius-sm:10px;
+
+  --ring:0 0 0 4px rgba(22,163,74,.18);
+}

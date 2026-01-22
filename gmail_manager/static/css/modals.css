@@ -1,21 +1,11 @@
+/* NOTE: Variables CSS déplacées vers css/theme.css (suppression du fallback :root) */
+
 /* ================= POPUP SaaS — Pharmacie =================
    Objectif:
    - Popup propre (carte blanche) + fond doux derrière
    - Drag & Drop fiable (input PAS en display:none)
    - N'affecte pas la page mère (sauf le dim overlay)
 =========================================================== */
-
-:root{
-  /* fallback si dashboard.css n'est pas chargé */
-  --card: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --border: #e5e7eb;
-  --primary: #16a34a;
-  --primary-600: #15803d;
-  --primary-soft: #eafaf0;
-  --ring: 0 0 0 4px rgba(22,163,74,.18);
-}
 
 /* ===== Overlay (fond derrière) ===== */
 .modal-overlay{

@@ -1,20 +1,15 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Profil patient</title>
 
-    <style>
-        :root {
-            --primary: #1f9d55;
-            --bg: #f4f6f8;
-            --card: #ffffff;
-            --text: #212529;
-            --muted: #6c757d;
-            --border: #dee2e6;
-        }
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
 
-        body {
+    <style>
+
+          body {
             margin: 0;
             background: var(--bg);
             font-family: "Inter", "Segoe UI", Arial, sans-serif;
@@ -54,12 +49,12 @@
         }
 
         .status-valid {
-            color: #166534;
+            color: var(--primary-600);
             font-weight: 700;
         }
 
         .status-rejected {
-            color: #991b1b;
+            color: var(--danger-600);
             font-weight: 700;
         }
 

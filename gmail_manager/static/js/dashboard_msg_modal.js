@@ -31,6 +31,7 @@
       // Auto-open si messages موجودة
       document.addEventListener("DOMContentLoaded", function () {
         const show = (modal.getAttribute("data-show") || "0") === "1";
-        if (show) openDashMsgModal();
+        const hasItems = !!modal.querySelector('[data-msg-item="1"]');
+        if (show && hasItems) openDashMsgModal();
       });
-    })();
+})();
