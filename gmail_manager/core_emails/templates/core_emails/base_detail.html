@@ -1,32 +1,50 @@
-{# core_emails/templates/core_emails/base_detail.html #}
 {% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{% block title %}Détail{% endblock %}</title>
 
-  <title>
-    {% block title %}Ordo{% endblock %}
-  </title>
-
-  <!-- CSS global -->
-    <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-  <link rel="stylesheet" href="{% static 'css/history.css' %}">
-  <link rel="stylesheet" href="{% static 'css/modals.css' %}">
-
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
+  <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
   {% block extra_css %}{% endblock %}
 </head>
 
 <body>
+<div class="app">
 
-  {% block content %}{% endblock %}
+  <div class="topbar">
+    <div class="topbar__inner">
+      <div class="head">
+        {% block topbar_left %}{% endblock %}
+        <div class="titlewrap">
+          <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+          <div class="breadcrumb">{% block breadcrumb %}{% endblock %}</div>
+          {% block page_subtitle %}{% endblock %}
+        </div>
+      </div>
 
-  <!-- JS global -->
-  <script src="{% static 'js/modals.js' %}"></script>
+      <div class="btnrow">
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </div>
+  </div>
 
-  {% block extra_js %}{% endblock %}
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+{% block modals %}{% endblock %}
+
+{# Popup messages Django (global) #}
+{% include "core_emails/modals/messages_modal.html" %}
+
+<script src="{% static 'js/modals.js' %}?v=500" defer></script>
+<script src="{% static 'js/dashboard_msg_modal.js' %}?v=501" defer></script>
+{% block extra_js %}{% endblock %}
 
 </body>
 </html>
