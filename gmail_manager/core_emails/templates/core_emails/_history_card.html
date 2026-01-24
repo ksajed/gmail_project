@@ -1,182 +1,74 @@
-<section class="card">
-        <div class="card__header">
-          <h3 class="card__title">
-            <span class="ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M7 21v-2a4 4 0 014-4h2a4 4 0 014 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" stroke-width="2"/>
-                <path d="M18 8h4M20 6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </span>
-            Infirmier
-          </h3>
+<section class="card full">
+  <header class="card__header">
+    <h3 class="card__title">Historique de l’ordonnance</h3>
 
-          {% if prescription.assignment %}
-            <span class="badge badge--success"><span class="dot"></span>Affecté</span>
-          {% else %}
-            <span class="chip">Non affecté</span>
-          {% endif %}
-        </div>
+    <span class="chip">
+      {{ history|length }} action{{ history|length|pluralize }}
+    </span>
+  </header>
 
-        <div class="card__body">
-          {% if prescription.assignment %}
-            <dl class="kv">
-              <dt class="k">Infirmier</dt><dd class="v">{{ prescription.assignment.nurse }}</dd>
-            </dl>
-            <div class="divider"></div>
-            <button class="btn btn--danger" type="button" onclick="openModal('unassignModal')">
-              Retirer l’infirmier
-            </button>
-          {% else %}
-            <div class="v muted">Aucun infirmier affecté pour le moment.</div>
-          {% endif %}
+  <div class="card__body">
 
-          <div class="divider"></div>
+    {% if history %}
+      <ul class="history-list" role="list">
 
-          <form method="post" action="{% url 'core_emails:assign_nurse' prescription.id %}">
-            {% csrf_token %}
-            <div class="field">
-              <label>Affecter / modifier l’infirmier</label>
-              <select name="nurse_id" required>
-                <option value="">Sélectionner</option>
-                {% for person in persons_nurses %}
-                  <option value="{{ person.id }}"
-                    {% if prescription.assignment and prescription.assignment.nurse.id == person.id %}selected{% endif %}>
-                    {{ person }}
-                  </option>
-                {% endfor %}
-              </select>
-              <div class="hint">Tu peux ajouter un infirmier s’il n’existe pas encore.</div>
-            </div>
+        {% for entry in history %}
+          <li class="history-item" role="listitem">
 
-            <div class="btnrow" style="justify-content:flex-start;">
-              <button type="submit" class="btn btn--primary">Enregistrer</button>
-              <button type="button" class="btn" onclick="openModal('createNurseModal')">Ajouter un infirmier</button>
-            </div>
-          </form>
-        </div>
-      </section>
+            <!-- LIGNE TIMELINE -->
+            <div class="history-row">
 
-      <!-- PIÈCES JOINTES -->
-      <section class="card full">
-        <div class="card__header">
-          <h3 class="card__title">
-            <span class="ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M21 15V8a2 2 0 00-2-2H8l-2 2H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2z"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-            Pièces jointes
-          </h3>
-          <span class="chip">{{ attachments|length }} fichier(s)</span>
-        </div>
+              <!-- DATE / HEURE -->
+              <div class="history-time">
+                <span class="history-date">
+                  {{ entry.changed_at|date:"d/m/Y" }}
+                </span>
+                <span class="history-hour">
+                  {{ entry.changed_at|date:"H:i" }}
+                </span>
+              </div>
 
-        <div class="card__body">
-          <ul class="filelist">
-            {% for a in attachments %}
-              <li class="file">
-                <div class="file__meta">
-                  <p class="file__name" title="{{ a.original_filename }}">{{ a.original_filename }}</p>
-                  <p class="file__sub">ID : {{ a.id }}</p>
+              <!-- CONTENU -->
+              <div class="history-content">
+
+                <!-- ACTION PRINCIPALE -->
+                <div class="history-main">
+
+                  <span class="history-user">
+                    {{ entry.changed_by|default:"Système" }}
+                  </span>
+
+                  <span class="history-label">
+                    a modifié le statut
+                  </span>
+
+                  <span class="history-status">
+                    {{ entry.old_status }}
+                    <span class="history-arrow" aria-hidden="true">→</span>
+                    {{ entry.new_status }}
+                  </span>
+
                 </div>
-                <div class="file__actions">
-                  <a class="btn btn--sm" href="{% url 'core_attachments:download_attachment' a.id %}">
-                    Télécharger
-                  </a>
-                  <a class="btn btn--sm btn-viewer" href="#"
-                     data-viewer-url="{% url 'core_attachments:attachment_viewer' a.id %}">
-                    Visionner
-                  </a>
-                </div>
-              </li>
-            {% empty %}
-              <li class="v muted">Aucune pièce jointe.</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </section>
 
-      <!-- STATUT -->
-      {% if allowed_statuses %}
-      <section class="card">
-        <div class="card__header">
-          <h3 class="card__title">
-            <span class="ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-            Statut
-          </h3>
-          <span class="chip">Action</span>
-        </div>
+                <!-- COMMENTAIRE (OPTIONNEL) -->
+                {% if entry.comment %}
+                  <div class="history-comment">
+                    {{ entry.comment }}
+                  </div>
+                {% endif %}
 
-        <div class="card__body">
-          <form method="post" action="{% url 'core_emails:change_status' prescription.id %}">
-            {% csrf_token %}
-            <div class="field">
-              <label>Changer le statut</label>
-              <select name="status" required>
-                <option value="">Sélectionner</option>
-                {% for value, label in allowed_statuses %}
-                  <option value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-              </select>
-              <div class="hint">Le changement de statut peut déclencher des notifications.</div>
+              </div>
             </div>
 
-            <div class="btnrow" style="justify-content:flex-start;">
-              <button type="submit" class="btn btn--primary">Valider</button>
-              <a class="btn" href="{% url 'core_emails:dashboard' %}">Retour dashboard</a>
-            </div>
-          </form>
-        </div>
-      </section>
-      {% endif %}
+          </li>
+        {% endfor %}
 
-      <!-- HISTORIQUE -->
-      <section class="card {% if allowed_statuses %}{% else %}full{% endif %}">
-        <div class="card__header">
-          <h3 class="card__title">
-            <span class="ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M3 12a9 9 0 109-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M3 3v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 7v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-            Historique
-          </h3>
-          <span class="chip">{{ history|length }} entrée(s)</span>
-        </div>
+      </ul>
+    {% else %}
+      <p class="v muted">
+        Aucun événement n’a encore été enregistré pour cette ordonnance.
+      </p>
+    {% endif %}
 
-        <div class="card__body">
-          {% if history %}
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th class="col-date">Date</th>
-                    <th class="col-user">Utilisateur</th>
-                    <th class="col-action">Action</th>
-                    <th class="col-comment">Commentaire</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for h in history %}
-                    <tr>
-                      <td class="nowrap col-date">{{ h.changed_at|date:"d/m/Y H:i" }}</td>
-                      <td class="col-user">{{ h.changed_by|default:"Système" }}</td>
-                      <td class="nowrap col-action">{{ h.old_status }} → {{ h.new_status }}</td>
-                      <td class="comment col-comment">{{ h.comment|default:"—" }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="v muted">Aucun historique disponible.</div>
-          {% endif %}
-        </div>
-      </section>
+  </div>
+</section>

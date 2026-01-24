@@ -1,34 +1,94 @@
 <section class="card">
-        <div class="card__header">
-          <h3 class="card__title">
-            <span class="ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-            Statut
-          </h3>
-          <span class="chip">Action</span>
+  <header class="card__header">
+    <h3 class="card__title">
+      Statut
+    </h3>
+
+    <span class="chip">
+      Action
+    </span>
+  </header>
+
+  <div class="card__body">
+
+    <form method="post"
+          action="{% url 'core_emails:change_status' prescription.id %}">
+      {% csrf_token %}
+
+        <!-- SMS_UI:BEGIN -->
+        <div class="field" style="margin-top:12px;">
+          <label style="display:flex; gap:8px; align-items:center;">
+            <input type="checkbox" name="send_sms" value="1">
+            Envoyer un SMS
+          </label>
         </div>
 
-        <div class="card__body">
-          <form method="post" action="{% url 'core_emails:change_status' prescription.id %}">
-            {% csrf_token %}
-            <div class="field">
-              <label>Changer le statut</label>
-              <select name="status" required>
-                <option value="">Sélectionner</option>
-                {% for value, label in allowed_statuses %}
-                  <option value="{{ value }}">{{ label }}</option>
-                {% endfor %}
-              </select>
-              <div class="hint">Le changement de statut peut déclencher des notifications.</div>
-            </div>
-
-            <div class="btnrow" style="justify-content:flex-start;">
-              <button type="submit" class="btn btn--primary">Valider</button>
-              <a class="btn" href="{% url 'core_emails:dashboard' %}">Retour dashboard</a>
-            </div>
-          </form>
+        <div class="field" style="margin-top:8px;">
+          <label for="sms_target">Destinataire(s)</label>
+          <select name="sms_target" id="sms_target">
+            <option value="patient" selected>Patient uniquement</option>
+            {% if assigned_nurse %}
+              <option value="nurse">Infirmier(ère) uniquement</option>
+              <option value="both">Patient + infirmier(ère)</option>
+            {% endif %}
+          </select>
+          <p class="hint" style="margin-top:6px;">
+            Si SMS coché : choisir Patient / Infirmier / Les deux.
+          </p>
         </div>
-      </section>
+
+        <script>
+          (function() {
+            const form = document.currentScript.closest('form');
+            if (!form) return;
+            const cb = form.querySelector('input[name="send_sms"]');
+            const sel = form.querySelector('select[name="sms_target"]');
+            if (!cb || !sel) return;
+
+            function sync() {
+              if (cb.checked) {
+                sel.required = true;
+                sel.disabled = false;
+              } else {
+                sel.required = false;
+                sel.disabled = true;
+              }
+            }
+            cb.addEventListener('change', sync);
+            sync();
+          })();
+        </script>
+        <!-- SMS_UI:END -->
+
+      <div class="field">
+        <label>Changer le statut</label>
+        <select name="status" required>
+          <option value="">Sélectionner un statut</option>
+
+          {% for value, label in allowed_statuses %}
+            <option value="{{ value }}">
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <p class="hint">
+          Le changement de statut est enregistré et horodaté.
+        </p>
+      </div>
+
+      <div class="btnrow" style="justify-content:flex-start;">
+        <button type="submit" class="btn btn--primary">
+          Valider
+        </button>
+
+        <a class="btn"
+           href="{% url 'core_emails:dashboard' %}">
+          Retour au tableau de bord
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+</section>

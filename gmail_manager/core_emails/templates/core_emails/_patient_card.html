@@ -1,50 +1,50 @@
-<section class="card">
-        <div class="card__header">
-          <h3 class="card__title">
-            <span class="ico" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M20 21a8 8 0 10-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" stroke-width="2"/>
-              </svg>
-            </span>
-            Patient
-          </h3>
+{% extends "core_emails/base_detail.html" %}
+{% load prescription_extras %}
 
-          {% if prescription.patient %}
-            {% if prescription.patient.is_complete %}
-              <span class="badge badge--success"><span class="dot"></span>Complet</span>
-            {% else %}
-              <span class="badge badge--warning"><span class="dot"></span>Incomplet</span>
-            {% endif %}
-          {% else %}
-            <span class="chip">Aucun</span>
-          {% endif %}
-        </div>
+{% block title %}
+Ordonnance n°{{ prescription.id }}
+{% endblock %}
 
-        <div class="card__body">
-          {% if prescription.patient %}
-            {% if prescription.patient.is_complete %}
-              <dl class="kv">
-                <dt class="k">Nom</dt><dd class="v">{{ prescription.patient.full_name }}</dd>
-                <dt class="k">Téléphone</dt><dd class="v">{{ prescription.patient.phone_number }}</dd>
-                <dt class="k">Email</dt><dd class="v">{{ prescription.patient.email }}</dd>
-              </dl>
-            {% else %}
-              <dl class="kv">
-                <dt class="k">Email</dt><dd class="v">{{ prescription.patient.email }}</dd>
-              </dl>
+{% block topbar %}
+<div class="topbar">
+  <div class="topbar__inner">
+    <div class="head">
+      <a class="btn btn--ghost" href="{% url 'core_emails:dashboard' %}">← Retour</a>
 
-              <div class="divider"></div>
-              <button type="button" class="btn btn--primary" onclick="openModal('patientModal')">
-                Compléter la fiche patient
-              </button>
-              <div class="hint">Ajoute le nom et le téléphone pour déclencher les étapes suivantes.</div>
-            {% endif %}
-          {% else %}
-            <div class="v muted">Aucun patient associé à cette ordonnance.</div>
-          {% endif %}
+      <div class="titlewrap">
+        <h1 class="page-title">Ordonnance n°{{ prescription.id }}</h1>
+        <div class="breadcrumb">Tableau de bord → Ordonnances → Détail</div>
+      </div>
+    </div>
 
+    <span class="badge badge--info">
+    {{ prescription.get_sender_type_display }}
 
+    </span>
+  </div>
+</div>
+{% endblock %}
 
-        </div>
-      </section>
+{% block content %}
+<div class="grid">
+
+  {% include "core_emails/_patient_card.html" %}
+  {% include "core_emails/_nurse_card.html" %}
+  {% include "core_emails/_attachments_card.html" %}
+
+  {% if allowed_statuses %}
+    {% include "core_emails/_status_card.html" %}
+  {% endif %}
+
+  {% include "core_emails/_history_card.html" %}
+
+</div>
+
+{# MODALS #}
+{% if prescription.patient and not prescription.patient.is_complete %}
+  {% include "core_emails/modals/_patient_modal.html" %}
+{% endif %}
+{% include "core_emails/modals/_unassign_modal.html" %}
+{% include "core_emails/modals/_create_nurse_modal.html" %}
+
+{% endblock %}
