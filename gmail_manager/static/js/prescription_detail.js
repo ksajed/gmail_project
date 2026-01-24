@@ -1,4 +1,30 @@
-document.addEventListener("DOMContentLoaded", function () {
+function openModal(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.display = "flex";
+    const focusable = el.querySelector("input, select, button");
+    if(focusable) setTimeout(() => focusable.focus(), 0);
+  }
+
+  function closeModal(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.display = "none";
+  }
+
+  document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", (e) => {
+      if(e.target === overlay) overlay.style.display = "none";
+    });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape"){
+      document.querySelectorAll(".modal-overlay").forEach(m => m.style.display = "none");
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".btn-viewer").forEach(btn => {
       btn.addEventListener("click", e => {
         e.preventDefault();
