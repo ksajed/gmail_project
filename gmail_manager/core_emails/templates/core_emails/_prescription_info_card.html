@@ -10,10 +10,15 @@
       </span>
       Ordonnance
     </h3>
-    <span class="chip">ID : {{ prescription.id }}</span>
+
+    <div class="rx-header-actions">
+      <span class="chip">ID : {{ prescription.id }}</span>
+    </div>
   </div>
 
   <div class="card__body">
+
+    <!-- RÉSUMÉ -->
     <dl class="kv">
       <dt class="k">Statut</dt><dd class="v">{{ prescription.status }}</dd>
       <dt class="k">Type</dt><dd class="v">{{ prescription.get_type_display }}</dd>
@@ -23,110 +28,43 @@
       {% endif %}
     </dl>
 
-    <div class="divider"></div>
-
-    <!-- TYPE D’ORDONNANCE -->
-    <form method="post" action="{% url 'core_emails:change_prescription_type' prescription.id %}">
-      {% csrf_token %}
-      <div class="field">
-        <label>Type d’ordonnance</label>
-        <select name="type" required>
-          {% for value, label in context_prescription_types %}
-            <option value="{{ value }}" {% if prescription.type == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-        <div class="hint">Qualifie la nature de l’ordonnance (urgence, renouvellement, stupéfiant…).</div>
-      </div>
-      <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
-        <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
-      </div>
-    </form>
-
-    <div class="divider"></div>
-
-    <!-- EXPÉDITEUR -->
-    <form method="post" action="{% url 'core_emails:change_sender_type' prescription.id %}">
-      {% csrf_token %}
-      <div class="field">
-        <label>Expéditeur de l’ordonnance</label>
-        <select name="sender_type" required>
-          {% for value, label in context_sender_types %}
-            <option value="{{ value }}" {% if prescription.sender_type == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-        <div class="hint">Le type aide à qualifier l’origine (patient / médecin / etc.).</div>
-      </div>
-      <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
-        <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
-      </div>
-    </form>
-
     {% if prescription.type == "RENOUVELLEMENT" %}
       <div class="divider"></div>
 
-      <h3 class="card__title" style="margin:0 0 10px 0;">Renouvellement</h3>
-      <div class="hint">Base du calcul J-5 / J-3 / retard.</div>
+      <div class="rx-inline-kv">
+        <h4 class="rx-section-title">Renouvellement — résumé</h4>
+        <dl class="kv">
+          <dt class="k">Établie le</dt>
+          <dd class="v">{% if prescription.established_at %}{{ prescription.established_at|date:"d/m/Y" }}{% else %}—{% endif %}</dd>
 
-      <form method="post" action="{% url 'core_emails:update_renewal_info' prescription.id %}">
-        {% csrf_token %}
-        <div class="field">
-          <label>Date d’établissement (médecin)</label>
-          <input type="date" name="established_at"
-            value="{% if prescription.established_at %}{{ prescription.established_at|date:'Y-m-d' }}{% endif %}"/>
-          <div class="hint">Base du calcul J-5 / J-3.</div>
+          <dt class="k">Période</dt><dd class="v">{{ renewal_info.period_days|default:30 }} jours</dd>
+          <dt class="k">Autorisé</dt><dd class="v">{{ renewal_info.renewal_times|default:0 }}</dd>
+
+          <dt class="k">Réalisés</dt>
+          <dd class="v">
+            {{ renewal_info.renewal_done_count|default:0 }} / {{ renewal_info.renewal_times|default:0 }}
+            — Restants : {{ renewal_remaining|default:0 }}
+          </dd>
+
+          {% if renewal_info.last_renewal_ordered_at %}
+            <dt class="k">Dernier</dt><dd class="v">{{ renewal_info.last_renewal_ordered_at }}</dd>
+          {% endif %}
+        </dl>
+
+        <div class="btnrow rx-actions">
+          <button type="button" class="btn btn--sm" onclick="openModal('renewalModal')">
+            Historique &amp; récap
+          </button>
+
+          <form method="post" action="{% url 'core_emails:send_renewal_doctor_email' prescription.id %}" style="margin:0;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="btn btn--sm">Email médecin</button>
+          </form>
         </div>
-
-        <div class="field">
-          <label>Nombre de renouvellements autorisés</label>
-          <input type="number" name="renewal_times" min="0" value="{{ renewal_info.renewal_times|default:0 }}">
-        </div>
-
-        <div class="field">
-          <label>Durée d’une période (jours)</label>
-          <input type="number" name="period_days" min="1" value="{{ renewal_info.period_days|default:30 }}">
-        </div>
-
-        <div class="field">
-          <label>Nom du médecin (optionnel)</label>
-          <input type="text" name="doctor_name" value="{{ renewal_info.doctor_name|default:'' }}">
-        </div>
-
-        <div class="field">
-          <label>Email du médecin (optionnel)</label>
-          <input type="email" name="doctor_email" value="{{ renewal_info.doctor_email|default:'' }}">
-        </div>
-
-        <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
-          <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
-        </div>
-      </form>
-
-      <form method="post" action="{% url 'core_emails:mark_renewal_done' prescription.id %}" style="margin-top:10px;">
-        {% csrf_token %}
-        <button type="submit" class="btn btn--sm btn--primary">Marquer renouvellement réalisé</button>
-      </form>
-
-      <div class="hint" style="margin-top:8px;">
-        <strong>Réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}
-        / {{ renewal_info.renewal_times|default:0 }}
-        — <strong>Restants :</strong> {{ renewal_remaining|default:0 }}
-        {% if renewal_info.last_renewal_ordered_at %}
-          — <strong>Dernier :</strong> {{ renewal_info.last_renewal_ordered_at }}
-        {% endif %}
       </div>
 
-      <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
-        <button type="button" class="btn btn--sm" onclick="openModal('renewalModal')" style="margin-top:10px;">
-          Historique &amp; récap
-        </button>
-
-        <form method="post" action="{% url 'core_emails:send_renewal_doctor_email' prescription.id %}" style="margin:0;">
-          {% csrf_token %}
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit" class="btn btn--sm">Email médecin</button>
-        </form>
-      </div>
-
+      <!-- MODAL RÉCAP (hors édition, toujours disponible) -->
       <div id="renewalModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="renewalModalTitle">
         <div class="modal-card" role="document">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
@@ -171,5 +109,103 @@
         </div>
       </div>
     {% endif %}
+
+    <div class="divider"></div>
+
+    <!-- ÉDITION (PRO / repliable, sans JS) -->
+    <details class="rx-details">
+      <summary class="btn btn--sm btn--ghost rx-details__summary">Modifier les informations</summary>
+
+      <div class="rx-details__body">
+
+        <h4 class="rx-section-title">Type &amp; origine</h4>
+
+        <!-- TYPE D’ORDONNANCE -->
+        <form method="post" action="{% url 'core_emails:change_prescription_type' prescription.id %}">
+          {% csrf_token %}
+          <div class="field">
+            <label>Type d’ordonnance</label>
+            <select name="type" required>
+              {% for value, label in context_prescription_types %}
+                <option value="{{ value }}" {% if prescription.type == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <div class="hint">Qualifie la nature de l’ordonnance (urgence, renouvellement, stupéfiant…).</div>
+          </div>
+          <div class="btnrow rx-actions">
+            <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
+          </div>
+        </form>
+
+        <div class="divider"></div>
+
+        <!-- EXPÉDITEUR -->
+        <form method="post" action="{% url 'core_emails:change_sender_type' prescription.id %}">
+          {% csrf_token %}
+          <div class="field">
+            <label>Expéditeur de l’ordonnance</label>
+            <select name="sender_type" required>
+              {% for value, label in context_sender_types %}
+                <option value="{{ value }}" {% if prescription.sender_type == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <div class="hint">Le type aide à qualifier l’origine (patient / médecin / etc.).</div>
+          </div>
+          <div class="btnrow rx-actions">
+            <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
+          </div>
+        </form>
+
+        {% if prescription.type == "RENOUVELLEMENT" %}
+          <div class="divider"></div>
+
+          <h4 class="rx-section-title">Renouvellement — édition</h4>
+          <div class="hint">Base du calcul J-5 / J-3 / retard.</div>
+
+          <form method="post" action="{% url 'core_emails:update_renewal_info' prescription.id %}">
+            {% csrf_token %}
+            <div class="field">
+              <label>Date d’établissement (médecin)</label>
+              <input type="date" name="established_at"
+                value="{% if prescription.established_at %}{{ prescription.established_at|date:'Y-m-d' }}{% endif %}"/>
+              <div class="hint">Base du calcul J-5 / J-3.</div>
+            </div>
+
+            <div class="field">
+              <label>Nombre de renouvellements autorisés</label>
+              <input type="number" name="renewal_times" min="0" value="{{ renewal_info.renewal_times|default:0 }}">
+            </div>
+
+            <div class="field">
+              <label>Durée d’une période (jours)</label>
+              <input type="number" name="period_days" min="1" value="{{ renewal_info.period_days|default:30 }}">
+            </div>
+
+            <div class="field">
+              <label>Nom du médecin (optionnel)</label>
+              <input type="text" name="doctor_name" value="{{ renewal_info.doctor_name|default:'' }}">
+            </div>
+
+            <div class="field">
+              <label>Email du médecin (optionnel)</label>
+              <input type="email" name="doctor_email" value="{{ renewal_info.doctor_email|default:'' }}">
+            </div>
+
+            <div class="btnrow rx-actions">
+              <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
+            </div>
+          </form>
+
+          <form method="post" action="{% url 'core_emails:mark_renewal_done' prescription.id %}" style="margin-top:10px;">
+            {% csrf_token %}
+            <div class="btnrow rx-actions">
+              <button type="submit" class="btn btn--sm btn--primary">Marquer renouvellement réalisé</button>
+            </div>
+          </form>
+        {% endif %}
+
+      </div>
+    </details>
+
   </div>
 </section>
