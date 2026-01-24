@@ -4,24 +4,101 @@
 
   const MODAL_ID = "createPrescriptionModal";
 
-  // --- Modal open/close ---
-  function openModal() {
-    const overlay = document.getElementById(MODAL_ID);
+  // ============================================================================
+  // API MODALES UNIQUE (globale)
+  // - Compatible: modales style="display:none" (prescription_detail)
+  // - Compatible: modales .is-open (createPrescriptionModal)
+  // - Garde body.modal-open tant qu'au moins 1 modale est ouverte
+  // ============================================================================
+  function isOpen(overlay) {
+    if (!overlay) return false;
+    try {
+      if (overlay.classList && overlay.classList.contains("is-open")) return true;
+      const ds = (overlay.style && overlay.style.display) ? overlay.style.display : "";
+      if (ds && ds !== "none") return true;
+      // fallback computed style
+      return window.getComputedStyle(overlay).display !== "none";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setOpen(overlay, open) {
+    if (!overlay) return;
+    if (open) {
+      overlay.classList.add("is-open");
+      overlay.style.display = "flex";
+      overlay.setAttribute("aria-hidden", "false");
+    } else {
+      overlay.classList.remove("is-open");
+      overlay.style.display = "none";
+      overlay.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  function anyModalOpen() {
+    const overlays = document.querySelectorAll(".modal-overlay");
+    for (const ov of overlays) {
+      if (isOpen(ov)) return true;
+    }
+    return false;
+  }
+
+  // window.openModal(id) / window.closeModal(id)
+  window.openModal = function (id) {
+    const targetId = (typeof id === "string" && id) ? id : MODAL_ID;
+    const overlay = document.getElementById(targetId);
     if (!overlay) return;
 
-    overlay.classList.add("is-open");
-    overlay.setAttribute("aria-hidden", "false");
+    setOpen(overlay, true);
     document.body.classList.add("modal-open");
-  }
 
-  function closeModal() {
-    const overlay = document.getElementById(MODAL_ID);
+    const focusable = overlay.querySelector(
+      "input, select, textarea, button, a[href], [tabindex]:not([tabindex='-1'])"
+    );
+    if (focusable) setTimeout(() => focusable.focus(), 0);
+  };
+
+  window.closeModal = function (id) {
+    const targetId = (typeof id === "string" && id) ? id : MODAL_ID;
+    const overlay = document.getElementById(targetId);
     if (!overlay) return;
 
-    overlay.classList.remove("is-open");
-    overlay.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("modal-open");
-  }
+    setOpen(overlay, false);
+
+    // Ne retire modal-open que si aucune modale n'est encore visible
+    if (!anyModalOpen()) {
+      document.body.classList.remove("modal-open");
+    }
+  };
+
+  // Backdrop close (toutes les modales)
+  document.addEventListener("click", function (e) {
+    const target = e.target;
+    if (!target || !(target instanceof HTMLElement)) return;
+    if (!target.classList.contains("modal-overlay")) return;
+    if (!target.id) return;
+    if (e.target === target) {
+      window.closeModal(target.id);
+    }
+  });
+
+  // ESC close (toutes les modales)
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+
+    document.querySelectorAll(".modal-overlay").forEach((ov) => {
+      if (!isOpen(ov)) return;
+      if (ov.id) window.closeModal(ov.id);
+      else setOpen(ov, false);
+    });
+
+    if (!anyModalOpen()) document.body.classList.remove("modal-open");
+  });
+
+  // Helpers modal default (createPrescriptionModal)
+  function openDefault() { window.openModal(MODAL_ID); }
+  function closeDefault() { window.closeModal(MODAL_ID); }
 
   // --- Utils ---
   function isAllowedFile(file) {
@@ -183,22 +260,22 @@
 
     if (btn) {
       btn.addEventListener("click", function () {
-        openModal();
+        openDefault();
         initDropzone(); // init quand on ouvre
       });
     }
 
-    if (closeBtn) closeBtn.addEventListener("click", closeModal);
-    if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeDefault);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeDefault);
 
     if (overlay) {
       overlay.addEventListener("click", function (e) {
-        if (e.target === overlay) closeModal();
+        if (e.target === overlay) closeDefault();
       });
     }
 
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeModal();
+      if (e.key === "Escape") closeDefault();
     });
 
     // init au chargement (si modal déjà dans le DOM)

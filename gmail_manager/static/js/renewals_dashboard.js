@@ -11,14 +11,14 @@
 
       let pendingForm = null;
 
-      function openModal(title, html, withActions) {
+      function rxOpenModal(title, html, withActions) {
         if (titleEl) titleEl.textContent = title || "Information";
         if (bodyEl) bodyEl.innerHTML = html || "";
         if (actionsEl) actionsEl.style.display = withActions ? "flex" : "none";
         modal.style.display = "flex";
       }
 
-      function closeModal() {
+      function rxCloseModal() {
         modal.style.display = "none";
         pendingForm = null;
       }
@@ -37,7 +37,7 @@
         const when = (days === "0") ? "RETARD" : ("J-" + days);
 
         pendingForm = form;
-        openModal(
+        rxOpenModal(
           "Confirmation",
           `<div style="font-weight:900; margin-bottom:6px;">Confirmer l’envoi</div>
            <div>Envoyer <b>${channel}</b> au patient — Ordonnance #${pid} (${when}) ?</div>`,
@@ -48,18 +48,18 @@
       if (btnOk) {
         btnOk.addEventListener("click", function () {
           if (pendingForm) pendingForm.submit();
-          closeModal();
+          rxCloseModal();
         });
       }
       if (btnCancel) btnCancel.addEventListener("click", closeModal);
       if (btnClose) btnClose.addEventListener("click", closeModal);
 
       modal.addEventListener("click", function (e) {
-        if (e.target === modal) closeModal();
+        if (e.target === modal) rxCloseModal();
       });
 
       document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && modal.style.display !== "none") closeModal();
+        if (e.key === "Escape" && modal.style.display !== "none") rxCloseModal();
       });
 
       // Notifications Django messages => même modal, sans actions
@@ -69,6 +69,6 @@
         const html = tpl
           ? tpl.innerHTML
           : '<div style="font-weight:900; margin-bottom:10px;">Notifications</div>';
-        openModal("Notifications", html, false);
+        rxOpenModal("Notifications", html, false);
       }
 })();
