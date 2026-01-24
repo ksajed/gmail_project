@@ -51,8 +51,8 @@
           rxCloseModal();
         });
       }
-      if (btnCancel) btnCancel.addEventListener("click", rxCloseModal);
-      if (btnClose) btnClose.addEventListener("click", rxCloseModal);
+      if (btnCancel) btnCancel.addEventListener("click", closeModal);
+      if (btnClose) btnClose.addEventListener("click", closeModal);
 
       modal.addEventListener("click", function (e) {
         if (e.target === modal) rxCloseModal();
