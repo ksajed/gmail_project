@@ -1,0 +1,152 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Connexion — Ordo (Pharmacien)</title>
+
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=500">
+  <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}?v=500">
+<style>
+/* ORDO_LOGIN_PILL:BEGIN */
+.pharm-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:.2px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:0 10px 24px rgba(16,24,40,.08);
+  backdrop-filter: blur(6px);
+}
+.pharm-pill::before{
+  content:"💊";
+  display:inline-block;
+  width:22px;
+  height:22px;
+  line-height:22px;
+  text-align:center;
+  border-radius:999px;
+  background:rgba(16,185,129,.12);
+  border:1px solid rgba(16,185,129,.28);
+  font-size:13px;
+}
+/* ORDO_LOGIN_PILL:END */
+
+</style>
+</head>
+
+<body class="auth-body auth-ordo2">
+  <main class="oa-wrap" role="main">
+    <section class="oa-card2" aria-label="Connexion Ordo">
+
+      <!-- CADRE GAUCHE -->
+      <aside class="oa-left" aria-label="Présentation Ordo">
+        <div class="oa-brand">
+          <div class="oa-logo" aria-hidden="true">
+            <span class="oa-logo__a">Or</span><span class="oa-logo__b">do</span>
+          </div>
+          <div class="oa-brandtxt">
+            <div class="oa-kicker"><span class="pharm-pill">Grande Pharmacie de Fives</span></div>
+              <h1 class="oa-title">Ordo</h1>
+            <p class="oa-tagline">Accès pharmacien</p>
+          </div>
+        </div>
+
+        <div class="oa-bullets" role="list">
+          <div class="oa-bullet" role="listitem">
+            <span class="oa-ico" aria-hidden="true">✓</span>
+            <div>
+              <div class="oa-bt">Tableau de bord temps réel</div>
+              <div class="oa-bd">Statuts, tri, filtres, accès rapide aux pièces jointes.</div>
+            </div>
+          </div>
+          <div class="oa-bullet" role="listitem">
+            <span class="oa-ico" aria-hidden="true">✓</span>
+            <div>
+              <div class="oa-bt">Renouvellements maîtrisés</div>
+              <div class="oa-bd">Rappels anti-doublon + traçabilité des actions.</div>
+            </div>
+          </div>
+          <div class="oa-bullet" role="listitem">
+            <span class="oa-ico" aria-hidden="true">✓</span>
+            <div>
+              <div class="oa-bt">Synchronisation Gmail</div>
+              <div class="oa-bd">Import des ordonnances reçues par email.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="oa-leftFoot">
+          <span class="oa-pill">
+            <span class="oa-dot" aria-hidden="true"></span>
+            Accès réservé • sécurisé
+          </span>
+        </div>
+      </aside>
+
+      <!-- CADRE DROIT -->
+      <section class="oa-right" aria-label="Connexion">
+        <header class="oa-rightHead">
+          <h2 class="oa-h2">Connexion</h2>
+          <p class="oa-p">Identifiez-vous pour accéder au tableau de bord Ordo.</p>
+        </header>
+
+        {% if form.non_field_errors %}
+          <div class="oa-alert" role="alert">
+            {% for err in form.non_field_errors %}<div>{{ err }}</div>{% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="oa-rightBody">
+<form method="post" autocomplete="on" novalidate>
+          {% csrf_token %}
+            {# SAFE redirect field (ne casse jamais si next absent) #}
+            {% with rf=redirect_field_name|default:"next" rv=redirect_field_value|default:next|default:"" %}
+              <input type="hidden" name="{{ rf }}" value="{{ rv }}"/>
+            {% endwith %}
+
+{% with rf=redirect_field_name|default:"next" rv=redirect_field_value|default:next|default:"" %}
+        <input type="hidden" name="{{ rf }}" value="{{ rv }}"/>
+      {% endwith %}
+{# SAFE redirect field (ne casse jamais si next absent) #}
+<div class="field">
+            <label for="id_username">Identifiant</label>
+            <input id="id_username" name="username" type="text"
+                   value="{{ form.username.value|default_if_none:'' }}"
+                   required autofocus />
+            {% if form.username.errors %}
+              <div class="hint" style="color:var(--danger, #dc2626); font-weight:800;">
+                {{ form.username.errors|striptags }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="field">
+            <label for="id_password">Mot de passe</label>
+            <input id="id_password" name="password" type="password" required />
+            {% if form.password.errors %}
+              <div class="hint" style="color:var(--danger, #dc2626); font-weight:800;">
+                {{ form.password.errors|striptags }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="auth-actions">
+            <button type="submit" class="btn btn--primary btn--block">Se connecter</button>
+            <a class="btn btn--block" href="/">Retour</a>
+          </div>
+        </form>
+        </div>
+</section>
+
+    </section>
+  </main>
+</body>
+</html>
