@@ -1,0 +1,132 @@
+/* ORDO_AUTH_MINI:BEGIN */
+.auth-body{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:28px;
+  background:
+    radial-gradient(900px 600px at 20% 10%, rgba(16,185,129,.10), transparent 60%),
+    radial-gradient(900px 600px at 90% 20%, rgba(59,130,246,.10), transparent 55%),
+    linear-gradient(180deg, rgba(2,6,23,.03), rgba(2,6,23,0));
+}
+
+/* Layout 2 colonnes (oa-ordo2) */
+.oa-wrap{ width:100%; max-width:1040px; }
+.oa-card2{
+  display:grid;
+  grid-template-columns: 1.05fr .95fr;
+  border-radius:22px;
+  overflow:hidden;
+  background:#fff;
+  border:1px solid rgba(2,6,23,.10);
+  box-shadow:0 22px 60px rgba(2,6,23,.12);
+}
+
+/* Colonne gauche */
+.oa-left{
+  padding:26px 26px 20px 26px;
+  background: linear-gradient(135deg, rgba(16,185,129,.08), rgba(59,130,246,.06));
+  border-right:1px solid rgba(2,6,23,.08);
+}
+.oa-brand{ display:flex; gap:14px; align-items:center; }
+.oa-logo{
+  width:54px;height:54px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:950;
+  background:linear-gradient(135deg, rgba(16,185,129,.22), rgba(59,130,246,.18));
+  border:1px solid rgba(2,6,23,.10);
+  color:#0f172a;
+}
+.oa-logo__a{opacity:.95}
+.oa-logo__b{opacity:.85}
+.pharm-pill{
+  display:inline-flex;align-items:center;
+  padding:4px 10px;border-radius:999px;
+  background:rgba(15,23,42,.06);
+  border:1px solid rgba(15,23,42,.10);
+  font-weight:800;font-size:12px;color:#0f172a;
+}
+.oa-title{ margin:6px 0 0; font-size:28px; font-weight:950; color:#0f172a; }
+.oa-tagline{ margin:2px 0 0; font-weight:800; color:#475569; }
+
+.oa-bullets{ margin-top:18px; display:grid; gap:12px; }
+.oa-bullet{ display:flex; gap:10px; align-items:flex-start; }
+.oa-ico{
+  width:22px;height:22px;border-radius:8px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:rgba(16,185,129,.12);
+  border:1px solid rgba(16,185,129,.22);
+  font-weight:950;color:#065f46;
+}
+.oa-bt{ font-weight:900; color:#0f172a; font-size:13px; }
+.oa-bd{ margin-top:2px; color:#64748b; font-weight:700; font-size:12px; }
+
+.oa-leftFoot{ margin-top:18px; }
+.oa-pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 12px; border-radius:999px;
+  border:1px solid rgba(2,6,23,.10);
+  background:rgba(255,255,255,.75);
+  font-weight:850; font-size:12px; color:#0f172a;
+}
+.oa-dot{ width:8px;height:8px;border-radius:999px; background:rgba(16,185,129,.9); }
+
+/* Colonne droite */
+.oa-right{ padding:26px; background:#fff; }
+.oa-rightHead{ margin-bottom:14px; }
+.oa-h2{ margin:0; font-size:18px; font-weight:950; color:#0f172a; }
+.oa-p{ margin:6px 0 0; color:#64748b; font-weight:700; font-size:12px; }
+
+.oa-alert{
+  background:rgba(239,68,68,.08);
+  border:1px solid rgba(239,68,68,.25);
+  color:#991b1b;
+  font-weight:850;
+  padding:10px 12px;
+  border-radius:14px;
+  margin-bottom:12px;
+}
+
+.field{ margin-top:12px; }
+.field label{ display:block; font-weight:900; font-size:12px; color:#0f172a; margin-bottom:6px; }
+.field input{
+  width:100%;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(2,6,23,.14);
+  outline:none;
+  font-weight:800;
+  background:#fff;
+}
+.field input:focus{
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.12);
+}
+
+.hint{ margin-top:6px; font-size:12px; font-weight:750; color:#64748b; }
+.hint--error{ color:#dc2626; font-weight:900; }
+
+.auth-actions{ margin-top:14px; display:grid; gap:10px; }
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:10px 12px; border-radius:14px;
+  border:1px solid rgba(2,6,23,.14);
+  background:#fff;
+  color:#0f172a;
+  font-weight:950;
+  text-decoration:none;
+  cursor:pointer;
+}
+.btn--primary{
+  background: linear-gradient(135deg, rgba(16,185,129,.95), rgba(59,130,246,.92));
+  color:#fff;
+  border-color: transparent;
+}
+.btn--primary:hover{ filter:brightness(.98); }
+
+@media (max-width: 920px){
+  .oa-card2{ grid-template-columns: 1fr; }
+  .oa-left{ border-right:none; border-bottom:1px solid rgba(2,6,23,.08); }
+}
+/* ORDO_AUTH_MINI:END */

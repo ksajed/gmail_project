@@ -2,44 +2,11 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
+<meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Connexion — Ordo (Pharmacien)</title>
-
-  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=500">
-  <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
-  <link rel="stylesheet" href="{% static 'css/auth.css' %}?v=500">
-<style>
-/* ORDO_LOGIN_PILL:BEGIN */
-.pharm-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 12px;
-  border-radius:999px;
-  font-weight:800;
-  font-size:12px;
-  letter-spacing:.2px;
-  background:rgba(255,255,255,.72);
-  border:1px solid rgba(0,0,0,.08);
-  box-shadow:0 10px 24px rgba(16,24,40,.08);
-  backdrop-filter: blur(6px);
-}
-.pharm-pill::before{
-  content:"💊";
-  display:inline-block;
-  width:22px;
-  height:22px;
-  line-height:22px;
-  text-align:center;
-  border-radius:999px;
-  background:rgba(16,185,129,.12);
-  border:1px solid rgba(16,185,129,.28);
-  font-size:13px;
-}
-/* ORDO_LOGIN_PILL:END */
-
-</style>
+<link rel="stylesheet" href="{% static 'css/auth.css' %}?v=500">
 </head>
 
 <body class="auth-body auth-ordo2">
@@ -111,19 +78,13 @@
             {% with rf=redirect_field_name|default:"next" rv=redirect_field_value|default:next|default:"" %}
               <input type="hidden" name="{{ rf }}" value="{{ rv }}"/>
             {% endwith %}
-
-{% with rf=redirect_field_name|default:"next" rv=redirect_field_value|default:next|default:"" %}
-        <input type="hidden" name="{{ rf }}" value="{{ rv }}"/>
-      {% endwith %}
-{# SAFE redirect field (ne casse jamais si next absent) #}
 <div class="field">
             <label for="id_username">Identifiant</label>
             <input id="id_username" name="username" type="text"
                    value="{{ form.username.value|default_if_none:'' }}"
                    required autofocus />
             {% if form.username.errors %}
-              <div class="hint" style="color:var(--danger, #dc2626); font-weight:800;">
-                {{ form.username.errors|striptags }}
+              <div class="hint hint--error">{{ form.username.errors|striptags }}
               </div>
             {% endif %}
           </div>
@@ -132,8 +93,7 @@
             <label for="id_password">Mot de passe</label>
             <input id="id_password" name="password" type="password" required />
             {% if form.password.errors %}
-              <div class="hint" style="color:var(--danger, #dc2626); font-weight:800;">
-                {{ form.password.errors|striptags }}
+              <div class="hint hint--error">{{ form.password.errors|striptags }}
               </div>
             {% endif %}
           </div>
