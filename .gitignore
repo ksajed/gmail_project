@@ -32,3 +32,6 @@ _export/
 *.patched.*
 *.rollback.*
 >>>>>>> Stashed changes
+
+# local safety files
+*.restore-safety.*

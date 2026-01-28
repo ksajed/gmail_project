@@ -929,13 +929,15 @@
                       <div class="history-content">
                         <div class="history-main">
                           <span class="history-user">{{ h.changed_by|default:"Système" }}</span>
-                          <span class="history-ico history-ico--status" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="history-badge history-badge--status">STATUT</span>
-                          <span class="history-label">a mis à jour le statut</span>
-                          <span class="history-status">
-                            {{ h.get_old_status_display }}
-                            <span class="history-arrow" aria-hidden="true">→</span>
-                            {{ h.get_new_status_display }}
-                          </span>
+<span class="history-label">Action sur l’ordonnance</span>
+                          {% if h.old_status != h.new_status %}
+                            <span class="history-status">
+                              {% comment %}Affiché uniquement si changement réel de statut{% endcomment %}
+                              {{ h.get_old_status_display }}
+                              <span class="history-arrow" aria-hidden="true">→</span>
+                              {{ h.get_new_status_display }}
+                            </span>
+                          {% endif %}
                         </div>
 
                         {% if h.comment %}
