@@ -25,6 +25,8 @@
 
         <div class="field" style="margin-top:8px;">
           <label for="sms_target">Destinataire(s)</label>
+          
+
           <select name="sms_target" id="sms_target">
             <option value="patient" selected>Patient uniquement</option>
             {% if assigned_nurse %}
@@ -60,6 +62,53 @@
         </script>
         <!-- SMS_UI:END -->
 
+
+  <!-- EMAIL_CHANNEL:BEGIN -->
+  <div class="row" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-top:10px;">
+    <label style="display:flex; gap:8px; align-items:center;">
+      <input type="checkbox" name="send_email" value="1">
+      <span>Envoyer Email</span>
+    </label>
+
+    <div style="min-width:240px;">
+      <label style="display:block; font-weight:800; font-size:12px; color:var(--muted); margin-bottom:6px;">
+        Destinataire Email
+      </label>
+      <select name="email_target">
+        <option value="patient">Patient uniquement</option>
+        {% if assigned_nurse %}
+          <option value="nurse">Infirmier(ère) uniquement</option>
+          <option value="both">Patient + infirmier(ère)</option>
+        {% endif %}
+      </select>
+    </div>
+  </div>
+  <!-- EMAIL_CHANNEL:END -->
+
+
+    <!-- EMAIL_UI:BEGIN -->
+    <script>
+      (function() {
+        const form = document.currentScript.closest('form');
+        if (!form) return;
+        const cb = form.querySelector('input[name="send_email"]');
+        const sel = form.querySelector('select[name="email_target"]');
+        if (!cb || !sel) return;
+
+        function sync() {
+          if (cb.checked) {
+            sel.required = true;
+            sel.disabled = false;
+          } else {
+            sel.required = false;
+            sel.disabled = true;
+          }
+        }
+        cb.addEventListener('change', sync);
+        sync();
+      })();
+    </script>
+    <!-- EMAIL_UI:END -->
       <div class="field">
         <label>Changer le statut</label>
         <select name="status" required>

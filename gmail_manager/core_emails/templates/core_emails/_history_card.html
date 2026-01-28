@@ -43,9 +43,9 @@
                   </span>
 
                   <span class="history-status">
-                    {{ entry.old_status }}
+                    {{ entry.get_old_status_display }}
                     <span class="history-arrow" aria-hidden="true">→</span>
-                    {{ entry.new_status }}
+                    {{ entry.get_new_status_display }}
                   </span>
 
                 </div>

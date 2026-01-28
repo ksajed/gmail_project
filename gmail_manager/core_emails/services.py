@@ -28,7 +28,7 @@ def status_label(enum: PrescriptionStatusEnum) -> str:
 
 
 @transaction.atomic
-def change_prescription_status(*, prescription, new_status, user=None, comment=""):
+def change_prescription_status(*, prescription, new_status, user=None, comment="", notify_patient_email: bool = True):
     """
     🔒 MÉTHODE UNIQUE ET OFFICIELLE POUR CHANGER UN STATUT D’ORDONNANCE
 

@@ -101,3 +101,38 @@
     font-size: 13px;
   }
 }
+
+/* BADGES:BEGIN */
+/* Badges type d'événement (Statut / Renouvellement) */
+.history-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:950;
+  letter-spacing:.2px;
+  border:1px solid rgba(15,23,42,.10);
+  white-space:nowrap;
+}
+
+.history-badge--status{
+  color: var(--info);
+  background: var(--info-soft);
+  border-color: rgba(55,48,163,.18);
+}
+
+.history-badge--renewal{
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: rgba(180,83,9,.20);
+}
+
+/* Accent visuel léger par type */
+.history-item--status .history-comment{
+  border-left-color: rgba(55,48,163,.25);
+}
+.history-item--renewal .history-comment{
+  border-left-color: rgba(180,83,9,.25);
+}
+/* BADGES:END */

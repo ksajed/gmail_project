@@ -24,6 +24,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.dateparse import parse_date
 from django.core.mail import send_mail
 
+from core_emails.emailing import send_status_email_to
 from django.core.validators import validate_email
 from django.db import transaction
 # =====================================================
@@ -55,7 +56,7 @@ from core_people.models import Person
 
 # (Optionnel) Si tu utilises Patient
 from core_patients.models import Patient
-from core_notifications.services import send_sms_logged
+from core_notifications.services import send_sms_logged, normalize_phone_e164
 from core_notifications.models import SmsPurpose
 
 
@@ -443,6 +444,13 @@ def change_status(request, pk):
         send_sms = False
     # SMS_POST:END
 
+
+    # EMAIL_POST:BEGIN
+    send_email = request.POST.get("send_email") in ("1", "true", "True", "on", "yes")
+    email_target = request.POST.get("email_target", "").strip()  # patient|nurse|both
+    if send_email and email_target not in ("patient", "nurse", "both"):
+        email_target = "patient"
+    # EMAIL_POST:END
     new_status = request.POST.get("status")
     if not new_status:
         messages.warning(request, "Aucun statut sélectionné.")
@@ -500,7 +508,7 @@ def change_status(request, pk):
         patient = getattr(prescription, "patient", None)
         patient_phone = None
         if patient:
-            patient_phone = getattr(patient, "phone", None) or getattr(patient, "mobile", None)
+            patient_phone = getattr(patient, "phone_number", None)
 
         # Nurse phone (si affectée)
         nurse_phone = None
@@ -533,20 +541,51 @@ def change_status(request, pk):
         msg_nurse = f"Statut ordonnance mis à jour : {label}."
 
         for who, phone in recipients:
-            # On envoie seulement si format international (+33...)
-            if phone.startswith("+"):
-                text = msg_patient if who == "patient" else msg_nurse
-                try:
-                    send_sms_logged(
-                        to_e164=phone,
-                        text=text,
-                        purpose=SmsPurpose.STATUS_UPDATE,
-                        template_key=f"PRESCRIPTION_STATUS_{prescription.status}_{who}".upper(),
-                        prescription=prescription,
-                    )
-                except Exception:
-                    pass
+            text = msg_patient if who == "patient" else msg_nurse
+            try:
+                send_sms_logged(
+                    to_e164=phone,
+                    text=text,
+                    purpose=SmsPurpose.STATUS_UPDATE,
+                    template_key=f"PRESCRIPTION_STATUS_{prescription.status}_{who}".upper(),
+                    prescription=prescription,
+                )
+            except Exception:
+                pass
     # SMS_SEND:END
+
+
+    # EMAIL_SEND:BEGIN
+    if status_changed and send_email and email_target in ("nurse", "both"):
+        # Nurse email (si affectée)
+        nurse_email = None
+        try:
+            assignment = (
+                PrescriptionAssignment.objects
+                .select_related("nurse")
+                .filter(prescription=prescription)
+                .first()
+            )
+            nurse = assignment.nurse if assignment and assignment.nurse else None
+            if nurse and getattr(nurse, "email", None):
+                nurse_email = str(getattr(nurse, "email", "")).strip()
+        except Exception:
+            nurse_email = None
+
+        if nurse_email:
+            try:
+                # Email “étapes” au référent infirmier (organisationnel)
+                send_status_email_to(
+                    to_email=nurse_email,
+                    prescription=prescription,
+                    old_status=prescription.status,  # le modèle a déjà été refresh plus haut
+                    new_status=prescription.status,
+                    user=request.user,
+                    recipient_role="nurse",
+                )
+            except Exception:
+                pass
+    # EMAIL_SEND:END
 
     return redirect("core_emails:prescription_detail", pk=pk)
 

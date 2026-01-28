@@ -9,6 +9,7 @@
   <title>Ordonnance n°{{ prescription.id }}</title>
 
     <link rel="stylesheet" href="{% static 'css/theme.css' %}?v=500">
+    <link rel="stylesheet" href="{% static 'css/history.css' %}?v=500">
   <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=500">
 <style>
 *{ box-sizing:border-box; }
@@ -656,30 +657,66 @@
 
         <div class="divider" style="margin:12px 0;"></div>
 
+
         <!-- HISTORIQUE -->
         <h4 style="margin:0 0 8px 0;">Historique des renouvellements</h4>
 
-        {% if renewal_events %}
-          <table style="width:100%; border-collapse:collapse;">
-            <thead>
-              <tr>
-                <th style="text-align:left; padding:6px;">#</th>
-                <th style="text-align:left; padding:6px;">Date</th>
-                <th style="text-align:left; padding:6px;">Utilisateur</th>
-                <th style="text-align:left; padding:6px;">Note</th>
-              </tr>
-            </thead>
-            <tbody>
+        
+          {% if renewal_events %}
+            <ul class="history-list" role="list">
               {% for ev in renewal_events %}
-                <tr>
-                  <td style="padding:6px;">{{ ev.number }}</td>
-                  <td style="padding:6px;">{{ ev.ordered_at }}</td>
-                  <td style="padding:6px;">{% if ev.created_by %}{{ ev.created_by }}{% else %}—{% endif %}</td>
-                  <td style="padding:6px;">{{ ev.note|default:"" }}</td>
-                </tr>
+                <li class="history-item history-item--renewal" role="listitem">
+                  <div class="history-row">
+
+                    <div class="history-time">
+                      {% if ev.ordered_at %}
+                        <span class="history-date">{{ ev.ordered_at|date:"d/m/Y" }}</span>
+                        <span class="history-hour">{{ ev.ordered_at|date:"H:i" }}</span>
+                      {% else %}
+                        <span class="history-date">—</span>
+                        <span class="history-hour">—</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="history-content">
+                      <div class="history-main">
+                        <span class="history-user">{{ ev.created_by|default:"Système" }}</span>
+                        <span class="history-ico history-ico--renewal" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M3 12a9 9 0 109-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M3 3v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                        </span>
+                        <span class="history-badge history-badge--renewal">RENOUVELLEMENT</span>
+                        <span class="history-label">a enregistré le renouvellement</span>
+                        <span class="history-status">#{{ ev.number }}</span>
+                      </div>
+
+                      {% if ev.note %}
+                        <div class="history-comment">{{ ev.note|linebreaksbr }}</div>
+                      {% endif %}
+                    </div>
+
+                  </div>
+                </li>
               {% endfor %}
-            </tbody>
-          </table>
+            </ul>
+          {% else %}
+            <div class="hint">Aucun renouvellement enregistré.</div>
+          {% endif %}
+</div>
+
+                  <div class="history-content">
+                    <div class="history-main">
+                      <span class="history-user">{{ ev.created_by|default:"Système" }}</span>
+                      <span class="history-ico history-ico--renewal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 109-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 3v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="history-badge history-badge--renewal">RENOUVELLEMENT</span>
+                      <span class="history-label">a enregistré le renouvellement</span>
+                      <span class="history-status">#{{ ev.number }}</span>
+                    </div>
+
+                    {% if ev.note %}
+                      <div class="history-comment">{{ ev.note|linebreaksbr }}</div>
+                    {% endif %}
         {% else %}
           <div class="hint">Aucun renouvellement enregistré.</div>
         {% endif %}
@@ -698,8 +735,7 @@
 
       <button type="submit" class="btn btn--sm">Email médecin</button>
     </form>
-  </div>
-{% endif %}
+</div>
 
           <!-- TYPE D’ORDONNANCE (EXPÉDITEUR) -->
           <form method="post" action="{% url 'core_emails:change_sender_type' prescription.id %}">
@@ -818,7 +854,7 @@
               </li>
             {% empty %}
               <li class="v muted">Aucune pièce jointe.</li>
-            {% endfor %}
+              {% endfor %}
           </ul>
         </div>
       </section>
@@ -872,35 +908,45 @@
                 <path d="M12 7v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </span>
-            Historique
+            Journal des actions
           </h3>
-          <span class="chip">{{ history|length }} entrée(s)</span>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="chip">{{ history|length }} entrée(s)</span><span class="chip" style="color:var(--info); background:var(--info-soft); border-color:rgba(55,48,163,.22);">Traçabilité</span></div>
         </div>
 
         <div class="card__body">
-          {% if history %}
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th class="col-date">Date</th>
-                    <th class="col-user">Utilisateur</th>
-                    <th class="col-action">Action</th>
-                    <th class="col-comment">Commentaire</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for h in history %}
-                    <tr>
-                      <td class="nowrap col-date">{{ h.changed_at|date:"d/m/Y H:i" }}</td>
-                      <td class="col-user">{{ h.changed_by|default:"Système" }}</td>
-                      <td class="nowrap col-action">{{ h.old_status }} → {{ h.new_status }}</td>
-                      <td class="comment col-comment">{{ h.comment|default:"—" }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+          <div class="hint" style="margin:0 0 10px 0;">Historique opposable : toutes les actions (statut, notifications, renouvellements) sont horodatées et attribuées.</div>
+            {% if history %}
+              <ul class="history-list" role="list">
+                {% for h in history %}
+                  <li class="history-item history-item--status" role="listitem">
+                    <div class="history-row">
+
+                      <div class="history-time">
+                        <span class="history-date">{{ h.changed_at|date:"d/m/Y" }}</span>
+                        <span class="history-hour">{{ h.changed_at|date:"H:i" }}</span>
+                      </div>
+
+                      <div class="history-content">
+                        <div class="history-main">
+                          <span class="history-user">{{ h.changed_by|default:"Système" }}</span>
+                          <span class="history-ico history-ico--status" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="history-badge history-badge--status">STATUT</span>
+                          <span class="history-label">a mis à jour le statut</span>
+                          <span class="history-status">
+                            {{ h.get_old_status_display }}
+                            <span class="history-arrow" aria-hidden="true">→</span>
+                            {{ h.get_new_status_display }}
+                          </span>
+                        </div>
+
+                        {% if h.comment %}
+                          <div class="history-comment">{{ h.comment|linebreaksbr }}</div>
+                        {% endif %}
+                      </div>
+
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
           {% else %}
             <div class="v muted">Aucun historique disponible.</div>
           {% endif %}
