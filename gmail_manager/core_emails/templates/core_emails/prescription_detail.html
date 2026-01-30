@@ -351,6 +351,169 @@
       background:var(--surface-2);
       flex-wrap:wrap;
     }
+
+/* HTIMELINE_ADVANCED_START */
+  /* Timeline historique avancée — scoped */
+  .history-timeline{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+
+  .history-day{
+    margin:14px 0 8px 0;
+  }
+
+  .history-day__label{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-weight:950;
+    font-size:12px;
+    color:var(--muted);
+    background:var(--info-soft);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:6px 10px;
+  }
+
+  .history-event{
+    display:grid;
+    grid-template-columns:18px minmax(0, 1fr);
+    gap:10px;
+    margin:0 0 12px 0;
+  }
+
+  .history-event__rail{
+    position:relative;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+  }
+
+  .history-dot{
+    width:10px;
+    height:10px;
+    border-radius:999px;
+    background:var(--primary);
+    margin-top:14px;
+    box-shadow:0 0 0 3px rgba(15,23,42,0.06);
+  }
+
+  .history-line{
+    position:absolute;
+    top:26px;
+    bottom:-14px;
+    width:2px;
+    background:var(--border);
+  }
+
+  .history-event:last-child .history-line{
+    display:none;
+  }
+
+  .history-event__card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:12px 12px;
+  }
+
+  .history-event__top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .history-when{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:120px;
+  }
+
+  .history-when__time{
+    font-weight:950;
+    font-size:13px;
+  }
+
+  .history-when__meta{
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  .history-action{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .history-badge{
+    display:inline-flex;
+    align-items:center;
+    border:1px solid var(--border);
+    background:rgba(15,23,42,0.04);
+    border-radius:999px;
+    padding:6px 10px;
+    font-weight:950;
+    font-size:12px;
+    white-space:nowrap;
+  }
+
+  .history-badge--new{
+    background:var(--primary-soft);
+    border-color:rgba(22,163,74,0.35);
+  }
+
+  .history-arrow{
+    color:var(--muted);
+    font-weight:950;
+  }
+
+  .history-comment{
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed var(--border);
+    color:var(--text);
+    font-size:13px;
+    line-height:1.35;
+    white-space:normal;
+  }
+
+  @media (max-width: 720px){
+    .history-event__top{
+      flex-direction:column;
+      align-items:flex-start;
+    }
+    .history-when{
+      min-width:unset;
+    }
+    .history-action{
+      justify-content:flex-start;
+    }
+  }
+  /* HISTORY_ACTION_LABEL_CSS_START */
+  .history-action-label{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid var(--border);
+    background:rgba(37,99,235,0.08);
+    color:var(--text);
+    border-radius:999px;
+    padding:6px 10px;
+    font-weight:950;
+    font-size:12px;
+    white-space:nowrap;
+  }
+  /* HISTORY_ACTION_LABEL_CSS_END */
+
+  /* HTIMELINE_ADVANCED_END */
+
+
   </style>
 </head>
 
@@ -614,32 +777,8 @@
         </div>
 
         <div class="card__body">
-          {% if history %}
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th class="col-date">Date</th>
-                    <th class="col-user">Utilisateur</th>
-                    <th class="col-action">Action</th>
-                    <th class="col-comment">Commentaire</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for h in history %}
-                    <tr>
-                      <td class="nowrap col-date">{{ h.changed_at|date:"d/m/Y H:i" }}</td>
-                      <td class="col-user">{{ h.changed_by|default:"Système" }}</td>
-                      <td class="nowrap col-action">{{ h.old_status }} → {{ h.new_status }}</td>
-                      <td class="comment col-comment">{{ h.comment|default:"—" }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="v muted">Aucun historique disponible.</div>
-          {% endif %}
+          {% include 'core_emails/_history_timeline.html' %}
+
         </div>
       </section>
 

@@ -1,0 +1,101 @@
+{# Timeline historique avancée (UI) — réutilise `history` du context #}
+{# Contrat: `history` (queryset), `today_ymd` (str), `yesterday_ymd` (str) #}
+
+{% if history %}
+  <ol class="history-timeline" role="list">
+    {% for h in history %}
+      {# Header de date : affiché quand la date change #}
+      {% ifchanged h.changed_at|date:"Y-m-d" %}
+        {% with d=h.changed_at|date:"Y-m-d" %}
+          <li class="history-day" role="listitem" aria-hidden="true">
+            <span class="history-day__label">
+              {% if d == today_ymd %}
+                Aujourd’hui
+              {% elif d == yesterday_ymd %}
+                Hier
+              {% else %}
+                {{ h.changed_at|date:"d/m/Y" }}
+              {% endif %}
+            </span>
+          </li>
+        {% endwith %}
+      {% endifchanged %}
+
+      <li class="history-event" role="listitem">
+        <div class="history-event__rail" aria-hidden="true">
+          <span class="history-dot"></span>
+          <span class="history-line"></span>
+        </div>
+
+        <div class="history-event__card">
+          <div class="history-event__top">
+            <div class="history-when">
+              <span class="history-when__time">{{ h.changed_at|date:"H:i" }}</span>
+              <span class="history-when__meta">
+                par <strong>{{ h.changed_by|default:"Système" }}</strong>
+              </span>
+            </div>
+
+            <!-- HISTORY_ACTION_LABEL_START -->
+
+
+            <div class="history-action">
+
+
+              {% if h.old_status == h.new_status %}
+
+
+                <span class="history-action-label" title="Action">
+
+
+                  {% if h.comment %}Note ajoutée{% else %}Mise à jour (sans changement de statut){% endif %}
+
+
+                </span>
+
+
+              {% else %}
+
+
+                <span class="history-badge" title="Statut précédent">
+
+
+                  {{ h.get_old_status_display|default:"—" }}
+
+
+                </span>
+
+
+                <span class="history-arrow" aria-hidden="true">→</span>
+
+
+                <span class="history-badge history-badge--new" title="Nouveau statut">
+
+
+                  {{ h.get_new_status_display|default:"—" }}
+
+
+                </span>
+
+
+              {% endif %}
+
+
+            </div>
+
+
+            <!-- HISTORY_ACTION_LABEL_END -->
+          </div>
+
+          {% if h.comment %}
+            <div class="history-comment">
+              {{ h.comment|linebreaksbr }}
+            </div>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+{% else %}
+  <div class="v muted">Aucun historique disponible.</div>
+{% endif %}
