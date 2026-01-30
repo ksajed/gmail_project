@@ -182,6 +182,18 @@ class Prescription(models.Model):
 # =====================================================
 # HISTORIQUE DES CHANGEMENTS DE STATUT
 # =====================================================
+    @property
+    def assigned_nurse(self):
+        """Compat: retourne l'infirmier affecté via PrescriptionAssignment si présent."""
+        a = getattr(self, "assignment", None)
+        if not a:
+            return None
+        return getattr(a, "nurse", None)
+
+    @property
+    def has_assigned_nurse(self) -> bool:
+        return self.assigned_nurse is not None
+
 class PrescriptionStatusHistory(models.Model):
     """
     Historique légal et opposable
@@ -333,3 +345,104 @@ def trace_prescription_type(sender, instance, **kwargs):
 def ensure_renewal_info(sender, instance, created, **kwargs):
     if instance.type == PrescriptionType.RENOUVELLEMENT:
         PrescriptionRenewalInfo.objects.get_or_create(prescription=instance)
+
+
+# =====================================================
+# 🔔 PARAMÉTRAGE NOTIFICATIONS PAR ORDONNANCE (V8)
+# =====================================================
+
+class PrescriptionNotificationSettings(models.Model):
+    prescription = models.OneToOneField(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="notification_settings"
+    )
+
+    patient_channel = models.CharField(
+        max_length=10,
+        choices=[
+            ("NONE", "NONE"),
+            ("SMS", "SMS"),
+            ("EMAIL", "EMAIL"),
+            ("BOTH", "BOTH"),
+        ],
+        default="NONE"
+    )
+
+    nurse_channel = models.CharField(
+        max_length=10,
+        choices=[
+            ("NONE", "NONE"),
+            ("SMS", "SMS"),
+            ("EMAIL", "EMAIL"),
+            ("BOTH", "BOTH"),
+        ],
+        default="NONE"
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"NotificationSettings(prescription={self.prescription_id})"
+
+
+class PrescriptionNotificationEvent(models.Model):
+    prescription = models.ForeignKey(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="notification_events"
+    )
+
+    recipient_type = models.CharField(
+        max_length=10,
+        choices=[
+            ("PATIENT", "PATIENT"),
+            ("NURSE", "NURSE"),
+        ]
+    )
+
+    channel = models.CharField(
+        max_length=10,
+        choices=[
+            ("NONE", "NONE"),
+            ("SMS", "SMS"),
+            ("EMAIL", "EMAIL"),
+            ("BOTH", "BOTH"),
+        ]
+    )
+
+    destination = models.CharField(max_length=255)
+
+    result = models.CharField(
+        max_length=10,
+        choices=[
+            ("SENT", "SENT"),
+            ("FAILED", "FAILED"),
+            ("SKIPPED", "SKIPPED"),
+        ]
+    )
+
+    error_message = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_notification_events",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return (
+            f"NotificationEvent("
+            f"p={self.prescription_id}, "
+            f"{self.recipient_type}, "
+            f"{self.channel}, "
+            f"{self.result}"
+            f")"
+        )

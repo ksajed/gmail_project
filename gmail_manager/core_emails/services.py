@@ -139,6 +139,20 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         user=user,
     )
 
+
+    # =====================================================
+    # 🔔 NOTIFICATIONS PARAMÉTRÉES PAR ORDONNANCE (V8)
+    # =====================================================
+    settings = getattr(prescription, "notification_settings", None)
+    if settings:
+        from core_emails.services import send_prescription_notifications
+        send_prescription_notifications(
+            prescription=prescription,
+            user=user,
+            patient_channel=settings.patient_channel,
+            nurse_channel=settings.nurse_channel,
+        )
+
     return prescription
 
 #====================================================
@@ -305,3 +319,130 @@ def compute_renewals_watch_from_delivered():
     overdue.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
 
     return due_5, due_3, overdue
+
+
+# =====================================================
+# 🔔 NOTIFICATIONS — SERVICE PAR ORDONNANCE (V8)
+# =====================================================
+
+def send_prescription_notifications(
+    *,
+    prescription,
+    user,
+    patient_channel,
+    nurse_channel,
+):
+    """
+    Envoi conditionnel SMS / EMAIL selon le paramétrage
+    STRICTEMENT lié à l'ordonnance.
+
+    - AUCUNE configuration globale
+    - Traçabilité complète via PrescriptionNotificationEvent
+    """
+
+    from django.core.mail import send_mail
+    from core_notifications.services import send_sms_logged
+    from core_emails.models import (
+        PrescriptionNotificationEvent,
+    )
+
+    def log_event(recipient_type, channel, destination, result, error=""):
+        PrescriptionNotificationEvent.objects.create(
+            prescription=prescription,
+            recipient_type=recipient_type,
+            channel=channel,
+            destination=destination or "-",
+            result=result,
+            error_message=error or "",
+            created_by=user,
+        )
+
+    # =========================
+    # PATIENT
+    # =========================
+    patient = getattr(prescription, "patient", None)
+
+    if patient_channel == "NONE":
+        log_event("PATIENT", "NONE", "-", "SKIPPED")
+    else:
+        # SMS patient
+        if patient_channel in ("SMS", "BOTH"):
+            phone = getattr(patient, "phone_number", None) if patient else None
+            if not phone:
+                log_event("PATIENT", "SMS", "-", "FAILED", "Téléphone patient manquant")
+            else:
+                try:
+                    send_sms_logged(
+                        to_e164=phone,
+                        text=f"Statut ordonnance #{prescription.id} mis à jour.",
+                        prescription=prescription,
+                    )
+                    log_event("PATIENT", "SMS", phone, "SENT")
+                except Exception as e:
+                    log_event("PATIENT", "SMS", phone, "FAILED", str(e))
+
+        # EMAIL patient
+        if patient_channel in ("EMAIL", "BOTH"):
+            email = getattr(patient, "email", None) if patient else None
+            if not email:
+                log_event("PATIENT", "EMAIL", "-", "FAILED", "Email patient manquant")
+            else:
+                try:
+                    send_mail(
+                        subject="Mise à jour de votre ordonnance",
+                        message=(
+                            f"Le statut de votre ordonnance "
+                            f"#{prescription.id} a été mis à jour."
+                        ),
+                        from_email=None,
+                        recipient_list=[email],
+                        fail_silently=False,
+                    )
+                    log_event("PATIENT", "EMAIL", email, "SENT")
+                except Exception as e:
+                    log_event("PATIENT", "EMAIL", email, "FAILED", str(e))
+
+    # =========================
+    # INFIRMIER (si associé)
+    # =========================
+    nurse = prescription.assigned_nurse
+    if not nurse:
+        return
+
+    if nurse_channel == "NONE":
+        log_event("NURSE", "NONE", "-", "SKIPPED")
+        return
+
+    # SMS infirmier
+    if nurse_channel in ("SMS", "BOTH"):
+        phone = getattr(nurse, "phone_number", None)
+        if not phone:
+            log_event("NURSE", "SMS", "-", "FAILED", "Téléphone infirmier manquant")
+        else:
+            try:
+                send_sms_logged(
+                    to_e164=phone,
+                    text=f"Ordonnance #{prescription.id} mise à jour.",
+                    prescription=prescription,
+                )
+                log_event("NURSE", "SMS", phone, "SENT")
+            except Exception as e:
+                log_event("NURSE", "SMS", phone, "FAILED", str(e))
+
+    # EMAIL infirmier
+    if nurse_channel in ("EMAIL", "BOTH"):
+        email = getattr(nurse, "email", None)
+        if not email:
+            log_event("NURSE", "EMAIL", "-", "FAILED", "Email infirmier manquant")
+        else:
+            try:
+                send_mail(
+                    subject="Ordonnance mise à jour",
+                    message=f"Ordonnance #{prescription.id} : statut mis à jour.",
+                    from_email=None,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                log_event("NURSE", "EMAIL", email, "SENT")
+            except Exception as e:
+                log_event("NURSE", "EMAIL", email, "FAILED", str(e))

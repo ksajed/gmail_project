@@ -109,4 +109,12 @@ urlpatterns = [
         views.send_renewal_doctor_email,
         name="send_renewal_doctor_email",
     ),
+
+    # 🔔 NOTIFICATIONS — PARAMÉTRAGE PAR ORDONNANCE (V8)
+    path(
+        "prescription/<int:prescription_id>/notifications/",
+        views.update_prescription_notification_settings,
+        name="update_prescription_notification_settings",
+    ),
+
 ]

@@ -766,7 +766,7 @@
             Infirmier
           </h3>
 
-          {% if prescription.assignment %}
+          {% if prescription.assignment and prescription.assignment.nurse %}
             <span class="badge badge--success"><span class="dot"></span>Affecté</span>
           {% else %}
             <span class="chip">Non affecté</span>
@@ -774,7 +774,7 @@
         </div>
 
         <div class="card__body">
-          {% if prescription.assignment %}
+          {% if prescription.assignment and prescription.assignment.nurse %}
             <dl class="kv">
               <dt class="k">Infirmier</dt><dd class="v">{{ prescription.assignment.nurse }}</dd>
             </dl>
@@ -812,7 +812,51 @@
         </div>
       </section>
 
-      <!-- PIÈCES JOINTES -->
+      
+        <!-- NOTIFICATIONS (COURANT) -->
+        <section class="card">
+          <div class="card__header">
+            <h3 class="card__title">
+              <span class="ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M18 16v-5a6 6 0 10-12 0v5l-2 2h16l-2-2z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+              </span>
+              Notifications
+            </h3>
+            <span class="chip">Par ordonnance</span>
+          </div>
+
+          <div class="card__body">
+            <dl class="kv">
+              <dt class="k">Patient</dt>
+              <dd class="v"><span class="chip">
+                    {{ prescription.notification_settings.patient_channel|default:"NONE" }}
+                  </span>
+                
+              </dd>
+
+              {% if prescription.assignment and prescription.assignment.nurse %}
+              <dt class="k">Infirmier</dt>
+              <dd class="v"><span class="chip">
+                    {{ prescription.notification_settings.nurse_channel|default:"NONE" }}
+                  </span>
+                
+              </dd>
+              {% endif %}
+            </dl>
+
+            <div class="divider"></div>
+
+            <button class="btn btn--sm" type="button"
+                    onclick="openModal('notificationsSettingsModal')">
+              ⚙️ Paramétrer
+            </button>
+          </div>
+        </section>
+
+<!-- PIÈCES JOINTES -->
       <section class="card full">
         <div class="card__header">
           <h3 class="card__title">
@@ -1250,6 +1294,100 @@
   {% endif %}
 {% endfor %}
 <!-- RENEWAL_DONE_MODAL:END -->
+
+
+<!-- MODAL — PARAMÉTRAGE NOTIFICATIONS -->
+<div class="modal" id="notificationsSettingsModal" aria-hidden="true">
+  <div class="modal__content">
+    <div class="modal__header">
+      <h3>Paramétrage des notifications</h3>
+      <button type="button" class="modal__close"
+              onclick="closeModal('notificationsSettingsModal')">×</button>
+    </div>
+
+    <form method="post"
+{% if prescription.status != "ARCHIVED" %}
+          action="{% url 'core_emails:update_prescription_notification_settings' prescription.id %}">
+      {% csrf_token %}
+
+      
+      <div class="field">
+        <label>Patient</label>
+
+        <label class="radio">
+          <input type="radio" name="patient_channel" value="NONE"
+            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "NONE" %}checked{% endif %}>
+          NONE
+        </label>
+
+        <label class="radio">
+          <input type="radio" name="patient_channel" value="SMS"
+            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "SMS" %}checked{% endif %}>
+          SMS
+        </label>
+
+        <label class="radio">
+          <input type="radio" name="patient_channel" value="EMAIL"
+            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "EMAIL" %}checked{% endif %}>
+          EMAIL
+        </label>
+
+        <label class="radio">
+          <input type="radio" name="patient_channel" value="BOTH"
+            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "BOTH" %}checked{% endif %}>
+          BOTH
+        </label>
+      </div>
+    
+
+      {% if prescription.assignment and prescription.assignment.nurse %}
+      
+      <div class="field">
+        <label>Infirmier</label>
+
+        <label class="radio">
+          <input type="radio" name="nurse_channel" value="NONE"
+            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "NONE" %}checked{% endif %}>
+          NONE
+        </label>
+
+        <label class="radio">
+          <input type="radio" name="nurse_channel" value="SMS"
+            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "SMS" %}checked{% endif %}>
+          SMS
+        </label>
+
+        <label class="radio">
+          <input type="radio" name="nurse_channel" value="EMAIL"
+            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "EMAIL" %}checked{% endif %}>
+          EMAIL
+        </label>
+
+        <label class="radio">
+          <input type="radio" name="nurse_channel" value="BOTH"
+            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "BOTH" %}checked{% endif %}>
+          BOTH
+        </label>
+      </div>
+    
+      {% endif %}
+
+      <div class="modal__footer">
+        <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
+        <button type="button" class="btn btn--sm"
+                onclick="closeModal('notificationsSettingsModal')">
+          Annuler
+        </button>
+      </div>
+    </form>
+{% else %}
+<div class="muted" style="margin-top:10px; padding:10px; border:1px dashed #ccc; border-radius:10px;">
+  Ordonnance archivée : le paramétrage des notifications est désactivé.
+</div>
+{% endif %}
+  </div>
+</div>
+
 
 </body>
 </html>

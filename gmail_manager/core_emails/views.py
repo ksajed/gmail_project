@@ -331,7 +331,7 @@ def prescription_detail(request, pk):
         (enum.value, enum.name.replace("_", " ").title()) for enum in allowed_enums
     ]
 
-    persons_nurses = Person.objects.filter(role="nurse").order_by("last_name", "first_name")
+    persons_nurses = Person.objects.filter(role__in=["nurse","NURSE"]).order_by("last_name", "first_name")
     renewal_info = None
     renewal_remaining = None
 
@@ -543,7 +543,7 @@ def assign_nurse(request, pk):
         messages.warning(request, "Aucun infirmier sélectionné.")
         return redirect("core_emails:prescription_detail", pk=pk)
 
-    nurse = get_object_or_404(Person, pk=nurse_id, role="nurse")
+    nurse = get_object_or_404(Person, pk=nurse_id, role__in=["nurse","NURSE"])
 
     assignment, _ = PrescriptionAssignment.objects.get_or_create(prescription=prescription)
     assignment.nurse = nurse
@@ -1304,3 +1304,32 @@ def update_renewal_info(request, pk):
     messages.success(request, "Infos renouvellement enregistrées.")
     return redirect("core_emails:prescription_detail", pk=pk)
 
+
+
+# =====================================================
+# 🔔 PARAMÉTRAGE NOTIFICATIONS — POST UNIQUEMENT (V8)
+# =====================================================
+
+@login_required
+@require_POST
+def update_prescription_notification_settings(request, prescription_id):
+    from .models import PrescriptionNotificationSettings, Prescription
+
+    prescription = get_object_or_404(Prescription, pk=prescription_id)
+
+    settings_obj, _ = PrescriptionNotificationSettings.objects.get_or_create(
+        prescription=prescription
+    )
+
+    settings_obj.patient_channel = request.POST.get("patient_channel", "NONE")
+
+    # Infirmier : uniquement si associé
+    if prescription.assigned_nurse:
+        settings_obj.nurse_channel = request.POST.get("nurse_channel", "NONE")
+    else:
+        settings_obj.nurse_channel = "NONE"
+
+    settings_obj.save(update_fields=["patient_channel", "nurse_channel", "updated_at"])
+
+    messages.success(request, "Paramétrage des notifications mis à jour.")
+    return redirect("core_emails:prescription_detail", prescription.id)
