@@ -1324,12 +1324,25 @@ def update_prescription_notification_settings(request, prescription_id):
     settings_obj.patient_channel = request.POST.get("patient_channel", "NONE")
 
     # Infirmier : uniquement si associé
-    if prescription.assigned_nurse:
+    if getattr(prescription, 'assignment', None) and getattr(prescription.assignment, 'nurse', None):
         settings_obj.nurse_channel = request.POST.get("nurse_channel", "NONE")
     else:
         settings_obj.nurse_channel = "NONE"
 
     settings_obj.save(update_fields=["patient_channel", "nurse_channel", "updated_at"])
+
+    # Trace opposable (historique) : paramétrage notifications
+    PrescriptionStatusHistory.objects.create(
+        prescription=prescription,
+        old_status=prescription.status,
+        new_status=prescription.status,
+        changed_by=request.user,
+        comment=(
+            'Paramétrage notifications mis à jour : '
+            f"patient={settings_obj.patient_channel or 'NONE'}, "
+            f"infirmier={settings_obj.nurse_channel or 'NONE'}"
+        ),
+    )
 
     messages.success(request, "Paramétrage des notifications mis à jour.")
     return redirect("core_emails:prescription_detail", prescription.id)

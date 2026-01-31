@@ -1,11 +1,15 @@
 {# core_emails/prescription_detail.html #}
 {% load prescription_extras %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Ordonnance n°{{ prescription.id }}</title>
+
+  <!-- CSS popup (modals) -->
+  <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=501">
 
   <style>
     :root{
@@ -1087,7 +1091,32 @@
     el.style.display = "none";
   }
 
-  document.querySelectorAll(".modal-overlay").forEach(overlay => {
+  
+  function onNotificationsSettingsSubmit(form){
+    try {
+      // Ferme immédiatement la popup de paramétrage
+      closeModal('notificationsSettingsModal');
+    } catch (_) {
+      // ignore
+    }
+
+    try {
+      // Anti double-clic
+      const btn = form.querySelector('button[type="submit"]');
+      if(btn){
+        btn.disabled = true;
+        btn.dataset.loading = "1";
+        btn.textContent = "Enregistrement...";
+      }
+    } catch (_) {
+      // ignore
+    }
+
+    // Laisser le POST se faire normalement
+    return true;
+  }
+
+document.querySelectorAll(".modal-overlay").forEach(overlay => {
     overlay.addEventListener("click", (e) => {
       if(e.target === overlay) overlay.style.display = "none";
     });
@@ -1310,7 +1339,7 @@
       <button type="button" class="modal-close" aria-label="Fermer" onclick="closeModal('notificationsSettingsModal')">×</button>
     </div>
     <div class="modal-body">
-        <form method="post"
+        <form method="post" onsubmit="return onNotificationsSettingsSubmit(this);"
 {% if prescription.status != "ARCHIVED" %}
           action="{% url 'core_emails:update_prescription_notification_settings' prescription.id %}">
       {% csrf_token %}

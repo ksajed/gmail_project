@@ -246,17 +246,17 @@ body.modal-open{ overflow: hidden; }
    - Sans toucher au HTML
 ===================================================== */
 
-/* Modal racine = overlay */
-.modal{
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(15, 23, 42, 0.42);
-  z-index: 9999;
-}
+  /* Modal interne (contenu) : carte visible dans .modal-overlay
+     IMPORTANT: ne JAMAIS transformer .modal interne en overlay */
+  .modal-overlay > .modal{
+    width: 560px;
+    max-width: calc(100% - 32px);
+    background: var(--card);
+    border: 1px solid rgba(15,23,42,.10);
+    border-radius: 16px;
+    box-shadow: 0 22px 70px rgba(15,23,42,.28);
+    overflow: hidden;
+  }
 
   /* Fermeture = priorité absolue (même si style inline affiche le modal) */
   .modal[aria-hidden="true"],
@@ -448,4 +448,153 @@ body.modal-open{ overflow: hidden; }
   border-color: rgba(15,23,42,.18);
   box-shadow: 0 14px 24px rgba(15,23,42,.10);
 }
+/* =====================================================
+     NOTIFICATIONS SETTINGS MODAL (V8+) — PREMIUM UI
+   ===================================================== */
+
+/* Scope strict pour éviter effets de bord */
+#notificationsSettingsModal .modal-card {
+  width: 640px; /* un peu plus large pour respirer */
+}
+
+#notificationsSettingsModal .modal-titleblock h2 {
+  font-size: 16px;
+}
+
+#notificationsSettingsModal .modal-body {
+  padding: 16px;
+}
+
+/* Section (Patient / Infirmier) : look carte */
+#notificationsSettingsModal .field {
+  border: 1px solid rgba(15,23,42,.10);
+  background: linear-gradient(to bottom, rgba(248,250,252,.9), #fff);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+#notificationsSettingsModal .field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+#notificationsSettingsModal .field-head label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: .2px;
+}
+
+#notificationsSettingsModal .field-hint {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+/* Radio group: grille plus régulière */
+#notificationsSettingsModal .radio-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  #notificationsSettingsModal .radio-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Radio pill: base premium */
+#notificationsSettingsModal .radio-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+#notificationsSettingsModal .radio-pill:hover {
+  border-color: rgba(15,23,42,.16);
+  box-shadow: 0 10px 18px rgba(15,23,42,.06);
+}
+
+#notificationsSettingsModal .radio-pill input {
+  /* on garde l’input accessible mais discret */
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+#notificationsSettingsModal .radio-pill span {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: .2px;
+}
+
+/* ✅ état sélectionné SANS :has() (compat totale) */
+#notificationsSettingsModal .radio-pill input:checked + span {
+  color: var(--primary-600);
+}
+
+#notificationsSettingsModal .radio-pill:focus-within {
+  border-color: rgba(22,163,74,.55);
+  box-shadow: var(--ring);
+}
+
+/* Focus clavier (si supporté) */
+#notificationsSettingsModal .radio-pill input:focus-visible {
+  outline: none;
+}
+
+/* Footer sticky: rendre plus “barre d’action” */
+#notificationsSettingsModal .modal-footer--sticky {
+  position: sticky;
+  bottom: 0;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid var(--border);
+  padding: 12px 0 0;
+  margin-top: 12px;
+}
+
+
+/* MODAL_STRUCT_V8:BEGIN
+   Styles pour .modal__header/.modal__body/.modal__actions
+   utilisés par confirmActionModal + messagesModal */
+.modal__header{
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, rgba(248,250,252,.98), rgba(255,255,255,.94));
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.modal__header h2{
+  margin:0;
+  font-size:16px;
+  font-weight:900;
+  color:var(--text);
+}
+.modal__body{ padding: 16px; }
+.modal__actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding: 0 16px 16px;
+}
+/* MODAL_STRUCT_V8:END */
 
