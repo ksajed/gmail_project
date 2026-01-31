@@ -571,12 +571,12 @@
 
   <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
 
-    <button type="button" class="btn btn--sm" onclick="openModal('renewalModal')" style="margin-top:10px;">
+    <button type="button" class="btn btn--sm btn--ghost" onclick="openModal('renewalModal')" style="margin-top:10px;">
       Historique &amp; récap
     </button>
 
     <div id="renewalModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="renewalModalTitle">
-      <div class="modal-card" role="document">
+      <div class="modal-card modal-card--wide modal-card--scroll" role="document">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
           <h3 id="renewalModalTitle" style="margin:0;">Renouvellement — récap &amp; historique</h3>
           <button type="button" class="btn btn--sm" onclick="closeModal('renewalModal')">Fermer</button>
@@ -1297,82 +1297,98 @@
 
 
 <!-- MODAL — PARAMÉTRAGE NOTIFICATIONS -->
-<div class="modal" id="notificationsSettingsModal" aria-hidden="true">
-  <div class="modal__content">
-    <div class="modal__header">
-      <h3>Paramétrage des notifications</h3>
-      <button type="button" class="modal__close"
-              onclick="closeModal('notificationsSettingsModal')">×</button>
+<div id="notificationsSettingsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="notificationsSettingsModalTitle" style="display:none;">
+  <div class="modal-card" role="document">
+    <div class="modal-header">
+      <div class="modal-titlewrap">
+          <div class="modal-badge" aria-hidden="true">🔔</div>
+  <div class="modal-titleblock">
+    <h2 id="notificationsSettingsModalTitle" style="margin:0;">Paramétrage des notifications</h2>
+    <p class="modal-subtitle">Choisis comment notifier le patient (et l’infirmier si associé).</p>
+  </div>
+</div>
+      <button type="button" class="modal-close" aria-label="Fermer" onclick="closeModal('notificationsSettingsModal')">×</button>
     </div>
-
-    <form method="post"
+    <div class="modal-body">
+        <form method="post"
 {% if prescription.status != "ARCHIVED" %}
           action="{% url 'core_emails:update_prescription_notification_settings' prescription.id %}">
       {% csrf_token %}
 
+        <div class="form-grid {% if prescription.assignment and prescription.assignment.nurse %}{% else %}form-grid--single{% endif %}">
+
       
-      <div class="field">
-        <label>Patient</label>
+              <div class="field">
+          <div class="field-head">
+            <label>Patient</label>
+            <div class="field-hint">Canal de notification</div>
+          </div>
 
-        <label class="radio">
-          <input type="radio" name="patient_channel" value="NONE"
-            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "NONE" %}checked{% endif %}>
-          NONE
-        </label>
+          <div class="radio-group" role="radiogroup" aria-label="Canal patient">
+            <label class="radio-pill">
+              <input type="radio" name="patient_channel" value="NONE"
+                {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "NONE" %}checked{% endif %}>
+              <span>Aucun</span>
+            </label>
 
-        <label class="radio">
-          <input type="radio" name="patient_channel" value="SMS"
-            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "SMS" %}checked{% endif %}>
-          SMS
-        </label>
+            <label class="radio-pill">
+              <input type="radio" name="patient_channel" value="SMS"
+                {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "SMS" %}checked{% endif %}>
+              <span>SMS</span>
+            </label>
 
-        <label class="radio">
-          <input type="radio" name="patient_channel" value="EMAIL"
-            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "EMAIL" %}checked{% endif %}>
-          EMAIL
-        </label>
+            <label class="radio-pill">
+              <input type="radio" name="patient_channel" value="EMAIL"
+                {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "EMAIL" %}checked{% endif %}>
+              <span>Email</span>
+            </label>
 
-        <label class="radio">
-          <input type="radio" name="patient_channel" value="BOTH"
-            {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "BOTH" %}checked{% endif %}>
-          BOTH
-        </label>
-      </div>
-    
+            <label class="radio-pill">
+              <input type="radio" name="patient_channel" value="BOTH"
+                {% if prescription.notification_settings and prescription.notification_settings.patient_channel == "BOTH" %}checked{% endif %}>
+              <span>SMS + Email</span>
+            </label>
+          </div>
+        </div>
 
-      {% if prescription.assignment and prescription.assignment.nurse %}
+        {% if prescription.assignment and prescription.assignment.nurse %}
       
-      <div class="field">
-        <label>Infirmier</label>
+              <div class="field">
+          <div class="field-head">
+            <label>Infirmier</label>
+            <div class="field-hint">Si un infirmier est associé</div>
+          </div>
 
-        <label class="radio">
-          <input type="radio" name="nurse_channel" value="NONE"
-            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "NONE" %}checked{% endif %}>
-          NONE
-        </label>
+          <div class="radio-group" role="radiogroup" aria-label="Canal infirmier">
+            <label class="radio-pill">
+              <input type="radio" name="nurse_channel" value="NONE"
+                {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "NONE" %}checked{% endif %}>
+              <span>Aucun</span>
+            </label>
 
-        <label class="radio">
-          <input type="radio" name="nurse_channel" value="SMS"
-            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "SMS" %}checked{% endif %}>
-          SMS
-        </label>
+            <label class="radio-pill">
+              <input type="radio" name="nurse_channel" value="SMS"
+                {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "SMS" %}checked{% endif %}>
+              <span>SMS</span>
+            </label>
 
-        <label class="radio">
-          <input type="radio" name="nurse_channel" value="EMAIL"
-            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "EMAIL" %}checked{% endif %}>
-          EMAIL
-        </label>
+            <label class="radio-pill">
+              <input type="radio" name="nurse_channel" value="EMAIL"
+                {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "EMAIL" %}checked{% endif %}>
+              <span>Email</span>
+            </label>
 
-        <label class="radio">
-          <input type="radio" name="nurse_channel" value="BOTH"
-            {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "BOTH" %}checked{% endif %}>
-          BOTH
-        </label>
-      </div>
+            <label class="radio-pill">
+              <input type="radio" name="nurse_channel" value="BOTH"
+                {% if prescription.notification_settings and prescription.notification_settings.nurse_channel == "BOTH" %}checked{% endif %}>
+              <span>SMS + Email</span>
+            </label>
+          </div>
+        </div>
     
       {% endif %}
 
-      <div class="modal__footer">
+      <div class="modal-footer modal-footer--sticky">
         <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
         <button type="button" class="btn btn--sm"
                 onclick="closeModal('notificationsSettingsModal')">
@@ -1385,9 +1401,8 @@
   Ordonnance archivée : le paramétrage des notifications est désactivé.
 </div>
 {% endif %}
+    </div>
   </div>
 </div>
-
-
 </body>
 </html>
