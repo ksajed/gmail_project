@@ -194,4 +194,51 @@ OVH_SMS_SENDER = os.getenv("OVH_SMS_SENDER", "")
 
 # Recommandé : utiliser le numéro court OVH tant que le sender n'est pas validé
 OVH_SENDER_FOR_RESPONSE = os.getenv("OVH_SENDER_FOR_RESPONSE", "1") in ("1", "true", "True", "yes", "YES")
+# ORDO_LOGGING:BEGIN
+# Journalisation applicative (SaaS) : fichiers + console
+# - logs/ordo.log : INFO
+# - logs/ordo_errors.log : WARNING/ERROR
+import os
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'ordo_file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'ordo.log'),
+            'formatter': 'verbose',
+            'level': 'INFO',
+        },
+        'ordo_errors': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'ordo_errors.log'),
+            'formatter': 'verbose',
+            'level': 'WARNING',
+        },
+    },
+    'loggers': {
+        'ordo.notifications': {
+            'handlers': ['console', 'ordo_file', 'ordo_errors'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console', 'ordo_errors'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+# ORDO_LOGGING:END

@@ -50,6 +50,31 @@ class OvhSmsBackend:
             raise RuntimeError(f"OVH API {r.status_code}: {r.text}")
         return r.json()
 
+
+    def get_job_status_safe(self, job_id: str) -> dict:
+        """Récupère le statut d’un job OVH sans casser l’app.
+        Si la CK n’a pas les droits GET (403 NOT_GRANTED_CALL), retourne un dict explicite.
+        """
+        job_id = (str(job_id or "")).strip()
+        if not job_id:
+            return {"ok": False, "error": "missing_job_id"}
+
+        path = f"/sms/{self.service_name}/jobs/{job_id}"
+        try:
+            data = self._request("GET", path)
+            return {"ok": True, "data": data}
+        except Exception as e:
+            msg = str(e)
+            # Cas typique: 403 NOT_GRANTED_CALL
+            if "403" in msg and "NOT_GRANTED_CALL" in msg:
+                return {
+                    "ok": False,
+                    "error": "not_granted_call",
+                    "message": "La Consumer Key OVH n’a pas l’autorisation GET sur /jobs. Ajoute la règle GET /sms/{service}/jobs/*.",
+                    "path": path,
+                }
+            return {"ok": False, "error": "ovh_error", "message": msg, "path": path}
+
     def send(self, to_e164: str, text: str) -> dict:
         payload = {
             "receivers": [to_e164],

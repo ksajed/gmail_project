@@ -1,3 +1,150 @@
+import re
+import logging
+logger_notif = logging.getLogger('ordo.notifications')
+
+# =====================================================
+# NOTIFICATIONS — JOURNALISATION MÉTIER (V8)
+# =====================================================
+
+# ORDO_NOTIF_JOURNAL:BEGIN
+def _mask_destination(dest: str) -> str:
+    # Masquage RGPD : destination minimisée
+    # - phone: +33******501
+    # - email: kh***@gmail.com
+    try:
+        if not dest:
+            return ''
+        d = str(dest).strip()
+        if '@' in d:
+            left, dom = d.split('@', 1)
+            if len(left) <= 2:
+                return ('*' * len(left)) + '@' + dom
+            return left[:2] + '***@' + dom
+        digits = re.sub(r'[^\d+]', '', d)
+        if digits.startswith('+') and len(digits) >= 6:
+            return digits[:3] + '******' + digits[-3:]
+        if len(digits) >= 4:
+            return '******' + digits[-3:]
+        return '******'
+    except Exception:
+        return '******'
+
+def log_notification_event_safe(*, prescription, recipient_type: str, channel: str, destination: str, result: str, error_message: str = '', user=None, trigger: str = 'STATUS_CHANGE'):
+    # Journalisation robuste : ne doit jamais casser le flow
+    masked = _mask_destination(destination or '')
+    pid = getattr(prescription, 'id', None)
+    try:
+        logger_notif.info(
+            'notif_event pid=%s recipient=%s channel=%s result=%s dest=%s trigger=%s err=%s',
+            pid, recipient_type, channel, result, masked, trigger, (error_message or '')[:200],
+        )
+    except Exception:
+        pass
+    try:
+        from core_emails.models import PrescriptionNotificationEvent
+        PrescriptionNotificationEvent.objects.create(
+            prescription=prescription,
+            recipient_type=recipient_type,
+            channel=channel,
+            destination=masked,
+            result=result,
+            error_message=(error_message or '')[:500],
+            created_by=user if getattr(user, 'is_authenticated', False) else None,
+        )
+    except Exception:
+        pass
+
+def log_status_history_notification_summary_safe(*, prescription, comment: str, user=None):
+    # Historique opposable : résumé (pas de contenu médical, pas de nom patient)
+    try:
+        from core_emails.models import PrescriptionStatusHistory
+        PrescriptionStatusHistory.objects.create(
+            prescription=prescription,
+            old_status=prescription.status,
+            new_status=prescription.status,
+            changed_by=user if getattr(user, 'is_authenticated', False) else None,
+            comment=(comment or '')[:500],
+        )
+    except Exception:
+        pass
+# ORDO_NOTIF_JOURNAL:END
+def _mask_phone(phone: str) -> str:
+    """Masque un numéro E.164/FR pour logs métier (RGPD)."""
+    if not phone:
+        return "—"
+    p = str(phone).strip()
+    if len(p) <= 6:
+        return "***"
+    return p[:3] + "****" + p[-3:]
+
+def _mask_email(email: str) -> str:
+    """Masque un email pour logs métier (RGPD)."""
+    if not email:
+        return "—"
+    e = str(email).strip()
+    if "@" not in e:
+        return "***"
+    name, dom = e.split("@", 1)
+    if len(name) <= 2:
+        name_m = "*"
+    else:
+        name_m = name[:1] + "***" + name[-1:]
+    return name_m + "@" + dom
+
+def _log_notification_business(prescription, user, recipient_type: str, channel: str, destination: str,
+                               result: str, error_message: str = "", provider_message_id: str = "", trigger: str = "") -> None:
+    """
+    Journalisation métier opposable:
+    - PrescriptionStatusHistory (toujours)
+    - PrescriptionNotificationEvent (best-effort, ne doit jamais casser)
+    """
+    try:
+        from core_emails.models import PrescriptionStatusHistory
+        # Trace opposable
+        parts = [
+            "Notif",
+            f"trigger={trigger or '—'}",
+            f"to={recipient_type}",
+            f"ch={channel}",
+            f"res={result}",
+            f"dst={destination}",
+        ]
+        if provider_message_id:
+            parts.append(f"provider_id={provider_message_id}")
+        if error_message:
+            parts.append(f"err={error_message[:120]}")
+        PrescriptionStatusHistory.objects.create(
+            prescription=prescription,
+            old_status=prescription.status,
+            new_status=prescription.status,
+            changed_by=user,
+            comment=" | ".join(parts),
+        )
+    except Exception:
+        # Jamais casser le flux métier
+        try:
+            logger.exception("Journalisation métier: PrescriptionStatusHistory failed (prescription_id=%s)", getattr(prescription, "id", None))
+        except Exception:
+            pass
+
+    # Best-effort: modèle Event si dispo
+    try:
+        from core_emails.models import PrescriptionNotificationEvent
+        PrescriptionNotificationEvent.objects.create(
+            prescription=prescription,
+            recipient_type=recipient_type,
+            channel=channel,
+            destination=destination,
+            result=result,
+            error_message=error_message or "",
+            created_by=user,
+        )
+    except Exception:
+        # Ne jamais casser
+        try:
+            logger.info("Journalisation Event ignorée (modèle/contraintes). prescription_id=%s", getattr(prescription, "id", None))
+        except Exception:
+            pass
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -331,6 +478,7 @@ def send_prescription_notifications(
     user,
     patient_channel,
     nurse_channel,
+    trigger="",
 ):
     """
     Envoi conditionnel SMS / EMAIL selon le paramétrage

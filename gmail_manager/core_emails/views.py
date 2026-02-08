@@ -22,6 +22,9 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.dateparse import parse_date
 from django.core.mail import send_mail
+import logging
+
+logger = logging.getLogger(__name__)
 
 from django.core.validators import validate_email
 from django.db import transaction
@@ -43,6 +46,7 @@ from core_emails.models import PrescriptionRenewalEvent
 # =====================================================
 from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services import change_prescription_status
+from .services import send_prescription_notifications
 from core_emails.services import compute_renewals_watch_from_delivered
 
 # =====================================================
@@ -56,6 +60,8 @@ from core_people.models import Person
 from core_patients.models import Patient
 from core_notifications.services import send_sms_logged
 from core_notifications.models import SmsPurpose
+from core_notifications.messages_sms import render_status_sms_rgpd_bilingual_compact
+from core_notifications.utils_phone import to_e164_fr
 
 
 # =====================================================
@@ -243,37 +249,38 @@ def renewals_dashboard(request):
         start_date = timezone.localtime(first_delivered_at).date()
         due_date = start_date + datetime.timedelta(days=(done_count + 1) * period_days)
         days_left = (due_date - today).days
-
-        item = {
-            "prescription": p,
-            "info": info,
-            "patient": getattr(p, "patient", None),
-            "start_date": start_date,
-            "due_date": due_date,
-            "days_left": days_left,
-            "done_count": done_count,
-            "renewal_times": renewal_times,
-            "period_days": period_days,
-            "email_j5_sent": bool(getattr(info, "reminder_5_patient_email_sent_at", None)),
-            "sms_j5_sent": bool(getattr(info, "reminder_5_patient_sms_sent_at", None)),
-            "email_j3_sent": bool(getattr(info, "reminder_3_patient_email_sent_at", None)),
-            "sms_j3_sent": bool(getattr(info, "reminder_3_patient_sms_sent_at", None)),
-        }
+        # Attacher les champs calculés directement sur l'objet Prescription (compat template)
+        p.renewal_end_date = due_date
+        p.renewal_days_left = days_left
+        p.renewal_start_date = start_date
+        p.renewal_due_date = due_date
+        p.renewal_done_count = done_count
+        p.renewal_times = renewal_times
+        p.renewal_period_days = period_days
+        p.email_j5_sent = bool(getattr(info, 'reminder_5_patient_email_sent_at', None))
+        p.sms_j5_sent = bool(getattr(info, 'reminder_5_patient_sms_sent_at', None))
+        p.email_j3_sent = bool(getattr(info, 'reminder_3_patient_email_sent_at', None))
+        p.sms_j3_sent = bool(getattr(info, 'reminder_3_patient_sms_sent_at', None))
 
         if days_left == 5:
-            j5_items.append(item)
+            j5_items.append(p)
         elif days_left == 3:
-            j3_items.append(item)
+            j3_items.append(p)
         elif days_left <= 0:
-            late_items.append(item)
+            late_items.append(p)
 
     # tri : plus urgent d’abord
-    j5_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
-    j3_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
-    late_items.sort(key=lambda x: (x["due_date"], x["prescription"].id))
+    j5_items.sort(key=lambda p: ((getattr(p, "renewal_due_date", None) or getattr(p, "renewal_end_date", None)), p.id))
+    j3_items.sort(key=lambda p: ((getattr(p, "renewal_due_date", None) or getattr(p, "renewal_end_date", None)), p.id))
+    late_items.sort(key=lambda p: ((getattr(p, "renewal_due_date", None) or getattr(p, "renewal_end_date", None)), p.id))
 
     context = {
-        "today": today,
+                # === ALIAS TEMPLATE (compatibilité renewals_dashboard.html) ===
+        "renewals_due_5": j5_items,
+        "renewals_due_3": j3_items,
+        "renewals_overdue": late_items,
+
+"today": today,
 
         # alias multiples pour matcher ton template quel que soit le nom attendu
         "j5_items": j5_items, "j5_list": j5_items, "items_j5": j5_items,
@@ -476,57 +483,40 @@ def change_status(request, pk):
             messages.error(request, str(e))
 
     # SMS_SEND:BEGIN
-    if status_changed and send_sms:
-        # Patient phone
-        patient = getattr(prescription, "patient", None)
-        patient_phone = None
-        if patient:
-            patient_phone = getattr(patient, "phone", None) or getattr(patient, "mobile", None)
+    # Notifications centralisées (anti-doublons) via send_prescription_notifications()
+    if status_changed:
+        s = getattr(prescription, "notification_settings", None)
+        patient_channel = getattr(s, "patient_channel", "NONE") if s else "NONE"
+        nurse_channel   = getattr(s, "nurse_channel", "NONE") if s else "NONE"
 
-        # Nurse phone (si affectée)
-        nurse_phone = None
+        # Optionnel: compat anciens champs POST (si présents)
+        # send_sms=1 => force au moins SMS selon sms_target
+        send_sms = request.POST.get("send_sms") in ("1", "true", "True", "on", "yes")
+        sms_target = (request.POST.get("sms_target", "") or "").strip()
+
+        if send_sms:
+            # on force uniquement le volet SMS (l'Email reste selon settings)
+            if sms_target == "patient":
+                patient_channel = "SMS" if patient_channel == "NONE" else patient_channel
+                nurse_channel = "NONE"
+            elif sms_target == "nurse":
+                nurse_channel = "SMS" if nurse_channel == "NONE" else nurse_channel
+                patient_channel = "NONE"
+            elif sms_target == "both":
+                patient_channel = "SMS" if patient_channel == "NONE" else patient_channel
+                nurse_channel   = "SMS" if nurse_channel == "NONE" else nurse_channel
+
         try:
-            assignment = (
-                PrescriptionAssignment.objects
-                .select_related("nurse")
-                .filter(prescription=prescription)
-                .first()
+            send_prescription_notifications(
+                prescription=prescription,
+                user=request.user,
+                patient_channel=patient_channel,
+                nurse_channel=nurse_channel,
+                trigger="STATUS_CHANGE",
             )
-            nurse = assignment.nurse if assignment and assignment.nurse else None
-            if nurse:
-                nurse_phone = getattr(nurse, "phone", None) or getattr(nurse, "mobile", None)
         except Exception:
-            nurse_phone = None
-
-        recipients = []
-        if sms_target == "patient" and patient_phone:
-            recipients.append(("patient", str(patient_phone)))
-        elif sms_target == "nurse" and nurse_phone:
-            recipients.append(("nurse", str(nurse_phone)))
-        elif sms_target == "both":
-            if patient_phone:
-                recipients.append(("patient", str(patient_phone)))
-            if nurse_phone:
-                recipients.append(("nurse", str(nurse_phone)))
-
-        label = prescription.get_status_display() if hasattr(prescription, "get_status_display") else str(prescription.status)
-        msg_patient = f"Votre ordonnance est maintenant : {label}."
-        msg_nurse = f"Statut ordonnance mis à jour : {label}."
-
-        for who, phone in recipients:
-            # On envoie seulement si format international (+33...)
-            if phone.startswith("+"):
-                text = msg_patient if who == "patient" else msg_nurse
-                try:
-                    send_sms_logged(
-                        to_e164=phone,
-                        text=text,
-                        purpose=SmsPurpose.STATUS_UPDATE,
-                        template_key=f"PRESCRIPTION_STATUS_{prescription.status}_{who}".upper(),
-                        prescription=prescription,
-                    )
-                except Exception:
-                    pass
+            logger.exception("Notifications: échec lors du trigger STATUS_CHANGE (prescription_id=%s)", prescription.id)
+            messages.warning(request, "Statut mis à jour, mais l'envoi des notifications a échoué (voir logs).")
     # SMS_SEND:END
 
     return redirect("core_emails:prescription_detail", pk=pk)

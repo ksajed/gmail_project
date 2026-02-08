@@ -918,6 +918,45 @@
         <div class="card__body">
           <form method="post" action="{% url 'core_emails:change_status' prescription.id %}">
             {% csrf_token %}
+             <!-- AUTO_SMS_FROM_SETTINGS:BEGIN -->
+             {# Déduit l'envoi SMS et la cible depuis le paramétrage popup (notification_settings) #}
+             {% if prescription.notification_settings %}
+               {# 1) Patient channel => SMS ? #}
+               {% if prescription.notification_settings.patient_channel == "SMS" or prescription.notification_settings.patient_channel == "BOTH" %}
+                 {# Patient reçoit SMS. Si infirmier affecté ET infirmier channel SMS/BOTH => both sinon patient #}
+                 {% if prescription.assignment and prescription.assignment.nurse %}
+                   {% if prescription.notification_settings.nurse_channel == "SMS" or prescription.notification_settings.nurse_channel == "BOTH" %}
+                     <input type="hidden" name="send_sms" value="1">
+                     <input type="hidden" name="sms_target" value="both">
+                   {% else %}
+                     <input type="hidden" name="send_sms" value="1">
+                     <input type="hidden" name="sms_target" value="patient">
+                   {% endif %}
+                 {% else %}
+                   <input type="hidden" name="send_sms" value="1">
+                   <input type="hidden" name="sms_target" value="patient">
+                 {% endif %}
+               {% else %}
+                 {# Patient ne reçoit pas SMS. Si infirmier affecté ET infirmier channel SMS/BOTH => nurse sinon none #}
+                 {% if prescription.assignment and prescription.assignment.nurse %}
+                   {% if prescription.notification_settings.nurse_channel == "SMS" or prescription.notification_settings.nurse_channel == "BOTH" %}
+                     <input type="hidden" name="send_sms" value="1">
+                     <input type="hidden" name="sms_target" value="nurse">
+                   {% else %}
+                     <input type="hidden" name="send_sms" value="0">
+                     <input type="hidden" name="sms_target" value="">
+                   {% endif %}
+                 {% else %}
+                   <input type="hidden" name="send_sms" value="0">
+                   <input type="hidden" name="sms_target" value="">
+                 {% endif %}
+               {% endif %}
+             {% else %}
+               <input type="hidden" name="send_sms" value="0">
+               <input type="hidden" name="sms_target" value="">
+             {% endif %}
+             <!-- AUTO_SMS_FROM_SETTINGS:END -->
+
             <div class="field">
               <label>Changer le statut</label>
               <select name="status" required>

@@ -1,0 +1,4080 @@
+[
+{
+  "model": "core_patients.patient",
+  "pk": 1,
+  "fields": {
+    "full_name": "Khalid Sajed",
+    "email": "khalidsajed19755@gmail.com",
+    "phone_number": "0748435501",
+    "created_at": "2026-01-27T17:03:39.240Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 2,
+  "fields": {
+    "full_name": "Khalid Sajed",
+    "email": "temu@eu.temuemail.com",
+    "phone_number": "0748435501",
+    "created_at": "2026-01-27T17:03:41.642Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 3,
+  "fields": {
+    "full_name": "",
+    "email": "khalidsajed1975@gmail.com",
+    "phone_number": "",
+    "created_at": "2026-01-27T17:03:44.535Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 4,
+  "fields": {
+    "full_name": "Khalid Sajed",
+    "email": "googleplay-noreply@google.com",
+    "phone_number": "0748435501",
+    "created_at": "2026-01-27T17:03:51.281Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 5,
+  "fields": {
+    "full_name": "",
+    "email": "hello@gamma.app",
+    "phone_number": "",
+    "created_at": "2026-01-30T03:55:30.088Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 6,
+  "fields": {
+    "full_name": "",
+    "email": "temu@consumer.temu.com",
+    "phone_number": "",
+    "created_at": "2026-01-30T03:55:34.482Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 7,
+  "fields": {
+    "full_name": "Demo J5 Patient 1",
+    "email": "demo_j5_1@example.test",
+    "phone_number": "0600J501000",
+    "created_at": "2026-02-02T14:22:46.118Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 8,
+  "fields": {
+    "full_name": "Demo J5 Patient 2",
+    "email": "demo_j5_2@example.test",
+    "phone_number": "0600J502000",
+    "created_at": "2026-02-02T14:22:46.136Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 9,
+  "fields": {
+    "full_name": "Demo J5 Patient 3",
+    "email": "demo_j5_3@example.test",
+    "phone_number": "0600J503000",
+    "created_at": "2026-02-02T14:22:46.147Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 10,
+  "fields": {
+    "full_name": "Demo J3 Patient 1",
+    "email": "demo_j3_1@example.test",
+    "phone_number": "0600J301000",
+    "created_at": "2026-02-02T14:22:46.172Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 11,
+  "fields": {
+    "full_name": "Demo J3 Patient 2",
+    "email": "demo_j3_2@example.test",
+    "phone_number": "0600J302000",
+    "created_at": "2026-02-02T14:22:46.185Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 12,
+  "fields": {
+    "full_name": "Demo J3 Patient 3",
+    "email": "demo_j3_3@example.test",
+    "phone_number": "0600J303000",
+    "created_at": "2026-02-02T14:22:46.202Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 13,
+  "fields": {
+    "full_name": "Demo RET Patient 1",
+    "email": "demo_ret_1@example.test",
+    "phone_number": "0600RET01000",
+    "created_at": "2026-02-02T14:22:46.229Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 14,
+  "fields": {
+    "full_name": "Demo RET Patient 2",
+    "email": "demo_ret_2@example.test",
+    "phone_number": "0600RET02000",
+    "created_at": "2026-02-02T14:22:46.243Z"
+  }
+},
+{
+  "model": "core_patients.patient",
+  "pk": 15,
+  "fields": {
+    "full_name": "Demo RET Patient 3",
+    "email": "demo_ret_3@example.test",
+    "phone_number": "0600RET03000",
+    "created_at": "2026-02-02T14:22:46.256Z"
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 1,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:39.280Z",
+    "updated_at": "2026-01-27T17:03:39.280Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 2,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:40.119Z",
+    "updated_at": "2026-01-27T17:03:40.120Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 3,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:40.976Z",
+    "updated_at": "2026-01-29T10:25:32.387Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 4,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:41.681Z",
+    "updated_at": "2026-01-27T17:03:41.681Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 5,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:42.373Z",
+    "updated_at": "2026-01-27T17:03:42.373Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 6,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:43.206Z",
+    "updated_at": "2026-01-27T17:03:43.206Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 7,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:43.923Z",
+    "updated_at": "2026-01-27T17:03:43.923Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 8,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 3,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:44.588Z",
+    "updated_at": "2026-01-27T17:03:44.588Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 9,
+  "fields": {
+    "status": "DELIVERED",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": "2026-01-27",
+    "received_at": "2026-01-27T17:03:45.521Z",
+    "updated_at": "2026-01-27T17:05:53.471Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 10,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:46.243Z",
+    "updated_at": "2026-01-28T15:51:01.692Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 11,
+  "fields": {
+    "status": "READY",
+    "type": "ALD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:46.974Z",
+    "updated_at": "2026-01-29T23:00:01.024Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 12,
+  "fields": {
+    "status": "IN_PROGRESS",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:47.893Z",
+    "updated_at": "2026-01-28T14:50:09.236Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 13,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:48.760Z",
+    "updated_at": "2026-01-27T17:03:48.760Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 14,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "ALD",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:49.604Z",
+    "updated_at": "2026-01-28T13:51:48.356Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 15,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:50.460Z",
+    "updated_at": "2026-01-28T15:15:23.330Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 16,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "doctor",
+    "patient": 4,
+    "established_at": null,
+    "received_at": "2026-01-27T17:03:51.323Z",
+    "updated_at": "2026-01-30T02:52:23.132Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 17,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "doctor",
+    "patient": 1,
+    "established_at": "2026-01-27",
+    "received_at": "2026-01-27T17:25:11.237Z",
+    "updated_at": "2026-01-30T00:23:58.444Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 18,
+  "fields": {
+    "status": "IN_PROGRESS",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "patient",
+    "patient": 1,
+    "established_at": "2026-01-28",
+    "received_at": "2026-01-27T17:25:11.904Z",
+    "updated_at": "2026-01-28T16:59:43.840Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 19,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "STANDARD",
+    "sender_type": "midwife",
+    "patient": 1,
+    "established_at": "2026-01-28",
+    "received_at": "2026-01-27T17:25:12.687Z",
+    "updated_at": "2026-01-30T02:33:19.021Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 20,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 5,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:30.103Z",
+    "updated_at": "2026-01-30T03:55:30.103Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 21,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 5,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:30.604Z",
+    "updated_at": "2026-01-30T03:55:30.604Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 22,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 5,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:31.227Z",
+    "updated_at": "2026-01-30T03:55:31.227Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 23,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 5,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:32.136Z",
+    "updated_at": "2026-01-30T03:55:32.136Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 24,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 5,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:32.505Z",
+    "updated_at": "2026-01-30T03:55:32.505Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 25,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 5,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:33.026Z",
+    "updated_at": "2026-01-30T03:55:33.026Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 26,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 5,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:33.888Z",
+    "updated_at": "2026-01-30T03:55:33.888Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 27,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 6,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:34.494Z",
+    "updated_at": "2026-01-30T03:55:34.494Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 28,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:35.363Z",
+    "updated_at": "2026-01-30T03:55:35.363Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 29,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:36.439Z",
+    "updated_at": "2026-01-30T03:55:36.439Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 30,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:48.285Z",
+    "updated_at": "2026-01-30T03:55:48.285Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 31,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:49.197Z",
+    "updated_at": "2026-02-02T14:17:11.638Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 32,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:50.069Z",
+    "updated_at": "2026-01-30T03:55:50.069Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 33,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:50.438Z",
+    "updated_at": "2026-01-30T03:55:50.438Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 34,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:50.981Z",
+    "updated_at": "2026-01-30T03:55:50.981Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 35,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:51.308Z",
+    "updated_at": "2026-01-30T03:55:51.308Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 36,
+  "fields": {
+    "status": "RECEIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:51.756Z",
+    "updated_at": "2026-01-30T03:55:51.757Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 37,
+  "fields": {
+    "status": "DELIVERED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:52.062Z",
+    "updated_at": "2026-02-01T16:42:28.467Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 38,
+  "fields": {
+    "status": "IN_PROGRESS",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:52.384Z",
+    "updated_at": "2026-02-01T16:43:33.779Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 39,
+  "fields": {
+    "status": "DELIVERED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:52.782Z",
+    "updated_at": "2026-01-31T23:42:24.568Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 40,
+  "fields": {
+    "status": "DELIVERED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:53.154Z",
+    "updated_at": "2026-02-01T11:34:25.275Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 41,
+  "fields": {
+    "status": "DELIVERED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:53.522Z",
+    "updated_at": "2026-01-31T17:54:16.745Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 42,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:54.084Z",
+    "updated_at": "2026-01-31T23:39:44.574Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 43,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:54.547Z",
+    "updated_at": "2026-01-31T18:14:41.333Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 44,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:55.079Z",
+    "updated_at": "2026-02-01T16:45:03.451Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 45,
+  "fields": {
+    "status": "READY",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:56.278Z",
+    "updated_at": "2026-01-31T17:12:04.542Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 46,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "ALD",
+    "sender_type": "midwife",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:57.260Z",
+    "updated_at": "2026-01-31T17:01:00.991Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 47,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:58.671Z",
+    "updated_at": "2026-01-30T16:15:54.559Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 48,
+  "fields": {
+    "status": "READY",
+    "type": "STANDARD",
+    "sender_type": "unknown",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-30T03:55:59.340Z",
+    "updated_at": "2026-02-02T00:15:07.778Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 49,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "ALD",
+    "sender_type": "dentist",
+    "patient": 2,
+    "established_at": null,
+    "received_at": "2026-01-30T03:56:01.837Z",
+    "updated_at": "2026-01-30T17:32:22.600Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 50,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "ALD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T03:56:11.085Z",
+    "updated_at": "2026-02-02T00:14:53.481Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 51,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "SOINS_INFIRMIERS",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T04:46:34.825Z",
+    "updated_at": "2026-01-30T22:36:01.166Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 52,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "ALD",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T06:14:05.694Z",
+    "updated_at": "2026-01-30T21:03:44.614Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 53,
+  "fields": {
+    "status": "ARCHIVED",
+    "type": "INCOMPLETE",
+    "sender_type": "unknown",
+    "patient": 1,
+    "established_at": null,
+    "received_at": "2026-01-30T06:14:06.460Z",
+    "updated_at": "2026-01-30T14:11:34.586Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 54,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 7,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.121Z",
+    "updated_at": "2026-02-02T14:22:46.121Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 55,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 8,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.137Z",
+    "updated_at": "2026-02-02T14:22:46.137Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 56,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 9,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.148Z",
+    "updated_at": "2026-02-02T14:22:46.148Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 57,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 10,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.173Z",
+    "updated_at": "2026-02-02T14:22:46.173Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 58,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 11,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.186Z",
+    "updated_at": "2026-02-02T14:22:46.186Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 59,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 12,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.202Z",
+    "updated_at": "2026-02-02T14:22:46.202Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 60,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 13,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.230Z",
+    "updated_at": "2026-02-02T14:22:46.230Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 61,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 14,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.244Z",
+    "updated_at": "2026-02-02T14:22:46.244Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescription",
+  "pk": 62,
+  "fields": {
+    "status": "READY",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "unknown",
+    "patient": 15,
+    "established_at": null,
+    "received_at": "2026-02-02T14:22:46.257Z",
+    "updated_at": "2026-02-02T14:22:46.257Z",
+    "created_by": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 1,
+  "fields": {
+    "prescription": 9,
+    "renewal_times": 1,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 2,
+  "fields": {
+    "prescription": 17,
+    "renewal_times": 2,
+    "period_days": 30,
+    "renewal_done_count": 1,
+    "last_renewal_ordered_at": "2026-01-27T20:29:41.286Z",
+    "doctor_email": "khalidsajeggd1975@gmail.com",
+    "doctor_name": "ggg",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": "2026-01-27T19:00:49.240Z"
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 3,
+  "fields": {
+    "prescription": 19,
+    "renewal_times": 1,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 4,
+  "fields": {
+    "prescription": 18,
+    "renewal_times": 1,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "khalidsajed1975@gmail.com",
+    "doctor_name": "Boushaba aicha",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 5,
+  "fields": {
+    "prescription": 15,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 6,
+  "fields": {
+    "prescription": 10,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 7,
+  "fields": {
+    "prescription": 3,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 8,
+  "fields": {
+    "prescription": 11,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 9,
+  "fields": {
+    "prescription": 16,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 10,
+  "fields": {
+    "prescription": 50,
+    "renewal_times": 1,
+    "period_days": 0,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 11,
+  "fields": {
+    "prescription": 51,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 12,
+  "fields": {
+    "prescription": 49,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 13,
+  "fields": {
+    "prescription": 52,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 14,
+  "fields": {
+    "prescription": 47,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 15,
+  "fields": {
+    "prescription": 46,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 16,
+  "fields": {
+    "prescription": 54,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 17,
+  "fields": {
+    "prescription": 55,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 18,
+  "fields": {
+    "prescription": 56,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 19,
+  "fields": {
+    "prescription": 57,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 20,
+  "fields": {
+    "prescription": 58,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 21,
+  "fields": {
+    "prescription": 59,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 22,
+  "fields": {
+    "prescription": 60,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 23,
+  "fields": {
+    "prescription": 61,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionrenewalinfo",
+  "pk": 24,
+  "fields": {
+    "prescription": 62,
+    "renewal_times": 0,
+    "period_days": 30,
+    "renewal_done_count": 0,
+    "last_renewal_ordered_at": null,
+    "doctor_email": "",
+    "doctor_name": "",
+    "reminder_5_patient_email_sent_at": null,
+    "reminder_5_patient_sms_sent_at": null,
+    "reminder_3_patient_email_sent_at": null,
+    "reminder_3_patient_sms_sent_at": null,
+    "doctor_email_sent_at": null
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 1,
+  "fields": {
+    "prescription": 9,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:05:13.613Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 2,
+  "fields": {
+    "prescription": 9,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:05:22.290Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 3,
+  "fields": {
+    "prescription": 9,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:05:29.800Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 4,
+  "fields": {
+    "prescription": 9,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:05:37.927Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 5,
+  "fields": {
+    "prescription": 9,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:05:53.475Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=1, period_days=30, doctor_email=—."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 6,
+  "fields": {
+    "prescription": 19,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:36:57.880Z",
+    "comment": "Origine de l’ordonnance modifiée : unknown → patient"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 7,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:37:17.550Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 8,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:37:26.131Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=0, period_days=30, doctor_email=—."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 9,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:48:16.974Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=1, period_days=30, doctor_email=—."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 10,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:48:35.217Z",
+    "comment": "Origine de l’ordonnance modifiée : unknown → patient"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 11,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:48:42.915Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 12,
+  "fields": {
+    "prescription": 17,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:48:50.545Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 13,
+  "fields": {
+    "prescription": 17,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:49:02.923Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 14,
+  "fields": {
+    "prescription": 17,
+    "old_status": "DELIVERED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T17:49:03.865Z",
+    "comment": "Renouvellement: délivrance enregistrée (n°1/2). Statut réinitialisé pour le prochain cycle."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 15,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T19:00:42.548Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=1, period_days=30, doctor_email=khalidsajed1975@gmail.com."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 16,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T19:00:49.278Z",
+    "comment": "Demande renouvellement envoyée au médecin (EMAIL)."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 17,
+  "fields": {
+    "prescription": 19,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:00:39.123Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 18,
+  "fields": {
+    "prescription": 19,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:01:10.804Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 19,
+  "fields": {
+    "prescription": 19,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:09:22.149Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 20,
+  "fields": {
+    "prescription": 19,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:10:33.095Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 21,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:11:59.462Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 22,
+  "fields": {
+    "prescription": 17,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:12:16.316Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 23,
+  "fields": {
+    "prescription": 17,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:26:33.830Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 24,
+  "fields": {
+    "prescription": 17,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:29:40.181Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 25,
+  "fields": {
+    "prescription": 17,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T20:59:01.264Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 26,
+  "fields": {
+    "prescription": 10,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T21:23:43.386Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 27,
+  "fields": {
+    "prescription": 10,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T21:24:34.892Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 28,
+  "fields": {
+    "prescription": 16,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T21:47:46.031Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 29,
+  "fields": {
+    "prescription": 16,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-27T21:47:56.702Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 30,
+  "fields": {
+    "prescription": 19,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T10:51:35.223Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 31,
+  "fields": {
+    "prescription": 19,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T10:51:44.875Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-28, renewal_times=1, period_days=30, doctor_email=—."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 32,
+  "fields": {
+    "prescription": 18,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T11:04:02.594Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 33,
+  "fields": {
+    "prescription": 18,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T11:04:12.139Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-28, renewal_times=1, period_days=30, doctor_email=—."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 34,
+  "fields": {
+    "prescription": 18,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T11:09:54.376Z",
+    "comment": "Origine de l’ordonnance modifiée : unknown → patient"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 35,
+  "fields": {
+    "prescription": 18,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T11:12:37.652Z",
+    "comment": "Infirmier affecté à l’ordonnance : bouchra fellah"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 36,
+  "fields": {
+    "prescription": 18,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T11:20:32.273Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-28, renewal_times=1, period_days=30, doctor_email=khalidsajed1975@gmail.com."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 37,
+  "fields": {
+    "prescription": 17,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T11:49:47.863Z",
+    "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=2, period_days=30, doctor_email=khalidsajeggd1975@gmail.com."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 38,
+  "fields": {
+    "prescription": 18,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T11:57:38.472Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 39,
+  "fields": {
+    "prescription": 18,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T12:09:22.354Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 40,
+  "fields": {
+    "prescription": 19,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T13:28:59.931Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 41,
+  "fields": {
+    "prescription": 15,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T13:46:24.850Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 42,
+  "fields": {
+    "prescription": 14,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T13:51:48.370Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 43,
+  "fields": {
+    "prescription": 12,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T14:50:09.230Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 44,
+  "fields": {
+    "prescription": 15,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T15:15:05.087Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 45,
+  "fields": {
+    "prescription": 15,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T15:15:23.349Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 46,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T15:22:06.519Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 47,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T15:49:00.730Z",
+    "comment": "Type d’ordonnance modifié : ALD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 48,
+  "fields": {
+    "prescription": 10,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T15:50:55.343Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → STUPEFIANT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 49,
+  "fields": {
+    "prescription": 10,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T15:51:01.734Z",
+    "comment": "Type d’ordonnance modifié : STUPEFIANT → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 50,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T16:05:31.294Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 51,
+  "fields": {
+    "prescription": 11,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T16:28:46.117Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 52,
+  "fields": {
+    "prescription": 18,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T16:50:44.674Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 53,
+  "fields": {
+    "prescription": 18,
+    "old_status": "DELIVERED",
+    "new_status": "RECEIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-28T16:50:45.951Z",
+    "comment": "Renouvellement: délivrance enregistrée (n°1/2). Statut réinitialisé pour le prochain cycle."
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 54,
+  "fields": {
+    "prescription": 18,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-28T16:59:43.835Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 55,
+  "fields": {
+    "prescription": 3,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T10:25:14.894Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → SORTIE_HOSPITALISATION"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 56,
+  "fields": {
+    "prescription": 3,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T10:25:23.443Z",
+    "comment": "Type d’ordonnance modifié : SORTIE_HOSPITALISATION → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 57,
+  "fields": {
+    "prescription": 3,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T10:25:32.424Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 58,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T21:20:19.314Z",
+    "comment": "Type d’ordonnance modifié : ALD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 59,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T21:26:30.467Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 60,
+  "fields": {
+    "prescription": 15,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T21:27:24.486Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 61,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T21:46:57.432Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 62,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T21:47:07.828Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 63,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T21:55:54.099Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 64,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T21:56:15.440Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 65,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T22:01:32.283Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 66,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T22:01:55.638Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → URGENCE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 67,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T22:59:15.874Z",
+    "comment": "Type d’ordonnance modifié : URGENCE → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 68,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T22:59:21.579Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 69,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T22:59:43.610Z",
+    "comment": "Infirmier affecté à l’ordonnance : bouchra fellah"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 70,
+  "fields": {
+    "prescription": 11,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T23:00:01.019Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 71,
+  "fields": {
+    "prescription": 17,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T23:31:15.653Z",
+    "comment": "Infirmier retiré de l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 72,
+  "fields": {
+    "prescription": 15,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T23:35:09.474Z",
+    "comment": "Infirmier affecté à l’ordonnance : ibtissam sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 73,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-29T23:59:46.569Z",
+    "comment": "Origine de l’ordonnance modifiée : patient → midwife"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 74,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T00:02:56.193Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 75,
+  "fields": {
+    "prescription": 17,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T00:21:57.021Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 76,
+  "fields": {
+    "prescription": 17,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T00:23:14.731Z",
+    "comment": "Origine de l’ordonnance modifiée : patient → doctor"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 77,
+  "fields": {
+    "prescription": 17,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T00:23:20.632Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 78,
+  "fields": {
+    "prescription": 17,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T00:23:58.463Z",
+    "comment": "Type d’ordonnance modifié : ALD → SOINS_INFIRMIERS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 79,
+  "fields": {
+    "prescription": 16,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T01:55:17.683Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 80,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T02:02:13.888Z",
+    "comment": "Type d’ordonnance modifié : ALD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 81,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T02:02:21.501Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 82,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T02:29:01.059Z",
+    "comment": "Type d’ordonnance modifié : ALD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 83,
+  "fields": {
+    "prescription": 19,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T02:33:19.040Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → STANDARD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 84,
+  "fields": {
+    "prescription": 16,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T02:52:23.131Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 85,
+  "fields": {
+    "prescription": 16,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T02:56:56.487Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 86,
+  "fields": {
+    "prescription": 50,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T04:09:39.917Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 87,
+  "fields": {
+    "prescription": 51,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T05:10:02.882Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 88,
+  "fields": {
+    "prescription": 51,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T05:10:47.102Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 89,
+  "fields": {
+    "prescription": 51,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T05:28:55.553Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 90,
+  "fields": {
+    "prescription": 51,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T05:44:52.248Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 91,
+  "fields": {
+    "prescription": 51,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T05:48:14.802Z",
+    "comment": "Type d’ordonnance modifié : ALD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 92,
+  "fields": {
+    "prescription": 51,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T05:48:25.423Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 93,
+  "fields": {
+    "prescription": 49,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T06:05:07.994Z",
+    "comment": "Origine de l’ordonnance modifiée : unknown → dentist"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 94,
+  "fields": {
+    "prescription": 50,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T12:32:10.600Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 95,
+  "fields": {
+    "prescription": 49,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T12:47:51.966Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 96,
+  "fields": {
+    "prescription": 49,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T13:02:46.591Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 97,
+  "fields": {
+    "prescription": 52,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T13:15:33.107Z",
+    "comment": "Type d’ordonnance modifié : INCOMPLETE → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 98,
+  "fields": {
+    "prescription": 52,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T13:18:12.834Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 99,
+  "fields": {
+    "prescription": 52,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T13:19:21.946Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 100,
+  "fields": {
+    "prescription": 49,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:07:36.008Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 101,
+  "fields": {
+    "prescription": 49,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:08:28.083Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 102,
+  "fields": {
+    "prescription": 53,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:09:06.207Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 103,
+  "fields": {
+    "prescription": 53,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:10:02.075Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 104,
+  "fields": {
+    "prescription": 53,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:10:42.972Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 105,
+  "fields": {
+    "prescription": 53,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:11:18.062Z",
+    "comment": "Infirmier affecté à l’ordonnance : bouchra fellah"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 106,
+  "fields": {
+    "prescription": 53,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:11:34.580Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 107,
+  "fields": {
+    "prescription": 46,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:12:46.769Z",
+    "comment": "Infirmier affecté à l’ordonnance : test test"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 108,
+  "fields": {
+    "prescription": 46,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:13:02.076Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 109,
+  "fields": {
+    "prescription": 46,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:14:13.597Z",
+    "comment": "Infirmier retiré de l’ordonnance : test test"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 110,
+  "fields": {
+    "prescription": 46,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:14:19.737Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 111,
+  "fields": {
+    "prescription": 46,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:14:46.278Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 112,
+  "fields": {
+    "prescription": 47,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T14:56:05.808Z",
+    "comment": "Infirmier affecté à l’ordonnance : ibtissam sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 113,
+  "fields": {
+    "prescription": 47,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T15:35:19.461Z",
+    "comment": ""
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 114,
+  "fields": {
+    "prescription": 47,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T15:35:45.819Z",
+    "comment": ""
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 115,
+  "fields": {
+    "prescription": 47,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T15:36:17.446Z",
+    "comment": ""
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 116,
+  "fields": {
+    "prescription": 47,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T15:37:22.027Z",
+    "comment": ""
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 117,
+  "fields": {
+    "prescription": 47,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T16:15:54.590Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 118,
+  "fields": {
+    "prescription": 51,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T16:55:05.593Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 119,
+  "fields": {
+    "prescription": 49,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T17:03:29.936Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 120,
+  "fields": {
+    "prescription": 49,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T17:03:49.856Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 121,
+  "fields": {
+    "prescription": 49,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T17:06:08.076Z",
+    "comment": "Infirmier retiré de l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 122,
+  "fields": {
+    "prescription": 49,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T17:06:25.685Z",
+    "comment": "Infirmier affecté à l’ordonnance : bouchra fellah"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 123,
+  "fields": {
+    "prescription": 49,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T17:32:22.597Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 124,
+  "fields": {
+    "prescription": 46,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T17:57:01.811Z",
+    "comment": "Origine de l’ordonnance modifiée : unknown → midwife"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 125,
+  "fields": {
+    "prescription": 46,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T17:57:13.159Z",
+    "comment": "Type d’ordonnance modifié : STANDARD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 126,
+  "fields": {
+    "prescription": 52,
+    "old_status": "RECEIVED",
+    "new_status": "BLOCKED",
+    "changed_by": 1,
+    "changed_at": "2026-01-30T20:54:32.501Z",
+    "comment": "TEST notif"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 127,
+  "fields": {
+    "prescription": 52,
+    "old_status": "BLOCKED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-01-30T21:03:44.613Z",
+    "comment": "TEST"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 128,
+  "fields": {
+    "prescription": 50,
+    "old_status": "IN_PROGRESS",
+    "new_status": "BLOCKED",
+    "changed_by": 1,
+    "changed_at": "2026-01-30T21:04:38.679Z",
+    "comment": "TEST no nurse"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 129,
+  "fields": {
+    "prescription": 53,
+    "old_status": "ARCHIVED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T21:09:35.941Z",
+    "comment": "Infirmier retiré de l’ordonnance : bouchra fellah"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 130,
+  "fields": {
+    "prescription": 51,
+    "old_status": "READY",
+    "new_status": "BLOCKED",
+    "changed_by": 1,
+    "changed_at": "2026-01-30T21:12:06.876Z",
+    "comment": "TEST"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 131,
+  "fields": {
+    "prescription": 51,
+    "old_status": "BLOCKED",
+    "new_status": "BLOCKED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T21:38:37.888Z",
+    "comment": "Type d’ordonnance modifié : ALD → RENOUVELLEMENT"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 132,
+  "fields": {
+    "prescription": 51,
+    "old_status": "BLOCKED",
+    "new_status": "BLOCKED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T21:38:43.006Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → SOINS_INFIRMIERS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 133,
+  "fields": {
+    "prescription": 51,
+    "old_status": "BLOCKED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-30T22:36:01.164Z",
+    "comment": "Changement de statut : Blocked → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 134,
+  "fields": {
+    "prescription": 45,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T09:01:34.578Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 135,
+  "fields": {
+    "prescription": 46,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T11:24:32.092Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 136,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T12:34:54.024Z",
+    "comment": "Infirmier retiré de l’ordonnance : Khalid Sajed"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 137,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T12:49:12.514Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 138,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T12:49:18.598Z",
+    "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 139,
+  "fields": {
+    "prescription": 50,
+    "old_status": "BLOCKED",
+    "new_status": "BLOCKED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T13:45:48.779Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 140,
+  "fields": {
+    "prescription": 50,
+    "old_status": "BLOCKED",
+    "new_status": "BLOCKED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T14:35:22.076Z",
+    "comment": "Paramétrage notifications mis à jour : patient=BOTH, infirmier=BOTH"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 141,
+  "fields": {
+    "prescription": 48,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T14:36:34.444Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 142,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T14:40:34.690Z",
+    "comment": "Paramétrage notifications mis à jour : patient=NONE, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 143,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T14:40:58.717Z",
+    "comment": "Paramétrage notifications mis à jour : patient=NONE, infirmier=EMAIL"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 144,
+  "fields": {
+    "prescription": 48,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T14:41:57.561Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 145,
+  "fields": {
+    "prescription": 48,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T14:42:21.823Z",
+    "comment": "Paramétrage notifications mis à jour : patient=BOTH, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 146,
+  "fields": {
+    "prescription": 48,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T15:17:42.581Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 147,
+  "fields": {
+    "prescription": 48,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T15:17:54.914Z",
+    "comment": "Paramétrage notifications mis à jour : patient=BOTH, infirmier=BOTH"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 148,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T15:19:38.679Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 149,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T15:19:56.453Z",
+    "comment": "Infirmier retiré de l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 150,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T15:20:12.410Z",
+    "comment": "Paramétrage notifications mis à jour : patient=BOTH, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 151,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T16:41:22.831Z",
+    "comment": "Paramétrage notifications mis à jour : patient=NONE, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 152,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:00:53.090Z",
+    "comment": "Paramétrage notifications mis à jour : patient=EMAIL, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 153,
+  "fields": {
+    "prescription": 46,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:01:00.984Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 154,
+  "fields": {
+    "prescription": 45,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:01:42.349Z",
+    "comment": "Paramétrage notifications mis à jour : patient=EMAIL, infirmier=EMAIL"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 155,
+  "fields": {
+    "prescription": 45,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:01:58.852Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 156,
+  "fields": {
+    "prescription": 45,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:11:54.760Z",
+    "comment": "Infirmier affecté à l’ordonnance : gmx khalidsajed1975@gmx.fr"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 157,
+  "fields": {
+    "prescription": 45,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:12:04.538Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 158,
+  "fields": {
+    "prescription": 43,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:14:28.039Z",
+    "comment": "Infirmier affecté à l’ordonnance : gmx khalidsajed1975@gmx.fr"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 159,
+  "fields": {
+    "prescription": 43,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:14:38.407Z",
+    "comment": "Paramétrage notifications mis à jour : patient=EMAIL, infirmier=EMAIL"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 160,
+  "fields": {
+    "prescription": 43,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:14:47.245Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 161,
+  "fields": {
+    "prescription": 41,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:27:01.245Z",
+    "comment": "Infirmier affecté à l’ordonnance : gmx khalidsajed1975@gmx.fr"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 162,
+  "fields": {
+    "prescription": 41,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:27:18.014Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 163,
+  "fields": {
+    "prescription": 41,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:27:28.334Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 164,
+  "fields": {
+    "prescription": 41,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:50:33.308Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 165,
+  "fields": {
+    "prescription": 41,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T17:54:16.740Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 166,
+  "fields": {
+    "prescription": 43,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T18:03:38.905Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 167,
+  "fields": {
+    "prescription": 43,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T18:03:52.683Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 168,
+  "fields": {
+    "prescription": 43,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T18:14:28.766Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 169,
+  "fields": {
+    "prescription": 43,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T18:14:41.330Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 170,
+  "fields": {
+    "prescription": 42,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T22:55:40.425Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 171,
+  "fields": {
+    "prescription": 42,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T22:55:49.994Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 172,
+  "fields": {
+    "prescription": 42,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:37:37.012Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 173,
+  "fields": {
+    "prescription": 42,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:38:11.688Z",
+    "comment": "Infirmier affecté à l’ordonnance : gmx khalidsajed1975@gmx.fr"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 174,
+  "fields": {
+    "prescription": 42,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:38:24.489Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 175,
+  "fields": {
+    "prescription": 42,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:39:00.822Z",
+    "comment": "Paramétrage notifications mis à jour : patient=NONE, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 176,
+  "fields": {
+    "prescription": 42,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:39:12.328Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 177,
+  "fields": {
+    "prescription": 42,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:39:36.512Z",
+    "comment": "Infirmier affecté à l’ordonnance : gmx khalidsajed1975@gmx.fr"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 178,
+  "fields": {
+    "prescription": 42,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:39:44.571Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 179,
+  "fields": {
+    "prescription": 39,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:40:07.743Z",
+    "comment": "Paramétrage notifications mis à jour : patient=EMAIL, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 180,
+  "fields": {
+    "prescription": 39,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:40:14.930Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 181,
+  "fields": {
+    "prescription": 39,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:40:54.346Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 182,
+  "fields": {
+    "prescription": 39,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:41:03.523Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 183,
+  "fields": {
+    "prescription": 39,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:42:05.748Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 184,
+  "fields": {
+    "prescription": 39,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:42:16.347Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=EMAIL"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 185,
+  "fields": {
+    "prescription": 39,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-01-31T23:42:24.565Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 186,
+  "fields": {
+    "prescription": 40,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T09:51:38.379Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 187,
+  "fields": {
+    "prescription": 40,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T09:51:52.679Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 188,
+  "fields": {
+    "prescription": 40,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T09:52:19.401Z",
+    "comment": "Paramétrage notifications mis à jour : patient=EMAIL, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 189,
+  "fields": {
+    "prescription": 40,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T09:52:30.804Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 190,
+  "fields": {
+    "prescription": 40,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T11:34:25.273Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 191,
+  "fields": {
+    "prescription": 44,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T11:35:15.342Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 192,
+  "fields": {
+    "prescription": 44,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T11:35:27.041Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 193,
+  "fields": {
+    "prescription": 44,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T11:36:03.663Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 194,
+  "fields": {
+    "prescription": 44,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T11:58:31.863Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 195,
+  "fields": {
+    "prescription": 37,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T13:24:47.513Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 196,
+  "fields": {
+    "prescription": 37,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T13:24:54.696Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 197,
+  "fields": {
+    "prescription": 37,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T13:25:36.073Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 198,
+  "fields": {
+    "prescription": 37,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T13:25:45.969Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=EMAIL"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 199,
+  "fields": {
+    "prescription": 37,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T13:25:57.696Z",
+    "comment": "Paramétrage notifications mis à jour : patient=EMAIL, infirmier=EMAIL"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 200,
+  "fields": {
+    "prescription": 37,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T13:26:04.750Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 201,
+  "fields": {
+    "prescription": 37,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T13:39:18.405Z",
+    "comment": "Infirmier affecté à l’ordonnance : Khalidtest Sajedddd"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 202,
+  "fields": {
+    "prescription": 37,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T16:42:28.458Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 203,
+  "fields": {
+    "prescription": 37,
+    "old_status": "DELIVERED",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T16:42:58.681Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 204,
+  "fields": {
+    "prescription": 38,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T16:43:15.907Z",
+    "comment": "Infirmier affecté à l’ordonnance : gmx khalidsajed1975@gmx.fr"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 205,
+  "fields": {
+    "prescription": 38,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T16:43:27.311Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=SMS"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 206,
+  "fields": {
+    "prescription": 38,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T16:43:33.776Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 207,
+  "fields": {
+    "prescription": 44,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-02-01T16:45:03.448Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 208,
+  "fields": {
+    "prescription": 48,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T17:42:48.973Z",
+    "comment": "Paramétrage notifications mis à jour : patient=BOTH, infirmier=BOTH"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 209,
+  "fields": {
+    "prescription": 48,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-01T17:42:57.330Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 210,
+  "fields": {
+    "prescription": 50,
+    "old_status": "BLOCKED",
+    "new_status": "ARCHIVED",
+    "changed_by": 1,
+    "changed_at": "2026-02-02T00:14:53.476Z",
+    "comment": "Changement de statut : Blocked → Archived"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 211,
+  "fields": {
+    "prescription": 48,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 1,
+    "changed_at": "2026-02-02T00:15:07.777Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 212,
+  "fields": {
+    "prescription": 31,
+    "old_status": "RECEIVED",
+    "new_status": "RECEIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T10:45:11.503Z",
+    "comment": "Paramétrage notifications mis à jour : patient=BOTH, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 213,
+  "fields": {
+    "prescription": 31,
+    "old_status": "RECEIVED",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T10:45:18.540Z",
+    "comment": "Changement de statut : Received → In Progress"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 214,
+  "fields": {
+    "prescription": 31,
+    "old_status": "IN_PROGRESS",
+    "new_status": "IN_PROGRESS",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T10:46:11.377Z",
+    "comment": "Paramétrage notifications mis à jour : patient=SMS, infirmier=NONE"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 215,
+  "fields": {
+    "prescription": 31,
+    "old_status": "IN_PROGRESS",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T10:46:20.733Z",
+    "comment": "Changement de statut : In Progress → Ready"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 216,
+  "fields": {
+    "prescription": 31,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T10:47:21.752Z",
+    "comment": "Infirmier affecté à l’ordonnance : dd ggg"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 217,
+  "fields": {
+    "prescription": 31,
+    "old_status": "READY",
+    "new_status": "READY",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T10:47:30.177Z",
+    "comment": "Paramétrage notifications mis à jour : patient=NONE, infirmier=BOTH"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 218,
+  "fields": {
+    "prescription": 31,
+    "old_status": "READY",
+    "new_status": "DELIVERED",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T10:47:36.980Z",
+    "comment": "Changement de statut : Ready → Delivered"
+  }
+},
+{
+  "model": "core_emails.prescriptionstatushistory",
+  "pk": 219,
+  "fields": {
+    "prescription": 31,
+    "old_status": "DELIVERED",
+    "new_status": "ARCHIVED",
+    "changed_by": 2,
+    "changed_at": "2026-02-02T14:17:11.635Z",
+    "comment": "Changement de statut : Delivered → Archived"
+  }
+}
+]

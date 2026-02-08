@@ -35,6 +35,12 @@ def notify_users(*, users, title, message, object_type="", object_id=None):
     Notification.objects.bulk_create(notifications)
 
 def send_sms_logged(*, to_e164: str, text: str, purpose: str = SmsPurpose.INFO, template_key: str = "", prescription=None) -> SmsMessage:
+    to_e164 = (to_e164 or '').strip()
+    # Normalisation FR: 0XXXXXXXXX -> +33XXXXXXXXX
+    if to_e164.startswith('0') and len(to_e164) == 10 and to_e164[1:].isdigit():
+        to_e164 = '+33' + to_e164[1:]
+    if not to_e164:
+        raise ValueError('to_e164 is required (E.164 format, e.g. +33...)')
     """
     Envoie un SMS via OVH et journalise en base (SmsMessage + SmsAttempt).
     """
@@ -56,10 +62,14 @@ def send_sms_logged(*, to_e164: str, text: str, purpose: str = SmsPurpose.INFO, 
             sms_message=sms,
             attempt_no=attempt_no,
             success=True,
-            response_payload=res.get("raw"),
+            response_payload=res,
         )
-
-        sms.provider_message_id = res.get("message_id") or ""
+        # OVH renvoie souvent {'ids':[...]} (job ids)
+        ovh_ids = res.get('ids') if isinstance(res, dict) else None
+        if isinstance(ovh_ids, list) and ovh_ids:
+            sms.provider_message_id = str(ovh_ids[0])
+        else:
+            sms.provider_message_id = str(res.get('message_id') or '') if isinstance(res, dict) else ''
         sms.status = SmsStatus.SENT
         sms.sent_at = timezone.now()
         sms.last_error_message = ""
