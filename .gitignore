@@ -22,3 +22,6 @@ db.sqlite3
 *.swp
 *.swo
 .DS_Store
+
+# Backups locaux
+backups/*.json
