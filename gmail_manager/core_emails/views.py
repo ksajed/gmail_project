@@ -16,7 +16,6 @@ from django.views.decorators.http import require_POST
 
 from .models import PrescriptionRenewalInfo
 
-
 import datetime
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -45,7 +44,7 @@ from core_emails.models import PrescriptionRenewalEvent
 # STATES & SERVICES
 # =====================================================
 from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
-from .services import change_prescription_status
+from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
 from core_emails.services import compute_renewals_watch_from_delivered
 
@@ -58,11 +57,9 @@ from core_people.models import Person
 
 # (Optionnel) Si tu utilises Patient
 from core_patients.models import Patient
-from core_notifications.services import send_sms_logged
 from core_notifications.models import SmsPurpose
 from core_notifications.messages_sms import render_status_sms_rgpd_bilingual_compact
 from core_notifications.utils_phone import to_e164_fr
-
 
 # =====================================================
 # CONSTANTES PJ (évite NameError)
@@ -80,8 +77,6 @@ ALLOWED_MIME_TYPES = tuple(
     )
 )
 
-
-
 # =====================================================
 # AUTH (Login/Logout)
 # =====================================================
@@ -90,7 +85,6 @@ class PharmacyLoginView(LoginView):
     # adapte si ton template est ailleurs
     template_name = "core_emails/login.html"
     redirect_authenticated_user = True
-
 
 class PharmacyLogoutView(LogoutView):
     # redirige vers la page login après logout
@@ -178,7 +172,6 @@ def dashboard(request):
     }
 
     return render(request, "core_emails/dashboard.html", context)
-
 
 # =====================================================
 # DÉTAIL ORDONNANCE
@@ -322,7 +315,6 @@ def prescription_detail(request, pk):
     )
     assigned_nurse = assignment.nurse if assignment and assignment.nurse else None
 
-
     attachments = prescription.attachments.all()
 
     history = (
@@ -434,9 +426,7 @@ def prescription_detail(request, pk):
     "renewal_events": renewal_events,
             }
 
-
     return render(request, "core_emails/prescription_detail.html", context)
-
 
 # =====================================================
 # CHANGEMENT DE STATUT
@@ -445,14 +435,6 @@ def prescription_detail(request, pk):
 @require_POST
 def change_status(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
-
-    # SMS_POST:BEGIN
-    send_sms = request.POST.get("send_sms") in ("1", "true", "True", "on", "yes")
-    sms_target = request.POST.get("sms_target", "").strip()  # patient|nurse|both
-    if send_sms and sms_target not in ("patient", "nurse", "both"):
-        send_sms = False
-    # SMS_POST:END
-
     new_status = request.POST.get("status")
     if not new_status:
         messages.warning(request, "Aucun statut sélectionné.")
@@ -481,44 +463,6 @@ def change_status(request, pk):
             )
         except Exception:
             messages.error(request, str(e))
-
-    # SMS_SEND:BEGIN
-    # Notifications centralisées (anti-doublons) via send_prescription_notifications()
-    if status_changed:
-        s = getattr(prescription, "notification_settings", None)
-        patient_channel = getattr(s, "patient_channel", "NONE") if s else "NONE"
-        nurse_channel   = getattr(s, "nurse_channel", "NONE") if s else "NONE"
-
-        # Optionnel: compat anciens champs POST (si présents)
-        # send_sms=1 => force au moins SMS selon sms_target
-        send_sms = request.POST.get("send_sms") in ("1", "true", "True", "on", "yes")
-        sms_target = (request.POST.get("sms_target", "") or "").strip()
-
-        if send_sms:
-            # on force uniquement le volet SMS (l'Email reste selon settings)
-            if sms_target == "patient":
-                patient_channel = "SMS" if patient_channel == "NONE" else patient_channel
-                nurse_channel = "NONE"
-            elif sms_target == "nurse":
-                nurse_channel = "SMS" if nurse_channel == "NONE" else nurse_channel
-                patient_channel = "NONE"
-            elif sms_target == "both":
-                patient_channel = "SMS" if patient_channel == "NONE" else patient_channel
-                nurse_channel   = "SMS" if nurse_channel == "NONE" else nurse_channel
-
-        try:
-            send_prescription_notifications(
-                prescription=prescription,
-                user=request.user,
-                patient_channel=patient_channel,
-                nurse_channel=nurse_channel,
-                trigger="STATUS_CHANGE",
-            )
-        except Exception:
-            logger.exception("Notifications: échec lors du trigger STATUS_CHANGE (prescription_id=%s)", prescription.id)
-            messages.warning(request, "Statut mis à jour, mais l'envoi des notifications a échoué (voir logs).")
-    # SMS_SEND:END
-
     return redirect("core_emails:prescription_detail", pk=pk)
 
 # AFFECTATION INFIRMIER (HISTORIQUE INCLUS)
@@ -551,7 +495,6 @@ def assign_nurse(request, pk):
     messages.success(request, "Infirmier affecté à l’ordonnance.")
     return redirect("core_emails:prescription_detail", pk=pk)
 
-
 # =====================================================
 # DÉSASSOCIATION INFIRMIER (HISTORIQUE INCLUS)
 # =====================================================
@@ -581,7 +524,6 @@ def unassign_nurse(request, pk):
     messages.success(request, "Infirmier retiré de l’ordonnance.")
     return redirect("core_emails:prescription_detail", pk=pk)
 
-
 # =====================================================
 # CRÉATION INFIRMIER
 # =====================================================
@@ -590,16 +532,19 @@ def unassign_nurse(request, pk):
 def create_nurse(request):
     """
     Création organisationnelle d’un infirmier
-    - Email obligatoire (contrainte DB)
+    - Email obligatoire
+    - Téléphone FR obligatoire (normalisé en E.164)
     """
     first_name = request.POST.get("first_name", "").strip()
     last_name = request.POST.get("last_name", "").strip()
     email = request.POST.get("email", "").strip().lower()
+    phone_raw = request.POST.get("phone_number", "").strip()
+    phone_e164 = to_e164_fr(phone_raw)
 
-    if not first_name or not last_name or not email:
+    if not first_name or not last_name or not email or not phone_e164:
         messages.error(
             request,
-            "Nom, prénom et email sont obligatoires pour créer un infirmier.",
+            "Nom, prénom, email et téléphone (France) sont obligatoires pour créer un infirmier.",
         )
         return redirect(request.META.get("HTTP_REFERER") or "core_emails:dashboard")
 
@@ -609,16 +554,23 @@ def create_nurse(request):
             "first_name": first_name,
             "last_name": last_name,
             "role": "nurse",
+            "phone": phone_e164,
         },
     )
+
+    # Si l’infirmier existait déjà, on met à jour le téléphone si manquant/différent
+    if not created:
+        current = (getattr(nurse, "phone", "") or "").strip()
+        if not current or current != phone_e164:
+            nurse.phone = phone_e164
+            nurse.save(update_fields=["phone"])
 
     if created:
         messages.success(request, "Infirmier créé avec succès.")
     else:
-        messages.info(request, "Cet infirmier existe déjà.")
+        messages.info(request, "Cet infirmier existe déjà (téléphone mis à jour si nécessaire).")
 
     return redirect(request.META.get("HTTP_REFERER") or "core_emails:dashboard")
-
 
 # =====================================================
 # SYNC GMAIL
@@ -683,7 +635,6 @@ def change_sender_type(request, pk):
     )
 
     return redirect("core_emails:prescription_detail", pk=pk)
-
 
 # =====================================================
 # CRÉATION MANUELLE D’ORDONNANCE PAR LE PHARMACIEN
@@ -768,7 +719,6 @@ def prescription_create(request):
 
     return render(request, "core_emails/prescription_create.html")
 
-
 # =====================================================
 # CHANGEMENT TYPE D’ORDONNANCE
 # =====================================================
@@ -799,7 +749,6 @@ def change_prescription_type(request, pk):
 
     return redirect("core_emails:prescription_detail", pk=pk)
 
-
 # =====================================================
 # V7 — ACTIONS RENOUVELLEMENT (EMAIL/SMS PATIENT + EMAIL MÉDECIN)
 # =====================================================
@@ -823,7 +772,6 @@ def _renewal_note_max_len(default: int = 255) -> int:
     except Exception:
         return int(default)
 
-
 def _renewal_truncate(text: str, max_len: int = 255) -> str:
     text = (text or "").strip()
     if not max_len:
@@ -833,7 +781,6 @@ def _renewal_truncate(text: str, max_len: int = 255) -> str:
     if max_len <= 3:
         return text[:max_len]
     return (text[: max_len - 3].rstrip() + "...")[:max_len]
-
 
 def _renewal_merge_notes(existing: str, addition: str, max_len: int = 255) -> str:
     existing = (existing or "").strip()
@@ -912,7 +859,6 @@ def send_renewal_patient_email(request, pk, days):
         require_https=request.is_secure(),
     ):
         next_url = reverse("core_emails:renewals_dashboard")
-
 
     if prescription.type != PrescriptionType.RENOUVELLEMENT:
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
@@ -1041,7 +987,6 @@ def send_renewal_patient_email(request, pk, days):
     )
     return redirect(next_url)
 
-
 @login_required
 @require_POST
 def send_renewal_patient_sms(request, pk, days):
@@ -1054,7 +999,6 @@ def send_renewal_patient_sms(request, pk, days):
         require_https=request.is_secure(),
     ):
         next_url = reverse("core_emails:renewals_dashboard")
-
 
     if prescription.type != PrescriptionType.RENOUVELLEMENT:
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
@@ -1155,7 +1099,6 @@ def send_renewal_patient_sms(request, pk, days):
     messages.success(request, ("SMS patient envoyé (RETARD)." if days == 0 else f"SMS patient envoyé (J-{days})."))
     return redirect(next_url)
 
-
 @login_required
 @require_POST
 def send_renewal_doctor_email(request, pk):
@@ -1205,7 +1148,6 @@ def send_renewal_doctor_email(request, pk):
 
     messages.success(request, "Email médecin envoyé.")
     return redirect("core_emails:prescription_detail", pk=pk)
-
 
 # =====================================================
 # V7 — MAJ INFOS RENOUVELLEMENT (depuis la fiche ordonnance)
@@ -1293,8 +1235,6 @@ def update_renewal_info(request, pk):
 
     messages.success(request, "Infos renouvellement enregistrées.")
     return redirect("core_emails:prescription_detail", pk=pk)
-
-
 
 # =====================================================
 # 🔔 PARAMÉTRAGE NOTIFICATIONS — POST UNIQUEMENT (V8)

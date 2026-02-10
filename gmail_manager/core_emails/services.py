@@ -156,6 +156,7 @@ from .states import (
 )
 
 from core_notifications.services import notify_users
+from .services_notifications import send_prescription_notifications as send_prescription_notifications_impl
 from core_emails.emailing import send_status_email
 
 import datetime
@@ -269,8 +270,8 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         users=User.objects.all(),
         title="Statut d’ordonnance modifié",
         message=(
-            f"Ordonnance #{prescription.id}\n"
-            f"{status_label(current_enum)} → {status_label(target_enum)}"
+            f"Ordonnance #{prescription.id} — Statut : "
+            f"{_status_label_fr(old_status)} → {_status_label_fr(new_status)}"
         ),
         object_type="Prescription",
         object_id=prescription.id,
@@ -472,125 +473,71 @@ def compute_renewals_watch_from_delivered():
 # 🔔 NOTIFICATIONS — SERVICE PAR ORDONNANCE (V8)
 # =====================================================
 
+# ORDO_NOTIFICATION_HELPERS_V1
+# Helpers UI / logs / RGPD (aucune logique métier)
+# =====================================================
+
+def _mask_email(email: str) -> str:
+    """
+    Masque un email pour logs/UI (RGPD).
+    Ex: a***@d***.fr
+    """
+    s = (email or "").strip()
+    if not s or "@" not in s:
+        return "-"
+    local, domain = s.split("@", 1)
+    local_mask = (local[0] + "***") if local else "***"
+    if "." in domain:
+        name, ext = domain.rsplit(".", 1)
+        dom_mask = (name[0] + "***") if name else "***"
+        return f"{local_mask}@{dom_mask}.{ext}"
+    return f"{local_mask}@***"
+
+def _status_label_fr(status: str) -> str:
+    """
+    Libellé FR basé sur PrescriptionStatus.choices
+    """
+    try:
+        from core_emails.models import PrescriptionStatus
+        return dict(PrescriptionStatus.choices).get(status, status or "—")
+    except Exception:
+        return status or "—"
+
+def _sms_text_status_only(*, prescription_id: int, new_status: str) -> str:
+    """
+    SMS RGPD : uniquement le statut, aucune donnée patient.
+    """
+    label = _status_label_fr(new_status)
+    return f"Ordo — Statut ordonnance #{prescription_id} : {label}. Contact : 03 20 56 50 05"
+
+
+
 def send_prescription_notifications(
     *,
     prescription,
-    user,
-    patient_channel,
-    nurse_channel,
+    user=None,
+    old_status=None,
+    new_status=None,
+    patient_channel="NONE",
+    nurse_channel="NONE",
     trigger="",
 ):
-    """
-    Envoi conditionnel SMS / EMAIL selon le paramétrage
-    STRICTEMENT lié à l'ordonnance.
+    """Compat: point d’entrée historique (services.py).
 
-    - AUCUNE configuration globale
-    - Traçabilité complète via PrescriptionNotificationEvent
+    Délègue vers services_notifications.send_prescription_notifications().
+    IMPORTANT: idéalement appeler AFTER COMMIT (géré dans services_workflow).
     """
+    if old_status is None:
+        old_status = getattr(prescription, "status", "")
+    if new_status is None:
+        new_status = getattr(prescription, "status", "")
 
-    from django.core.mail import send_mail
-    from core_notifications.services import send_sms_logged
-    from core_emails.models import (
-        PrescriptionNotificationEvent,
+    return send_prescription_notifications_impl(
+        prescription=prescription,
+        old_status=old_status,
+        new_status=new_status,
+        patient_channel=patient_channel,
+        nurse_channel=nurse_channel,
     )
 
-    def log_event(recipient_type, channel, destination, result, error=""):
-        PrescriptionNotificationEvent.objects.create(
-            prescription=prescription,
-            recipient_type=recipient_type,
-            channel=channel,
-            destination=destination or "-",
-            result=result,
-            error_message=error or "",
-            created_by=user,
-        )
 
-    # =========================
-    # PATIENT
-    # =========================
-    patient = getattr(prescription, "patient", None)
-
-    if patient_channel == "NONE":
-        log_event("PATIENT", "NONE", "-", "SKIPPED")
-    else:
-        # SMS patient
-        if patient_channel in ("SMS", "BOTH"):
-            phone = getattr(patient, "phone_number", None) if patient else None
-            if not phone:
-                log_event("PATIENT", "SMS", "-", "FAILED", "Téléphone patient manquant")
-            else:
-                try:
-                    send_sms_logged(
-                        to_e164=phone,
-                        text=f"Statut ordonnance #{prescription.id} mis à jour.",
-                        prescription=prescription,
-                    )
-                    log_event("PATIENT", "SMS", phone, "SENT")
-                except Exception as e:
-                    log_event("PATIENT", "SMS", phone, "FAILED", str(e))
-
-        # EMAIL patient
-        if patient_channel in ("EMAIL", "BOTH"):
-            email = getattr(patient, "email", None) if patient else None
-            if not email:
-                log_event("PATIENT", "EMAIL", "-", "FAILED", "Email patient manquant")
-            else:
-                try:
-                    send_mail(
-                        subject="Mise à jour de votre ordonnance",
-                        message=(
-                            f"Le statut de votre ordonnance "
-                            f"#{prescription.id} a été mis à jour."
-                        ),
-                        from_email=None,
-                        recipient_list=[email],
-                        fail_silently=False,
-                    )
-                    log_event("PATIENT", "EMAIL", email, "SENT")
-                except Exception as e:
-                    log_event("PATIENT", "EMAIL", email, "FAILED", str(e))
-
-    # =========================
-    # INFIRMIER (si associé)
-    # =========================
-    nurse = prescription.assigned_nurse
-    if not nurse:
-        return
-
-    if nurse_channel == "NONE":
-        log_event("NURSE", "NONE", "-", "SKIPPED")
-        return
-
-    # SMS infirmier
-    if nurse_channel in ("SMS", "BOTH"):
-        phone = getattr(nurse, "phone_number", None)
-        if not phone:
-            log_event("NURSE", "SMS", "-", "FAILED", "Téléphone infirmier manquant")
-        else:
-            try:
-                send_sms_logged(
-                    to_e164=phone,
-                    text=f"Ordonnance #{prescription.id} mise à jour.",
-                    prescription=prescription,
-                )
-                log_event("NURSE", "SMS", phone, "SENT")
-            except Exception as e:
-                log_event("NURSE", "SMS", phone, "FAILED", str(e))
-
-    # EMAIL infirmier
-    if nurse_channel in ("EMAIL", "BOTH"):
-        email = getattr(nurse, "email", None)
-        if not email:
-            log_event("NURSE", "EMAIL", "-", "FAILED", "Email infirmier manquant")
-        else:
-            try:
-                send_mail(
-                    subject="Ordonnance mise à jour",
-                    message=f"Ordonnance #{prescription.id} : statut mis à jour.",
-                    from_email=None,
-                    recipient_list=[email],
-                    fail_silently=False,
-                )
-                log_event("NURSE", "EMAIL", email, "SENT")
-            except Exception as e:
-                log_event("NURSE", "EMAIL", email, "FAILED", str(e))

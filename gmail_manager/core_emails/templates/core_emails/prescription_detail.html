@@ -1045,7 +1045,9 @@
         </div>
         <div class="field">
           <label>Téléphone</label>
-          <input type="text" name="phone_number" required />
+          <label for="id_nurse_phone_number">Téléphone (France)</label>
+          <input type="tel" name="phone_number" id="id_nurse_phone_number" inputmode="numeric" autocomplete="tel" placeholder="06 12 34 56 78" maxlength="14" required />
+          <div class="hint">Format : 06 12 34 56 78</div>
         </div>
         <div class="hint">Ces infos facilitent la livraison + notifications.</div>
       </div>
@@ -1102,10 +1104,39 @@
           <input type="text" name="last_name" required />
         </div>
         <div class="field">
-          <label>Email (optionnel)</label>
-          <input type="email" name="email" />
+          <label>Email</label>
+          <input type="email" name="email" required />
+        </div>
+        <div class="field">
+          <label>Téléphone (France)</label>
+          <input
+            id="id_nurse_phone_number"
+            type="tel"
+            name="phone_number"
+            inputmode="numeric"
+            autocomplete="tel"
+            placeholder="06 12 34 56 78"
+            maxlength="14"
+            required
+          />
         </div>
       </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn" onclick="closeModal('createNurseModal')">Annuler</button>
+        <button type="submit" class="btn btn--primary">Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn" onclick="closeModal('createNurseModal')">Annuler</button>
+        <button type="submit" class="btn btn--primary">Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
 
       <div class="modal__actions">
         <button type="button" class="btn" onclick="closeModal('createNurseModal')">Annuler</button>
@@ -1472,5 +1503,77 @@ document.querySelectorAll(".modal-overlay").forEach(overlay => {
     </div>
   </div>
 </div>
+
+<script>
+(function(){
+  const el = document.getElementById("id_nurse_phone_number");
+  if(!el) return;
+
+  function formatFRMobile(v){
+    let d = (v || "").replace(/\D/g, "");
+    if(d.startsWith("33") && d.length === 11) d = "0" + d.slice(2);
+    d = d.slice(0, 10);
+    const parts = [];
+    if(d.length > 0) parts.push(d.slice(0,2));
+    if(d.length > 2) parts.push(d.slice(2,4));
+    if(d.length > 4) parts.push(d.slice(4,6));
+    if(d.length > 6) parts.push(d.slice(6,8));
+    if(d.length > 8) parts.push(d.slice(8,10));
+    return parts.join(" ");
+  }
+
+  el.addEventListener("input", () => { el.value = formatFRMobile(el.value); });
+  el.addEventListener("blur", () => { el.value = formatFRMobile(el.value); });
+})();
+</script>
+
+
+<script>
+/* ORDO_PHONE_MASK_FR_V1 */
+(function() {
+  function onlyDigits(s) {
+    return (s || "").replace(/\D+/g, "");
+  }
+
+  // 'xx xx xx xx xx' (max 10 digits)
+  function formatFrGroups(digits) {
+    const d = (digits || "").slice(0, 10);
+    const parts = [];
+    for (let i = 0; i < d.length; i += 2) {
+      parts.push(d.slice(i, i + 2));
+    }
+    return parts.join(" ").trim();
+  }
+
+  function normalizeForDisplay(d) {
+    // +33..., 0033... => 0XXXXXXXXX pour affichage
+    if (d.startsWith("0033")) {
+      d = "0" + d.slice(4);
+    } else if (d.startsWith("33") && d.length >= 11) {
+      d = "0" + d.slice(2);
+    }
+    return d.slice(0, 10);
+  }
+
+  function applyMask(el) {
+    if (!el) return;
+    let d = onlyDigits(el.value || "");
+    d = normalizeForDisplay(d);
+    el.value = formatFrGroups(d);
+  }
+
+  function bindMask(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    ["input","blur","focus","paste"].forEach(evt => {
+      el.addEventListener(evt, () => applyMask(el));
+    });
+    applyMask(el);
+  }
+
+  bindMask("id_nurse_phone_number");
+})();
+</script>
+
 </body>
 </html>

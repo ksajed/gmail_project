@@ -39,6 +39,15 @@ class Person(models.Model):
         blank=True,
     )
 
+
+    @property
+    def phone_number(self) -> str:
+        """Compat: alias de 'phone' (certains modules utilisent phone_number)."""
+        return (self.phone or "").strip()
+
+    @phone_number.setter
+    def phone_number(self, value: str) -> None:
+        self.phone = (value or "").strip()
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
