@@ -130,7 +130,7 @@ def notify_nurse(
             )
 
 
-def send_prescription_notifications(
+def _legacy_send_prescription_notifications_void(
     *,
     prescription,
     old_status: str,
@@ -370,13 +370,22 @@ def send_prescription_notifications(
     nurse_sms_status = "SKIPPED"
     nurse_email_status = "SKIPPED"
 
-    # Texte RGPD-safe
-    text_patient = build_sms_text_status_only(
-        prescription=prescription,
-        old_status=old_status,
-        new_status=new_status,
-    )
-    text_nurse = "[Ordo] Mise à jour: statut ordonnance (patient) : " + f"{_status_label_fr(old_status)} → {_status_label_fr(new_status)}."
+    # Texte RGPD-safe (SMS pro) : patient vs infirmier (ton différent)
+    try:
+        from core_notifications.messages_sms import get_sms_texts_for_status
+        text_patient, text_nurse = get_sms_texts_for_status(new_status)
+    except Exception:
+        # Fallback minimal si import impossible
+        text_patient = build_sms_text_status_only(
+            prescription=prescription,
+            old_status=old_status,
+            new_status=new_status,
+        )
+        text_nurse = (
+            "Bonjour. "
+            "Statut ordonnance (patient) : "
+            + f"{_status_label_fr(old_status)} → {_status_label_fr(new_status)}."
+        )
 
     pc = (patient_channel or "NONE").upper()
     if pc in ("SMS", "BOTH"):

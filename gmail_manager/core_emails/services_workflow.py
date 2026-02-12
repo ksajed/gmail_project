@@ -215,13 +215,5 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
     settings = _get_or_create_notification_settings(prescription)
     if settings:
         from .services import send_prescription_notifications
-        send_prescription_notifications(
-            prescription=prescription,
-            user=user,
-            old_status=old_status,
-            new_status=new_status,
-            patient_channel=settings.patient_channel,
-            nurse_channel=settings.nurse_channel,
-        )
 
     return prescription
