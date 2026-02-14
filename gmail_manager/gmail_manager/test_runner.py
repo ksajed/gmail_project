@@ -16,5 +16,6 @@ class OrdoDiscoverRunner(DiscoverRunner):
         # Otherwise, force-discover from known apps that currently have tests.
         forced_labels = [
             "core_emails",
+            "core_notifications",
         ]
         return super().build_suite(forced_labels, extra_tests=extra_tests, **kwargs)
