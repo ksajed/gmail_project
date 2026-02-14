@@ -42,10 +42,26 @@ def build_sms_text_status_only(*, prescription, old_status: str, new_status: str
     """SMS RGPD-safe: statut uniquement."""
     # IMPORTANT: pas de nom patient, pas d'ordonnance détaillée, pas de pathologie.
     return (
-        "[Ordo] Mise à jour: statut de votre ordonnance : "
+        "Mise à jour: statut de votre ordonnance : "
         f"{_status_label_fr(old_status)} → {_status_label_fr(new_status)}."
     )
 
+
+
+# ORDO_NOTIF_FREE_TEXT_V2_BACKEND: helpers message libre (RGPD-safe)
+def _sanitize_free_text(msg: str, max_len: int = 240) -> str:
+    m = (msg or "").strip()
+    m = " ".join(m.split())
+    if len(m) > max_len:
+        m = m[:max_len].rstrip() + "…"
+    return m
+
+def _append_free_text(base: str, msg: str) -> str:
+    m = _sanitize_free_text(msg)
+    if not m:
+        return base
+    base = (base or "").rstrip()
+    return base + "\n\n" + "Message de la pharmacie : " + m
 
 def _send_email_strict(*, to_email: str, subject: str, body: str) -> None:
     to_email = (to_email or "").strip()
@@ -107,7 +123,7 @@ def notify_nurse(
 
     # RGPD: côté infirmier aussi, rester au statut uniquement (tu peux ajuster plus tard)
     sms_text = (
-        "[Ordo] Mise à jour: statut ordonnance (patient) : "
+        "Mise à jour: statut ordonnance (patient) : "
         f"{_status_label_fr(old_status)} → {_status_label_fr(new_status)}."
     )
 
@@ -346,6 +362,8 @@ def send_prescription_notifications(
     new_status=None,
     patient_channel="NONE",
     nurse_channel="NONE",
+    notification_message="",
+    # ORDO_NOTIF_FREE_TEXT_V2_BACKEND: message libre optionnel
 ):
     """Override SAFE : envoi réel + retour NotifResult (RGPD-safe).
 
@@ -370,12 +388,12 @@ def send_prescription_notifications(
     nurse_sms_status = "SKIPPED"
     nurse_email_status = "SKIPPED"
 
+    
     # Texte RGPD-safe (SMS pro) : patient vs infirmier (ton différent)
     try:
         from core_notifications.messages_sms import get_sms_texts_for_status
         text_patient, text_nurse = get_sms_texts_for_status(new_status)
     except Exception:
-        # Fallback minimal si import impossible
         text_patient = build_sms_text_status_only(
             prescription=prescription,
             old_status=old_status,
@@ -387,7 +405,12 @@ def send_prescription_notifications(
             + f"{_status_label_fr(old_status)} → {_status_label_fr(new_status)}."
         )
 
+    # Ajout message libre (optionnel)
+    text_patient = _append_free_text(text_patient, notification_message)
+    text_nurse = _append_free_text(text_nurse, notification_message)
+
     pc = (patient_channel or "NONE").upper()
+
     if pc in ("SMS", "BOTH"):
         if patient_phone:
             try:
@@ -405,7 +428,6 @@ def send_prescription_notifications(
             patient_sms_status = "FAILED"
 
     if pc in ("EMAIL", "BOTH"):
-        # compat: peut renvoyer str ou None
         ret = _send_email_if_possible(
             to_email=(patient_email or ""),
             subject="Mise à jour du statut de votre ordonnance",
@@ -414,6 +436,7 @@ def send_prescription_notifications(
         patient_email_status = _email_status_from_helper(ret)
 
     if not nurse:
+
         nurse_sms_status = "SKIPPED"
         nurse_email_status = "SKIPPED"
     else:

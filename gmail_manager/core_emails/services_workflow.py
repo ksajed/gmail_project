@@ -51,7 +51,7 @@ def _status_label_fr(status: str) -> str:
 
 
 
-def _send_external_notifications(*, prescription, old_status, new_status, user, history_id=None):
+def _send_external_notifications(*, prescription, old_status, new_status, user, history_id=None, notification_message=""):
     """Effets externes (emails + notifications) exécutés AFTER COMMIT.
 
     - Envoi email statut
@@ -74,21 +74,24 @@ def _send_external_notifications(*, prescription, old_status, new_status, user, 
     except Exception:
         pass
 
-    # 2) Email “statut” (si ton emailing est branché)
+    # 2) Email “statut” (legacy 'templates')
+    # ✅ Anti-double-email : si notifications paramétrées EMAIL/BOTH => on SKIP l'email legacy
+    settings = _get_or_create_notification_settings(prescription)
     try:
-        send_status_email(
-            prescription=prescription,
-            old_status=old_status,
-            new_status=new_status,
-            user=user,
-        )
+        pc = (getattr(settings, "patient_channel", "NONE") or "NONE").upper() if settings else "NONE"
+        if pc not in ("EMAIL", "BOTH"):
+            send_status_email(
+                prescription=prescription,
+                old_status=old_status,
+                new_status=new_status,
+                user=user,
+            )
     except Exception:
         pass
 
     # 3) Notifications patient/infirmier + résultat réel
     result = None
     try:
-        settings = _get_or_create_notification_settings(prescription)
         if settings:
             from .services import send_prescription_notifications
             result = send_prescription_notifications(
@@ -98,6 +101,7 @@ def _send_external_notifications(*, prescription, old_status, new_status, user, 
                 new_status=new_status,
                 patient_channel=settings.patient_channel,
                 nurse_channel=settings.nurse_channel,
+                  notification_message=notification_message,
             )
     except Exception:
         result = None
@@ -115,7 +119,8 @@ def _send_external_notifications(*, prescription, old_status, new_status, user, 
             pass
 
 
-def change_prescription_status(*, prescription, new_status, user=None, comment=""):
+def change_prescription_status(*, prescription, new_status, user=None, comment="", notification_message=""):
+    # ORDO_NOTIF_FREE_TEXT_V2_BACKEND: message libre optionnel transmis aux notifications
     old_status = prescription.status
 
     if old_status == new_status:
@@ -142,6 +147,12 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
     final_comment = (comment or "").strip()
     if not final_comment:
         final_comment = f"Changement de statut : {status_label(current_enum)} → {status_label(target_enum)}"
+
+    nm = (notification_message or "").strip()
+    if nm:
+        # RGPD: ne jamais logger le contenu du message libre
+        final_comment = (final_comment or "").rstrip() + "\nMessage libre ajouté."
+    # ORDO_NOTIF_FREE_TEXT_V2_BACKEND: trace message libre
 
     # Audit notifications (RGPD-safe) dans l'historique
     settings = _get_or_create_notification_settings(prescription)
@@ -191,29 +202,8 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
             new_status=new_status,
             user=user,
             history_id=history.id,
+              notification_message=notification_message,
         )
     transaction.on_commit(_after_commit)
-
-    notify_users(
-        users=User.objects.all(),
-        title="Statut d’ordonnance modifié",
-        message=(
-            f"Ordonnance #{prescription.id} — Statut : "
-            f"{_status_label_fr(old_status)} → {_status_label_fr(new_status)}"
-        ),
-        object_type="Prescription",
-        object_id=prescription.id,
-    )
-
-    send_status_email(
-        prescription=prescription,
-        old_status=old_status,
-        new_status=new_status,
-        user=user,
-    )
-
-    settings = _get_or_create_notification_settings(prescription)
-    if settings:
-        from .services import send_prescription_notifications
 
     return prescription

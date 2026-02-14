@@ -377,7 +377,14 @@ class PrescriptionNotificationSettings(models.Model):
             ("EMAIL", "EMAIL"),
             ("BOTH", "BOTH"),
         ],
-        default="NONE"
+        default="NONE",
+    )
+
+    # Message libre (RGPD-safe) ajouté au SMS/email si canal activé
+    free_text_message = models.TextField(
+        blank=True,
+        default="",
+        help_text="Message libre optionnel ajouté aux notifications (sans données médicales).",
     )
 
     updated_at = models.DateTimeField(auto_now=True)

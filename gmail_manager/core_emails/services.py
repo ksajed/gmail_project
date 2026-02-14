@@ -278,20 +278,30 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
     )
 
     # =====================================================
+    # 🔎 Notification settings (si existants)
+    # =====================================================
+    settings = getattr(prescription, "notification_settings", None)
+
+    # =====================================================
     # 4️⃣ EMAIL PATIENT
     # =====================================================
-    send_status_email(
-        prescription=prescription,
-        old_status=old_status,
-        new_status=new_status,
-        user=user,
-    )
+    # ✅ Anti-double-email : si settings.patient_channel EMAIL/BOTH => on SKIP l'email legacy
+    try:
+        pc = (getattr(settings, "patient_channel", "NONE") or "NONE").upper() if settings else "NONE"
+        if pc not in ("EMAIL", "BOTH"):
+            send_status_email(
+                prescription=prescription,
+                old_status=old_status,
+                new_status=new_status,
+                user=user,
+            )
+    except Exception:
+        pass
 
 
     # =====================================================
     # 🔔 NOTIFICATIONS PARAMÉTRÉES PAR ORDONNANCE (V8)
     # =====================================================
-    settings = getattr(prescription, "notification_settings", None)
     if settings:
         from core_emails.services import send_prescription_notifications
         send_prescription_notifications(
@@ -520,6 +530,8 @@ def send_prescription_notifications(
     new_status=None,
     patient_channel="NONE",
     nurse_channel="NONE",
+    notification_message="",
+    # ORDO_NOTIF_FREE_TEXT_V2_BACKEND: message libre optionnel
     trigger="",
 ):
     """Compat: point d’entrée historique (services.py).
@@ -538,6 +550,7 @@ def send_prescription_notifications(
         new_status=new_status,
         patient_channel=patient_channel,
         nurse_channel=nurse_channel,
+        notification_message=notification_message,
     )
 
 

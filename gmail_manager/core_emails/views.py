@@ -436,6 +436,8 @@ def prescription_detail(request, pk):
 def change_status(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
     new_status = request.POST.get("status")
+    notification_message = (request.POST.get("notification_message") or "").strip()
+    # ORDO_NOTIF_FREE_TEXT_V2_BACKEND: message libre optionnel (pharmacien)
     if not new_status:
         messages.warning(request, "Aucun statut sélectionné.")
         return redirect("core_emails:prescription_detail", pk=pk)
@@ -446,6 +448,7 @@ def change_status(request, pk):
             prescription=prescription,
             new_status=new_status,
             user=request.user,
+            notification_message=notification_message,
         )
         messages.success(request, "Statut mis à jour avec succès.")
         status_changed = True
@@ -1259,7 +1262,10 @@ def update_prescription_notification_settings(request, prescription_id):
     else:
         settings_obj.nurse_channel = "NONE"
 
-    settings_obj.save(update_fields=["patient_channel", "nurse_channel", "updated_at"])
+    # ORDO_NOTIF_FREE_TEXT_V2_BACKEND: persistance du message libre (popup)
+    settings_obj.free_text_message = (request.POST.get("notification_message_modal") or "").strip()
+
+    settings_obj.save(update_fields=["patient_channel", "nurse_channel", "free_text_message", "updated_at"])
 
     # Trace opposable (historique) : paramétrage notifications
     PrescriptionStatusHistory.objects.create(

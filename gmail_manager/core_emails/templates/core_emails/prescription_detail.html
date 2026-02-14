@@ -918,6 +918,8 @@
         <div class="card__body">
           <form method="post" action="{% url 'core_emails:change_status' prescription.id %}">
             {% csrf_token %}
+            {# ORDO_NOTIF_FREE_TEXT_V1_HIDDEN: message libre (optionnel) transmis au backend #}
+            <input type="hidden" name="notification_message" id="id_notification_message" value="{{ prescription.notification_settings.free_text_message|default:"" }}">
              <!-- AUTO_SMS_FROM_SETTINGS:BEGIN -->
              {# Déduit l'envoi SMS et la cible depuis le paramétrage popup (notification_settings) #}
              {% if prescription.notification_settings %}
@@ -1163,6 +1165,24 @@
 
   
   function onNotificationsSettingsSubmit(form){
+    // ORDO_NOTIF_FREE_TEXT_V1_JS: copie le message libre (popup) vers le form change_status
+    try {
+      const msgEl = document.getElementById('id_notification_message_modal');
+      const hidden = document.getElementById('id_notification_message');
+      // ORDO_NOTIF_FREE_TEXT_V2_JS_SYNC: sync live textarea -> hidden form status
+      if (msgEl && hidden) {
+        hidden.value = (msgEl.value || '').trim();
+        msgEl.addEventListener('input', function(){
+          hidden.value = (msgEl.value || '').trim();
+        });
+      }
+      if (msgEl && hidden) {
+        hidden.value = (msgEl.value || '').trim();
+      }
+    } catch (_) {
+      // ignore
+    }
+
     try {
       // Ferme immédiatement la popup de paramétrage
       closeModal('notificationsSettingsModal');
@@ -1486,6 +1506,24 @@ document.querySelectorAll(".modal-overlay").forEach(overlay => {
         </div>
     
       {% endif %}
+
+      {# ORDO_NOTIF_FREE_TEXT_V1_TEXTAREA: message libre saisi par le pharmacien (RGPD-safe) #}
+      <div class="field" style="margin-top:12px;">
+        <div class="field-head">
+          <label for="id_notification_message_modal">Message libre (optionnel)</label>
+          <div class="field-hint">Ajouté au SMS/email selon le canal choisi</div>
+        </div>
+        <textarea
+          id="id_notification_message_modal"
+          name="notification_message_modal"
+          rows="3"
+          maxlength="240"
+          placeholder="Ex : médicament non disponible… commande en retard…"
+          style="width:100%; resize:vertical; padding:10px; border-radius:12px; border:1px solid rgba(0,0,0,.12);"
+        >{{ prescription.notification_settings.free_text_message|default:"" }}
+        </textarea>
+        <div class="hint">Reste opérationnel et RGPD-safe (pas d’informations médicales, pas de nom patient).</div>
+      </div>
 
       <div class="modal-footer modal-footer--sticky">
         <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
