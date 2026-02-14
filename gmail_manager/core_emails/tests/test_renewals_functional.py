@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 import datetime
 import uuid
 from django.urls import reverse
