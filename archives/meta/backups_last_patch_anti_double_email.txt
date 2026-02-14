@@ -1,2 +1,0 @@
-gmail_manager/core_emails/services_workflow.py <- gmail_manager/core_emails/services_workflow.py.bak.20260213-143814
-gmail_manager/core_emails/services.py <- gmail_manager/core_emails/services.py.bak.20260213-143814
