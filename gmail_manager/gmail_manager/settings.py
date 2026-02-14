@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Force Django test discovery from the project folder (to find app tests)
+TEST_DISCOVER_TOP_LEVEL = Path(__file__).resolve().parent.parent
+
 load_dotenv(BASE_DIR / ".env")
 
 
@@ -242,3 +245,6 @@ LOGGING = {
     },
 }
 # ORDO_LOGGING:END
+
+# Ordo: custom test runner (ensures global test discovery works)
+TEST_RUNNER = "gmail_manager.test_runner.OrdoDiscoverRunner"
