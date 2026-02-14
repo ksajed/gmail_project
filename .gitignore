@@ -25,3 +25,8 @@ db.sqlite3
 
 # Backups locaux
 backups/*.json
+
+# Ordo - fichiers de travail / trace locale
+IN_PROGRESS
+backups_last_patch_anti_double_email.txt
+logs/
