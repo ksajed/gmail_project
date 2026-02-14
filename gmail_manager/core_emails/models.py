@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 # core_emails/models.py
 from django.conf import settings
 from django.db import models
@@ -332,10 +336,10 @@ def trace_prescription_type(sender, instance, **kwargs):
         return
 
     if old.type != instance.type:
-        print("🔥 TYPE CHANGE DETECTED 🔥")
-        print("PK:", instance.pk)
-        print("OLD TYPE:", old.type)
-        print("NEW TYPE:", instance.type)
+        logger.debug("TYPE CHANGE DETECTED")
+        logger.debug("PK=%s", instance.pk)
+        logger.debug("OLD TYPE=%s", old.type)
+        logger.debug("NEW TYPE=%s", instance.type)
 
 
 # =====================================================
