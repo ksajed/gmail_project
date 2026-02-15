@@ -24,8 +24,8 @@ def render_status_sms_rgpd_bilingual_compact(status_label_fr: str, prescription_
     ref_fr = f" Réf: {prescription_id}." if prescription_id is not None else ""
     ref_en = f" Ref: {prescription_id}." if prescription_id is not None else ""
 
-    fr = f"Bonjour. Statut ordonnance : {status_label_fr}.{ref_fr} Merci. {PHARMACY_SIGNATURE_FR_SMS_COMPACT}"
-    en = f"EN: Hello. Prescription status: {status_label_en}.{ref_en} Thank you. {PHARMACY_SIGNATURE_EN_SMS_COMPACT}"
+    fr = f"Bonjour. Statut : {status_label_fr}.{ref_fr} Merci. {PHARMACY_SIGNATURE_FR_SMS_COMPACT}"
+    en = f"EN: Hello. Status: {status_label_en}.{ref_en} Thank you. {PHARMACY_SIGNATURE_EN_SMS_COMPACT}"
     return fr + "\n" + en
 
 ### ORDO_STATUS_SMS_MAP_V1_START ###
@@ -61,7 +61,7 @@ STATUS_HUMAN = {
 def _patient_template(status_human: str) -> str:
     return (
         "Bonjour,\n\n"
-        "Le statut de votre ordonnance a évolué.\n"
+        "Une mise à jour de statut est disponible.\n"
         "État actuel : " + status_human + "."
         + _sig()
     )
@@ -69,7 +69,7 @@ def _patient_template(status_human: str) -> str:
 def _nurse_template(status_human: str) -> str:
     return (
         "Bonjour,\n\n"
-        "Le statut d’une ordonnance associée à votre patient a évolué.\n"
+        "Une mise à jour de statut est disponible.\n"
         "État actuel : " + status_human + "."
         + _sig()
     )
