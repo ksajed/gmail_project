@@ -546,6 +546,7 @@ def send_prescription_notifications(
 
     return send_prescription_notifications_impl(
         prescription=prescription,
+        user=user,
         old_status=old_status,
         new_status=new_status,
         patient_channel=patient_channel,

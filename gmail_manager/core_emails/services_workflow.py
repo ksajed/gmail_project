@@ -24,9 +24,6 @@ def _get_or_create_notification_settings(prescription):
     Ne doit jamais lever d'exception (workflow robuste).
     """
     try:
-        settings = _get_or_create_notification_settings(prescription)
-        if settings is not None:
-            return settings
         from core_emails.models import PrescriptionNotificationSettings
         settings, _ = PrescriptionNotificationSettings.objects.get_or_create(
             prescription=prescription,
@@ -77,6 +74,12 @@ def _send_external_notifications(*, prescription, old_status, new_status, user, 
     # 2) Email “statut” (legacy 'templates')
     # ✅ Anti-double-email : si notifications paramétrées EMAIL/BOTH => on SKIP l'email legacy
     settings = _get_or_create_notification_settings(prescription)
+    # ORDO_NOTIF_V9_PATCH_APPLIED: fallback message libre (si POST vide)
+    try:
+        if settings and not (notification_message or '').strip():
+            notification_message = (getattr(settings, 'free_text_message', '') or '').strip()
+    except Exception:
+        pass
     try:
         pc = (getattr(settings, "patient_channel", "NONE") or "NONE").upper() if settings else "NONE"
         if pc not in ("EMAIL", "BOTH"):
@@ -92,17 +95,16 @@ def _send_external_notifications(*, prescription, old_status, new_status, user, 
     # 3) Notifications patient/infirmier + résultat réel
     result = None
     try:
-        if settings:
-            from .services import send_prescription_notifications
-            result = send_prescription_notifications(
-                prescription=prescription,
-                user=user,
-                old_status=old_status,
-                new_status=new_status,
-                patient_channel=settings.patient_channel,
-                nurse_channel=settings.nurse_channel,
-                  notification_message=notification_message,
-            )
+        from .services import send_prescription_notifications
+        result = send_prescription_notifications(
+            prescription=prescription,
+            user=user,
+            old_status=old_status,
+            new_status=new_status,
+            patient_channel=(getattr(settings, 'patient_channel', 'NONE') if settings else 'NONE'),
+            nurse_channel=(getattr(settings, 'nurse_channel', 'NONE') if settings else 'NONE'),
+            notification_message=notification_message,
+        )
     except Exception:
         result = None
 
