@@ -1,0 +1,32 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+  <div class="card" style="padding:14px;">
+    <form method="get" style="display:flex; gap:8px; margin-bottom:10px;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher…" style="flex:1;">
+      <button class="btn btn--primary" type="submit">Rechercher</button>
+    </form>
+
+    <table style="width:100%; border-collapse:collapse;">
+      <thead><tr><th style="text-align:left;">User</th><th>Actif</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+          <tr style="border-top:1px solid var(--border);">
+            <td style="padding:10px 6px;"><strong>{{ u.username }}</strong> <span class="muted">{{ u.email }}</span></td>
+            <td style="padding:10px 6px; text-align:center;">{% if u.is_active %}✅{% else %}⛔{% endif %}</td>
+            <td style="padding:10px 6px; text-align:right;">
+              <form method="post" action="{% url 'core_adminconsole:account_toggle_active' u.id %}" style="margin:0;">
+                {% csrf_token %}
+                <button class="btn {% if u.is_active %}btn--danger{% else %}btn--primary{% endif %}" type="submit"
+                        onclick="return confirm('Confirmer (POST) ?');">
+                  {% if u.is_active %}Désactiver{% else %}Réactiver{% endif %}
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="muted" style="padding:10px 6px;">Aucun user.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

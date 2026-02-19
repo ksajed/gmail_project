@@ -1,0 +1,16 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+  <div class="card" style="padding:14px;">
+    <form method="get" style="display:flex; gap:8px; margin-bottom:10px;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher…" style="flex:1;">
+      <button class="btn btn--primary" type="submit">Rechercher</button>
+    </form>
+    <ul style="margin:0; padding-left:18px;">
+      {% for e in events %}
+        <li><strong>{{ e.action }}</strong> — {{ e.created_at|date:"d/m/Y H:i" }} — {{ e.summary|default:"—" }}</li>
+      {% empty %}
+        <li class="muted">Aucun événement.</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}

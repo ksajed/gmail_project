@@ -1,0 +1,24 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ordo — Admin Console</title>
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1">
+</head>
+<body style="padding:16px;">
+  <div style="max-width:1100px; margin:0 auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <h2 style="margin:0;">Admin Console</h2>
+      <div style="display:flex; gap:8px;">
+        <a class="btn" href="{% url 'core_adminconsole:accounts_list' %}">Comptes</a>
+        <a class="btn" href="{% url 'core_adminconsole:audit_log' %}">Audit</a>
+        <a class="btn" href="{% url 'core_emails:dashboard' %}">Retour Ordo</a>
+      </div>
+    </div>
+    <div style="height:12px;"></div>
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
