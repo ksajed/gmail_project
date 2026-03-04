@@ -1,0 +1,59 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}{% if mode == "create" %}Créer un compte{% else %}Modifier un compte{% endif %}{% endblock %}
+{% block content %}
+  <div class="ac-card">
+    <div class="ac-row" style="justify-content:space-between; align-items:center;">
+      <div>
+        <div class="ac-title">{% if mode == "create" %}Créer un compte{% else %}Modifier : {{ target.username }}{% endif %}</div>
+        <div class="ac-muted">Gestion IAM (SaaS) — groups + permissions</div>
+      </div>
+      <a class="btn" href="{% url 'core_adminconsole:accounts_list' %}">← Retour</a>
+    </div>
+
+    <form method="post" class="ac-form" style="margin-top:12px;">
+      {% csrf_token %}
+      <div class="ac-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>{{ form.username.label_tag }} {{ form.username }}</div>
+        <div>{{ form.email.label_tag }} {{ form.email }}</div>
+        <div>{{ form.first_name.label_tag }} {{ form.first_name }}</div>
+        <div>{{ form.last_name.label_tag }} {{ form.last_name }}</div>
+
+        {% if form.password1 %}
+          <div>{{ form.password1.label_tag }} {{ form.password1 }}</div>
+          <div>{{ form.password2.label_tag }} {{ form.password2 }}</div>
+        {% endif %}
+
+        {% if form.new_password %}
+          <div style="grid-column:1 / -1;">{{ form.new_password.label_tag }} {{ form.new_password }} <div class="ac-muted">{{ form.new_password.help_text }}</div></div>
+        {% endif %}
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <label style="display:flex; gap:6px; align-items:center;">{{ form.is_active }} <span>Actif</span></label>
+          <label style="display:flex; gap:6px; align-items:center;">{{ form.is_staff }} <span>Staff</span></label>
+          <label style="display:flex; gap:6px; align-items:center;">{{ form.is_superuser }} <span>Superuser</span></label>
+        </div>
+
+        <div style="grid-column:1 / -1;">
+          <div class="ac-row" style="justify-content:space-between;">
+            <div><strong>Groupes</strong></div>
+            <div class="ac-muted">Préférer groupes plutôt que permissions directes</div>
+          </div>
+          {{ form.groups }}
+        </div>
+
+        <div style="grid-column:1 / -1;">
+          <div class="ac-row" style="justify-content:space-between;">
+            <div><strong>Permissions directes</strong></div>
+            <div class="ac-muted">À utiliser avec parcimonie</div>
+          </div>
+          {{ form.user_permissions }}
+        </div>
+      </div>
+
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn btn--primary" type="submit">Enregistrer</button>
+        <a class="btn" href="{% url 'core_adminconsole:accounts_list' %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

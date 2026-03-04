@@ -1,0 +1,196 @@
+/* =========================================================
+   Admin Console — PREMIUM UI (SaaS)
+   Scope: .ac-*
+   Objectif: table moderne, toolbar, badges, recherche pro
+   ========================================================= */
+
+/* Container premium */
+.ac-card--premium{
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 16px 40px rgba(15,23,42,.06);
+}
+
+/* Header / Toolbar */
+.ac-toolbar{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin: 10px 0 14px;
+}
+.ac-titleblock{ min-width: 240px; }
+.ac-h1{
+  margin:0;
+  font-size:18px;
+  font-weight:950;
+  letter-spacing:.2px;
+}
+.ac-subline{
+  margin-top:4px;
+  color: var(--muted);
+  font-weight:800;
+  font-size:12px;
+}
+.ac-actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+/* Search */
+.ac-search{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top: 6px;
+}
+.ac-search .ac-input{
+  width: 340px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background:#fff;
+  font-weight:800;
+  outline:none;
+}
+.ac-search .ac-input:focus{
+  border-color: rgba(22,163,74,.55);
+  box-shadow: var(--ring);
+}
+
+/* KPI chips */
+.ac-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,.10);
+  background: rgba(255,255,255,.8);
+  font-weight:900;
+  font-size:12px;
+  color: var(--text);
+}
+.ac-dot{
+  width:8px; height:8px; border-radius:999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22,163,74,.14);
+}
+.ac-dot--muted{
+  background: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148,163,184,.18);
+}
+
+/* Table premium */
+.ac-tablewrap{
+  border:1px solid var(--border);
+  border-radius: 16px;
+  overflow:auto;
+  background:#fff;
+}
+.ac-table--premium{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:13px;
+}
+.ac-table--premium thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align:left;
+  padding: 12px 12px;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.22px;
+  color: var(--muted);
+  background: rgba(248,250,252,.98);
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.ac-table--premium tbody td{
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align:top;
+  background:#fff;
+}
+.ac-table--premium tbody tr:hover td{
+  background: rgba(15,23,42,.02);
+}
+.ac-table--premium tbody tr:last-child td{ border-bottom:none; }
+
+/* Column helpers */
+.ac-col-id{ width:90px; white-space:nowrap; color: rgba(15,23,42,.75); font-weight:900;}
+.ac-col-actions{ text-align:right; white-space:nowrap; }
+
+/* Person cell */
+.ac-person{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width: 220px;
+}
+.ac-avatar{
+  width:34px; height:34px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: var(--primary-soft);
+  color: var(--primary-600);
+  border: 1px solid rgba(22,163,74,.18);
+  font-weight:950;
+  flex: 0 0 auto;
+}
+.ac-person .name{
+  font-weight:950;
+  line-height:1.15;
+}
+.ac-person .meta{
+  margin-top:2px;
+  font-size:12px;
+  font-weight:800;
+  color: var(--muted);
+}
+
+/* Status pills */
+.ac-pill--active{
+  border-color: rgba(22,163,74,.22);
+  background: rgba(234,250,240,.8);
+  color: var(--primary-600);
+}
+.ac-pill--inactive{
+  border-color: rgba(148,163,184,.28);
+  background: rgba(248,250,252,.95);
+  color: rgba(15,23,42,.65);
+}
+
+/* Buttons small (table actions) */
+.btn--sm{
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+/* Empty state */
+.ac-empty{
+  padding: 18px;
+  text-align:center;
+  color: var(--muted);
+}
+.ac-empty .big{
+  font-size: 14px;
+  font-weight: 950;
+  color: rgba(15,23,42,.85);
+}
+.ac-empty .small{
+  margin-top:6px;
+  font-size:12px;
+  font-weight: 800;
+}

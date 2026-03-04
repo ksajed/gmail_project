@@ -6,19 +6,279 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Ordo — Admin Console</title>
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1">
+  <style>
+    .ac-wrap{display:grid; grid-template-columns:260px 1fr; gap:16px; padding:16px;}
+    .ac-nav{background:#fff; border:1px solid var(--border); border-radius:16px; padding:12px; position:sticky; top:12px; height:fit-content;}
+    .ac-brand{font-weight:950; margin:6px 6px 10px;}
+    .ac-nav a{display:flex; gap:10px; padding:10px 12px; border-radius:12px; font-weight:850; color:var(--text); text-decoration:none;}
+    .ac-nav a:hover{background:rgba(0,0,0,.04);}
+    .ac-main{min-width:0;}
+    .ac-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+    .ac-title{font-weight:950; font-size:18px;}
+    .ac-sub{color:var(--muted); margin-top:2px;}
+    .ac-card{background:#fff; border:1px solid var(--border); border-radius:16px; padding:14px;}
+    .ac-grid{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px;}
+    .ac-kpi{border:1px solid var(--border); border-radius:14px; padding:12px; background:#fff;}
+    .ac-kpi .n{font-size:20px; font-weight:950;}
+    .ac-table{width:100%; border-collapse:collapse;}
+    .ac-table th,.ac-table td{border-bottom:1px solid var(--border); padding:10px 8px; text-align:left; vertical-align:top;}
+    .ac-muted{color:var(--muted);}
+    .ac-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+    .danger{color:var(--danger);}
+    .ac-pill{display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); font-weight:850; font-size:12px;}
+  </style>
+
+<link rel="stylesheet" href="{% static 'css/adminconsole_sidebar_pro.css' %}">
+  <link rel="stylesheet" href="{% static 'css/adminconsole_hotfix.css' %}">
+    <link rel="stylesheet" href="{% static 'css/adminconsole_premium.css' %}">
+
+<!-- ADMINCONSOLE_PREMIUM_CSS_V1:BEGIN -->
+<style>
+  .ac-page { max-width: 1100px; margin: 0 auto; }
+  .ac-header { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; margin: 6px 0 14px; }
+  .ac-kicker { font-size: 12px; color: #6b7280; font-weight: 600; letter-spacing: .02em; }
+  .ac-h1 { margin: 2px 0 0; font-size: 22px; }
+  .ac-subtitle { margin-top: 6px; color: #6b7280; }
+  .ac-actions { display:flex; gap:10px; }
+  .ac-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 980px) { .ac-grid { grid-template-columns: 1fr; } }
+
+  .ac-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .ac-card__title { font-weight: 800; }
+  .ac-card__desc { color:#6b7280; font-size: 13px; margin-top: 4px; }
+  .ac-divider { height: 1px; background: #eef2f7; margin: 12px 0; }
+  .ac-grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 720px) { .ac-grid-2 { grid-template-columns: 1fr; } }
+
+  .ac-field { margin-top: 10px; }
+  .ac-label { display:block; font-size: 12px; font-weight: 800; color: #374151; margin-bottom: 6px; text-transform: uppercase; letter-spacing:.02em; }
+  .ac-hint { font-size: 12px; color: #6b7280; margin-top: 6px; }
+
+  .ac-selectbox select { width: 100%; min-height: 170px; }
+  .ac-card input, .ac-card select { width: 100%; border:1px solid #d1d5db; border-radius: 10px; padding: 10px; }
+  .ac-card input:focus, .ac-card select:focus { outline:none; border-color:#93c5fd; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+
+  .ac-alert { border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid; }
+  .ac-alert--danger { background: #fff5f5; border-color: #fecaca; }
+  .ac-alert__title { font-weight: 900; }
+  .ac-alert__body { margin-top: 6px; color:#7f1d1d; }
+  .ac-errors { margin: 8px 0 0 18px; }
+
+  .ac-chips { display:flex; gap:10px; flex-wrap: wrap; margin-top: 10px; }
+  .ac-chip { display:flex; align-items:center; gap:8px; border:1px solid #e5e7eb; border-radius: 999px; padding: 8px 10px; background:#f9fafb; }
+  .ac-chip--warn { border-color:#fde68a; background:#fffbeb; }
+  .ac-footer { display:flex; gap:10px; justify-content:flex-end; margin-top: 8px; }
+</style>
+<!-- ADMINCONSOLE_PREMIUM_CSS_V1:END -->
+
+
+  <!-- ORDO_PREMIUM_V1 -->
+  <link rel="stylesheet" href="{% static 'core_adminconsole/admin_console.css' %}">
+
+  <!-- ORDO_PREMIUM_PATIENTS_V1 -->
+  <link rel="stylesheet" href="{% static 'css/admin_console_premium.css' %}?v=1">
+<!-- ORDO_ADMIN_PREMIUM_CSS_V1 -->
+<style>
+/* === Ordo Admin Console – Premium UI (V1) === */
+:root{
+  --px-bg:#f6f8fc;
+  --px-card:#ffffff;
+  --px-border:rgba(17,24,39,.08);
+  --px-text:#0f172a;
+  --px-muted:rgba(15,23,42,.62);
+  --px-shadow:0 12px 30px rgba(2,8,23,.08);
+  --px-shadow-sm:0 6px 18px rgba(2,8,23,.08);
+  --px-radius:16px;
+  --px-radius-sm:12px;
+  --px-primary:#2563eb;
+  --px-primary-2:#1d4ed8;
+  --px-danger:#dc2626;
+  --px-danger-2:#b91c1c;
+}
+
+body{
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(37,99,235,.10), transparent 60%),
+              radial-gradient(900px 600px at 90% 10%, rgba(99,102,241,.08), transparent 55%),
+              var(--px-bg) !important;
+  color:var(--px-text);
+}
+
+.px-card, .ac-card, .card, .panel, .content-card {
+  background: var(--px-card);
+  border:1px solid var(--px-border);
+  border-radius: var(--px-radius);
+  box-shadow: var(--px-shadow);
+}
+
+.px-pagehead, .px-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding: 18px 18px 10px 18px;
+}
+
+.px-title, h1 {
+  letter-spacing:-.02em;
+}
+
+.px-subtitle, .px-sub, .px-muted {
+  color: var(--px-muted);
+}
+
+.px-badge, .px-pill {
+  background: rgba(37,99,235,.10);
+  color: var(--px-primary-2);
+  border: 1px solid rgba(37,99,235,.16);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.px-input, input[type="text"], select {
+  border:1px solid var(--px-border) !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 0 rgba(2,8,23,.02);
+}
+
+.px-input:focus, input[type="text"]:focus, select:focus {
+  outline: none !important;
+  border-color: rgba(37,99,235,.35) !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.12) !important;
+}
+
+.px-btn, button.btn, a.btn {
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  border:1px solid var(--px-border) !important;
+  background:#fff;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(2,8,23,.06);
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.px-btn:hover, button.btn:hover, a.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(2,8,23,.10);
+  border-color: rgba(17,24,39,.14) !important;
+}
+
+.px-btn-sm {
+  padding: 8px 10px !important;
+  border-radius: 11px !important;
+  font-size: 12.5px;
+}
+
+.px-btn-primary {
+  background: linear-gradient(180deg, rgba(37,99,235,1), rgba(29,78,216,1)) !important;
+  border-color: rgba(37,99,235,.35) !important;
+  color:#fff !important;
+}
+
+.px-btn-ghost {
+  background: #fff !important;
+  color: var(--px-text) !important;
+}
+
+.px-btn-danger {
+  background: linear-gradient(180deg, rgba(220,38,38,1), rgba(185,28,28,1)) !important;
+  border-color: rgba(220,38,38,.35) !important;
+  color:#fff !important;
+}
+
+.px-table, table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.px-table thead th, table thead th {
+  background: rgba(15,23,42,.03);
+  color: rgba(15,23,42,.72);
+  font-size: 12px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--px-border);
+}
+
+.px-table tbody tr:hover, table tbody tr:hover {
+  background: rgba(37,99,235,.04);
+}
+
+.px-table td, .px-table th, table td, table th {
+  padding: 12px 12px;
+  border-bottom: 1px solid rgba(17,24,39,.08);
+}
+
+.px-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.px-empty {
+  padding: 16px;
+  color: var(--px-muted);
+}
+</style>
+<!-- /ORDO_ADMIN_PREMIUM_CSS_V1 -->
 </head>
-<body style="padding:16px;">
-  <div style="max-width:1100px; margin:0 auto;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-      <h2 style="margin:0;">Admin Console</h2>
-      <div style="display:flex; gap:8px;">
-        <a class="btn" href="{% url 'core_adminconsole:accounts_list' %}">Comptes</a>
-        <a class="btn" href="{% url 'core_adminconsole:audit_log' %}">Audit</a>
-        <a class="btn" href="{% url 'core_emails:dashboard' %}">Retour Ordo</a>
-      </div>
+<body>
+  <div class="ac-wrap">
+    <aside class="ac-nav">
+      <div class="ac-brand">Admin Console</div>
+      <a href="{% url 'core_adminconsole:home' %}">🏠 Dashboard</a>
+      <a href="{% url 'core_adminconsole:accounts_list' %}">👤 Comptes</a>
+    <a href="{% url 'core_adminconsole:groups_list' %}"><span>👥</span><span>Groupes</span></a>
+    <a href="{% url 'core_adminconsole:iam_matrix' %}"><span>🧩</span><span>IAM</span></a>
+        <!-- ADMINCONSOLE SIDEBAR: PERSONNES PRO -->
+    <a class="nav-item" href="{% url 'core_adminconsole:users_home' %}">
+      🧾 Dossiers patients
+    </a>
+    <div class="nav-sub" aria-label="Sous-menu dossiers patients">
+      <a class="nav-sub-item" href="{% url 'core_adminconsole:patients_list' %}">
+        Titulaires d’ordonnance
+      </a>
+      <a class="nav-sub-item" href="{% url 'core_adminconsole:nurses_list' %}">
+        Mandataires de retrait
+      
+<a class="ac-navlink" href="{% url 'core_adminconsole:prescriptions_search' %}">
+  <span>📄</span><span>Ordonnances</span>
+</a>
     </div>
-    <div style="height:12px;"></div>
-    {% block content %}{% endblock %}
+    <!-- /ADMINCONSOLE SIDEBAR: PERSONNES PRO -->
+
+      <a href="{% url 'core_adminconsole:prescriptions_search' %}">📄 Ordonnances</a>
+<a class="ac-navlink" href="{% url 'core_adminconsole:prescriptions_trash' %}"><span>🗑</span><span>Corbeille ordonnances</span></a>
+
+      <a href="{% url 'core_adminconsole:notifications_settings' %}">🔔 Notifications</a>
+      <a href="{% url 'core_adminconsole:gmail_tools' %}">✉️ Gmail</a>
+      <a href="{% url 'core_adminconsole:audit_log' %}">🧾 Audit</a>
+      <div style="height:10px;"></div>
+      <a class="danger" href="{% url 'core_emails:dashboard' %}">← Retour Ordo</a>
+    </aside>
+
+    <main class="ac-main">
+      <div class="ac-top">
+        <div>
+          <div class="ac-title">{% block title %}{% endblock %}</div>
+          
+        </div>
+      </div>
+
+      {% block content %}{% endblock %}
+    </main>
   </div>
+
+
+
+
+
+
+
 </body>
 </html>

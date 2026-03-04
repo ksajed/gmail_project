@@ -1,0 +1,23 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Supprimer un groupe{% endblock %}
+{% block content %}
+  <div class="ac-card">
+    <div class="ac-title">Supprimer un groupe</div>
+    <p class="ac-muted">Cette action supprime le groupe (POST-only). Les utilisateurs ne seront pas supprimés.</p>
+
+    <div class="ac-card" style="margin-top:12px; border-style:dashed;">
+      <div><strong>{{ target.name }}</strong> <span class="ac-muted">(#{{ target.id }})</span></div>
+      <div class="ac-muted">Membres: {{ target.user_set.count }} — Permissions: {{ target.permissions.count }}</div>
+    </div>
+
+    <form method="post" action="{% url 'core_adminconsole:group_delete' target.id %}" style="margin-top:12px;">
+      {% csrf_token %}
+      <div class="ac-muted">Confirmation : tape <strong>SUPPRIMER</strong></div>
+      <input name="confirm" type="text" placeholder="SUPPRIMER" style="max-width:260px;">
+      <div style="margin-top:12px; display:flex; gap:10px;">
+        <button class="btn btn--danger" type="submit" onclick="return confirm('Confirmer la suppression du groupe ?');">Supprimer</button>
+        <a class="btn" href="{% url 'core_adminconsole:groups_list' %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

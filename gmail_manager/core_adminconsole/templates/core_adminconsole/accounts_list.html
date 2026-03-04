@@ -1,30 +1,55 @@
 {% extends "core_adminconsole/base.html" %}
+{% block title %}Comptes{% endblock %}
 {% block content %}
-  <div class="card" style="padding:14px;">
-    <form method="get" style="display:flex; gap:8px; margin-bottom:10px;">
-      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher…" style="flex:1;">
+  <div class="ac-card">
+    <form method="get" class="ac-row" style="margin-bottom:10px;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher username/email/nom…" style="flex:1; min-width:260px;">
       <button class="btn btn--primary" type="submit">Rechercher</button>
+      <a class="btn btn--primary" href="{% url 'core_adminconsole:account_create' %}">+ Créer</a>
+      <a class="btn" href="{% url 'core_adminconsole:groups_list' %}">Groupes</a>
+      <a class="btn" href="{% url 'core_adminconsole:accounts_list' %}">Reset</a>
     </form>
 
-    <table style="width:100%; border-collapse:collapse;">
-      <thead><tr><th style="text-align:left;">User</th><th>Actif</th><th>Action</th></tr></thead>
+    <table class="ac-table">
+      <thead><tr><th>ID</th><th>User</th><th>Email</th><th>Actif</th><th>Rôles</th><th>Action</th></tr></thead>
       <tbody>
         {% for u in users %}
-          <tr style="border-top:1px solid var(--border);">
-            <td style="padding:10px 6px;"><strong>{{ u.username }}</strong> <span class="muted">{{ u.email }}</span></td>
-            <td style="padding:10px 6px; text-align:center;">{% if u.is_active %}✅{% else %}⛔{% endif %}</td>
-            <td style="padding:10px 6px; text-align:right;">
-              <form method="post" action="{% url 'core_adminconsole:account_toggle_active' u.id %}" style="margin:0;">
-                {% csrf_token %}
-                <button class="btn {% if u.is_active %}btn--danger{% else %}btn--primary{% endif %}" type="submit"
-                        onclick="return confirm('Confirmer (POST) ?');">
-                  {% if u.is_active %}Désactiver{% else %}Réactiver{% endif %}
-                </button>
-              </form>
+          <tr>
+            <td class="ac-muted">#{{ u.id }}</td>
+            <td><strong>{{ u.username }}</strong><div class="ac-muted">{{ u.first_name }} {{ u.last_name }}</div></td>
+            <td class="ac-muted">{{ u.email|default:"—" }}</td>
+            <td>{% if u.is_active %}✅{% else %}⛔{% endif %}</td>
+            <td class="ac-muted">
+              {% if u.is_superuser %}<span class="ac-pill">superuser</span>{% endif %}
+              {% if u.is_staff %}<span class="ac-pill">staff</span>{% endif %}
+              {% for g in u.groups.all %}<span class="ac-pill">{{ g.name }}</span>{% endfor %}
+            </td>
+            <td style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              {% if u.id == request.user.id %}
+                <span class="ac-muted">—</span>
+              {% else %}
+                <a class="btn" href="{% url 'core_adminconsole:account_edit' u.id %}">Modifier</a>
+
+                {% if u.is_active %}
+                  <form method="post" action="{% url 'core_adminconsole:account_toggle_active' u.id %}" style="margin:0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="confirm" value="1">
+                    <button class="btn btn--danger" type="submit" onclick="return confirm('Désactiver (simple) ?');">Désactiver</button>
+                  </form>
+
+                  <a class="btn btn--danger" href="{% url 'core_adminconsole:account_soft_delete_confirm' u.id %}">Mettre en veille</a>
+                {% else %}
+                  <form method="post" action="{% url 'core_adminconsole:account_reactivate' u.id %}" style="margin:0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="confirm" value="1">
+                    <button class="btn btn--primary" type="submit" onclick="return confirm('Réactiver ?');">Réactiver</button>
+                  </form>
+                {% endif %}
+              {% endif %}
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="3" class="muted" style="padding:10px 6px;">Aucun user.</td></tr>
+          <tr><td colspan="6" class="ac-muted">Aucun user.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -178,7 +178,15 @@
   document.addEventListener("DOMContentLoaded", function () {
     const btn = document.getElementById("btnNewPrescription");
     const overlay = document.getElementById(MODAL_ID);
-    const closeBtn = document.getElementById("modalCloseBtn");
+    
+
+    // ✅ Ordo: ce modal ne doit exister QUE sur les pages qui ont le bouton.
+    // Sur les pages détail (ex: /prescription/<id>/), on le retire du DOM pour éviter tout artefact UI.
+    if (!btn && overlay) {
+      overlay.remove();
+      return;
+    }
+const closeBtn = document.getElementById("modalCloseBtn");
     const cancelBtn = document.getElementById("modalCancelBtn");
 
     if (btn) {

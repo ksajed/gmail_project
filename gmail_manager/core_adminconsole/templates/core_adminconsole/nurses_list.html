@@ -1,0 +1,167 @@
+{% extends "core_adminconsole/base.html" %}
+
+{% block title %}Infirmiers mandatés{% endblock %}
+
+{% block content %}
+  <div class="ac-card ac-card--premium">
+
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0;">
+    <label class="px-muted" style="min-width:70px;">État</label>
+    
+<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><select name="state" class="px-input" style="max-width:220px;">
+      <option value="all" {% if state == "all" %}selected{% endif %}>Tous</option>
+      <option value="active" {% if state == "active" %}selected{% endif %}>Actifs</option>
+      <option value="inactive" {% if state == "inactive" %}selected{% endif %}>Inactifs</option>
+    </select>
+<button type="submit" class="btn btn--primary" data-filter-ok="1">OK</button>
+</div>
+
+  </div>
+
+
+    <div class="ac-toolbar">
+      <div class="ac-titleblock">
+        <h2 class="ac-h1">Infirmiers mandatés</h2>
+
+<!-- ADMINCONSOLE_FILTER_CHIPS_NURSES_V1 -->
+<div class="ac-chipbar" style="display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 16px;">
+  {% for key,label,count in state_items %}
+    <a class="ac-chip {% if state == key %}ac-chip--active{% endif %}"
+       href="?state={{ key }}{% if q %}&q={{ q|urlencode }}{% endif %}">
+      <span class="ac-chip__label">{{ label }}</span>
+      <span class="ac-chip__count">{{ count }}</span>
+    </a>
+  {% endfor %}
+</div>
+
+
+
+<div class="ac-subline">Gestion des mandataires de retrait • UI SaaS Premium</div>
+
+<!-- ADMINCONSOLE_HELP_NURSES_V1 -->
+<div class="ac-help" style="margin:10px 0 16px; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.08); background:rgba(16,185,129,.06);">
+  <div style="font-weight:700; margin-bottom:6px;">📌 Comment lire “Ordonnances” (infirmier) ?</div>
+  <div class="px-muted" style="line-height:1.55;">
+    <b>Total</b> = ordonnances affectées à l’infirmier (historique).<br>
+    <b>Actives</b> = ordonnances affectées qui ne sont pas en corbeille (non supprimées).<br>
+    <b>État</b> = compte activé/désactivé pour l’infirmier.
+  </div>
+</div>
+
+
+      </div>
+
+      <div class="ac-actions">
+        <span class="ac-chip" title="Statut actif/inactif">
+          <span class="ac-dot"></span> Actif / <span class="ac-dot ac-dot--muted"></span> Inactif
+        </span>
+        <a class="btn btn--success" href="{% url 'core_adminconsole:nurse_create' %}">+ Ajouter</a>
+      </div>
+    </div>
+
+    <form method="get" class="ac-search">
+<input type="hidden" name="q" value="{{ q }}">
+<input type="hidden" name="per_page" value="{{ per_page }}">
+      <input class="ac-input" name="q" value="{{ q }}" placeholder="Recherche nom / email / téléphone">
+      <button class="btn btn--success" type="submit">Rechercher</button>
+      {% if q %}
+        <a class="btn btn--ghost" href="{% url 'core_adminconsole:nurses_list' %}">Réinitialiser</a>
+      {% endif %}
+    </form>
+
+    <div style="height:12px;"></div>
+
+    <div class="ac-tablewrap">
+      <table class="ac-table--premium">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Mandataire</th>
+            <th>Email</th>
+            <th>Téléphone</th>
+            <th>Ordonnances</th>
+            <th>Statut</th>
+            <th>Mis à jour</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% for n in nurses %}
+          <tr>
+            <td class="ac-col-id">#{{ n.id }}</td>
+
+            <td>
+              <div class="ac-person">
+                <div class="ac-avatar">
+                  {% if n.first_name %}{{ n.first_name|slice:":1"|upper }}{% elif n.last_name %}{{ n.last_name|slice:":1"|upper }}{% else %}N{% endif %}
+                </div>
+                <div>
+                  <div class="name">{{ n.first_name }} {{ n.last_name }}</div>
+                  <div class="meta">Rôle: Mandataire de retrait</div>
+                </div>
+              </div>
+            </td>
+
+            <td>{{ n.email|default:"—" }}</td>
+            <td>{{ n.phone|default:"—" }}</td>
+            <td style="white-space:nowrap;">
+              <span class="ac-pill ac-pill--muted">
+                {% if n.assigned_total %}{{ n.assigned_total }}{% else %}0{% endif %}
+              </span>
+              <span class="ac-pill ac-pill--active" style="margin-left:6px;">
+                actives: {% if n.assigned_active %}{{ n.assigned_active }}{% else %}0{% endif %}
+              </span>
+            </td>
+
+
+            <td>
+              {% if n.is_active %}
+                <span class="ac-pill ac-pill--active">Actif</span>
+              {% else %}
+                <span class="ac-pill ac-pill--inactive">Inactif</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if n.updated_at %}
+                {{ n.updated_at|date:"Y-m-d H:i" }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+
+            <td class="ac-col-actions">
+              <a class="btn btn--ghost btn--sm" href="{% url 'core_adminconsole:nurse_edit' n.id %}">Modifier</a>
+
+              {% if n.is_active %}
+                <a class="btn btn--danger btn--sm" style="margin-left:8px;"
+                   href="{% url 'core_adminconsole:nurse_toggle_confirm' n.id 'deactivate' %}">
+                  Désactiver
+                </a>
+              {% else %}
+                <a class="btn btn--success btn--sm" style="margin-left:8px;"
+                   href="{% url 'core_adminconsole:nurse_toggle_confirm' n.id 'activate' %}">
+                  Activer
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8">
+              <div class="ac-empty">
+                <div class="big">Aucun mandataire trouvé</div>
+                <div class="small">Essaie une autre recherche, ou ajoute un mandataire.</div>
+                <div style="height:10px;"></div>
+                <a class="btn btn--success" href="{% url 'core_adminconsole:nurse_create' %}">+ Ajouter un mandataire</a>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

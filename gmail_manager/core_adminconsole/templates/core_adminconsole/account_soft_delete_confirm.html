@@ -1,0 +1,26 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Mise en veille{% endblock %}
+{% block content %}
+  <div class="ac-card">
+    <div class="ac-title">Mettre en veille un compte</div>
+    <p class="ac-muted">
+      Action <strong>logique</strong> (SaaS) : <code>is_active=False</code> + retrait groupes/permissions.
+      Aucune suppression DB.
+    </p>
+
+    <div class="ac-card" style="margin-top:12px; border-style:dashed;">
+      <div><strong>{{ target.username }}</strong> <span class="ac-muted">(#{{ target.id }})</span></div>
+      <div class="ac-muted">{{ target.email|default:"—" }}</div>
+    </div>
+
+    <form method="post" action="{% url 'core_adminconsole:account_soft_delete' target.id %}" style="margin-top:12px;">
+      {% csrf_token %}
+      <div class="ac-muted">Confirmation : tape <strong>DESACTIVER</strong></div>
+      <input name="confirm" type="text" placeholder="DESACTIVER" style="max-width:260px;">
+      <div style="margin-top:12px; display:flex; gap:10px;">
+        <button class="btn btn--danger" type="submit" onclick="return confirm('Confirmer la mise en veille ?');">Mettre en veille</button>
+        <a class="btn" href="{% url 'core_adminconsole:accounts_list' %}">Annuler</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

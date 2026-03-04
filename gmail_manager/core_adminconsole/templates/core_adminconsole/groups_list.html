@@ -1,0 +1,39 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Groupes{% endblock %}
+{% block content %}
+  <div class="ac-card">
+    <div class="ac-row" style="justify-content:space-between; align-items:center;">
+      <div>
+        <div class="ac-title">Groupes</div>
+        <div class="ac-muted">Gestion des rôles (permissions Django)</div>
+      </div>
+      <a class="btn btn--primary" href="{% url 'core_adminconsole:group_create' %}">+ Créer un groupe</a>
+    </div>
+
+    <form method="get" class="ac-row" style="margin:12px 0;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher groupe…" style="flex:1; min-width:260px;">
+      <button class="btn btn--primary" type="submit">Rechercher</button>
+      <a class="btn" href="{% url 'core_adminconsole:groups_list' %}">Reset</a>
+    </form>
+
+    <table class="ac-table">
+      <thead><tr><th>ID</th><th>Nom</th><th>Membres</th><th>Permissions</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for g in groups %}
+        <tr>
+          <td class="ac-muted">#{{ g.id }}</td>
+          <td><strong>{{ g.name }}</strong></td>
+          <td class="ac-muted">{{ g.user_set.count }}</td>
+          <td class="ac-muted">{{ g.permissions.count }}</td>
+          <td style="display:flex; gap:8px; align-items:center;">
+            <a class="btn" href="{% url 'core_adminconsole:group_edit' g.id %}">Modifier</a>
+            <a class="btn btn--danger" href="{% url 'core_adminconsole:group_delete_confirm' g.id %}">Supprimer</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="ac-muted">Aucun groupe.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

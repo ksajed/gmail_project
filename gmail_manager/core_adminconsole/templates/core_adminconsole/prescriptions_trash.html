@@ -1,0 +1,244 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+
+<div class="ac-page">
+  <div class="ac-hero" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h1 style="margin:0;">🗑 Corbeille — Ordonnances</h1>
+      <div class="ac-muted" style="margin-top:6px;">
+        Purge possible après {{ purge_min_days }} jours + règles de sécurité.
+      </div>
+    </div>
+    <div class="ac-muted" style="margin-top:6px;">
+      {% if page_obj %}{{ page_obj.paginator.count }} résultat(s){% endif %}
+    </div>
+  </div>
+
+  <form method="get" class="ac-card" style="margin-top:14px;">
+    <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+      <div style="min-width:280px; flex:1;">
+        <label class="ac-label">Recherche</label>
+        <input name="q" value="{{ q }}" placeholder="id / email / téléphone..." />
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn--primary" type="submit">Rechercher</button>
+        <a class="btn" href="?">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="ac-card" style="margin-top:14px;">
+    <div style="overflow:auto;">
+      <table class="ac-table" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:10px;">ID</th>
+            <th style="text-align:left; padding:10px;">Patient</th>
+            <th style="text-align:left; padding:10px;">Statut</th>
+            <th style="text-align:left; padding:10px;">Supprimée le</th>
+            <th style="text-align:left; padding:10px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in page_obj %}
+            <tr>
+              <td style="padding:10px; white-space:nowrap;">
+                <span class="badge" style="padding:4px 8px; border-radius:999px;">#{{ p.id }}</span>
+              </td>
+
+              <td style="padding:10px; min-width:240px;">
+                <div style="font-weight:600;">
+                  {% if p.patient %}{{ p.patient }}{% else %}<span class="ac-muted">—</span>{% endif %}
+                </div>
+                <div class="ac-muted" style="margin-top:4px;">
+                  {% if p.patient.email %}{{ p.patient.email }}{% endif %}
+                  {% if p.patient.phone_number %}{% if p.patient.email %} · {% endif %}{{ p.patient.phone_number }}{% endif %}
+                </div>
+              </td>
+
+              <td style="padding:10px;">
+                <span class="badge" style="padding:4px 8px; border-radius:999px;">
+                  {{ p.get_status_display|default:p.status }}
+                </span>
+              </td>
+
+              <td style="padding:10px; white-space:nowrap;">
+                <div class="ac-muted">
+                  {% if p.deleted_at %}{{ p.deleted_at|date:"Y-m-d H:i" }}{% else %}—{% endif %}
+                </div>
+                <div class="ac-muted" style="margin-top:4px;">
+                  {% if p.delete_reason %}Motif: {{ p.delete_reason }}{% endif %}
+                </div>
+              </td>
+
+              <td style="padding:10px; white-space:nowrap; display:flex; gap:8px; flex-wrap:wrap;">
+                <form method="post" action="{% url 'core_adminconsole:prescription_restore' p.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button class="btn" onclick="return confirm('Restaurer cette ordonnance ?')">↩ Restaurer</button>
+                </form>
+
+                <form method="post" action="{% url 'core_adminconsole:prescription_purge' p.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <input name="confirm" placeholder="Tape {{p.id}} pour purger" style="width:180px;" />
+                  <button class="btn btn--danger" onclick="return confirm('PURGE DEFINITIVE. Confirmer ?')">
+                    🔥 Purger
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" style="padding:16px;">
+                <div class="ac-muted">Corbeille vide.</div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+      <div style="margin-top:14px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+        <div class="ac-muted">
+          Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          {% if page_obj.has_previous %}
+            <a class="btn" href="?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}">← Précédent</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a class="btn" href="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}">Suivant →</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+/* ORDO_ADMINCONSOLE_TRASH_PREMIUM_V2 */
+
+/* Fond SaaS léger */
+body {
+  background: radial-gradient(1200px 700px at 30% 10%, rgba(59,130,246,.10), transparent 60%),
+              radial-gradient(900px 600px at 80% 30%, rgba(99,102,241,.10), transparent 55%),
+              #f6f8fc;
+}
+
+/* Cards premium (sans dépendre d'une classe spécifique) */
+.px-card, .ac-card, .px-tablewrap, .px-table-wrap, .px-table-wrap > div, .admin-premium {
+  border: 1px solid rgba(15,23,42,.08) !important;
+  box-shadow: 0 14px 40px rgba(2,8,23,.08) !important;
+  border-radius: 18px !important;
+  background: rgba(255,255,255,.92) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Header */
+.px-title, h1 {
+  letter-spacing: -0.02em;
+}
+.px-subtitle, .px-sub, p {
+  color: rgba(15,23,42,.60);
+}
+
+/* Badge résultats */
+.px-badge, .px-pill {
+  border-radius: 999px !important;
+  background: rgba(37,99,235,.10) !important;
+  border: 1px solid rgba(37,99,235,.18) !important;
+  color: rgba(37,99,235,.95) !important;
+  padding: 6px 10px !important;
+  font-weight: 700 !important;
+}
+
+/* Recherche premium */
+.px-search, form[method="get"] {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap: wrap;
+  background: rgba(2,8,23,.02);
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 16px;
+  padding: 12px;
+}
+.px-input, input[type="text"], input[type="search"] {
+  border-radius: 14px !important;
+  border: 1px solid rgba(15,23,42,.10) !important;
+  background: rgba(255,255,255,.95) !important;
+  padding: 10px 12px !important;
+}
+.px-input:focus, input[type="text"]:focus, input[type="search"]:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.14) !important;
+  border-color: rgba(37,99,235,.35) !important;
+}
+
+/* Boutons premium */
+.px-btn, .btn, button {
+  border-radius: 12px !important;
+  border: 1px solid rgba(15,23,42,.10) !important;
+  background: rgba(255,255,255,.96) !important;
+  padding: 9px 12px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 16px rgba(2,8,23,.06);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+.px-btn:hover, .btn:hover, button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(2,8,23,.10);
+}
+
+/* Danger (Purger) */
+.btn--danger, .px-btn-danger {
+  background: rgba(220,38,38,.10) !important;
+  border-color: rgba(220,38,38,.22) !important;
+}
+.btn--danger:hover, .px-btn-danger:hover {
+  background: rgba(220,38,38,.14) !important;
+  border-color: rgba(220,38,38,.30) !important;
+}
+
+/* Table premium */
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+thead th {
+  background: rgba(2,8,23,.03) !important;
+  color: rgba(15,23,42,.70) !important;
+  font-size: 12px !important;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+tbody tr {
+  transition: background .12s ease;
+}
+tbody tr:hover {
+  background: rgba(37,99,235,.04);
+}
+td, th {
+  border-bottom: 1px solid rgba(15,23,42,.06) !important;
+  vertical-align: middle;
+}
+
+/* Colonne actions : alignement premium */
+td:last-child {
+  text-align: left !important;
+}
+/* Mettre les actions sur une ligne + spacing */
+td:last-child form {
+  display:inline-flex !important;
+  align-items:center;
+  gap:10px;
+  margin: 0 10px 6px 0;
+}
+/* Input "Tape ID" plus clean */
+input[name="confirm"] {
+  width: 190px !important;
+}
+</style>
+
+{% endblock %}

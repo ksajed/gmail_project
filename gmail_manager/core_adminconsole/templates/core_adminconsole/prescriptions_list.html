@@ -1,0 +1,271 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+
+<div class="ac-page">
+  <div class="ac-hero" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h1 style="margin:0;">📄 Ordonnances</h1>
+      <div class="ac-muted" style="margin-top:6px;">
+        Recherche • Admin Console
+      </div>
+    </div>
+
+    <div class="ac-muted" style="margin-top:6px;">
+      {% if page_obj %}{{ page_obj.paginator.count }} résultat(s){% endif %}
+    </div>
+  </div>
+
+  <form method="get" class="ac-card" style="margin-top:14px;">
+    <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+      <div style="min-width:280px; flex:1;">
+        <label class="ac-label">Recherche</label>
+        <input name="q" value="{{ q }}" placeholder="id / email / téléphone / statut..." />
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn--primary" type="submit">Rechercher</button>
+        <a class="btn" href="?">Reset</a>
+      <a class="px-btn px-btn-ghost" href="{% url 'core_adminconsole:prescriptions_trash' %}">Corbeille</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="ac-card" style="margin-top:14px;">
+    <div style="overflow:auto;">
+      <table class="ac-table" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:10px;">ID</th>
+            <th style="text-align:left; padding:10px;">Patient</th>
+            <th style="text-align:left; padding:10px;">Statut</th>
+            <th style="text-align:left; padding:10px;">Dates</th>
+            <th style="text-align:left; padding:10px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in page_obj %}
+            <tr>
+              <td style="padding:10px; white-space:nowrap;">
+                <span class="badge" style="padding:4px 8px; border-radius:999px;">#{{ p.id }}</span>
+              </td>
+
+              <td style="padding:10px; min-width:240px;">
+                <div style="font-weight:600;">
+                  {% if p.patient %}
+                    {{ p.patient }}
+                  {% else %}
+                    <span class="ac-muted">—</span>
+                  {% endif %}
+                </div>
+                <div class="ac-muted" style="margin-top:4px;">
+                  {% if p.patient.email %}{{ p.patient.email }}{% endif %}
+                  {% if p.patient.phone_number %}{% if p.patient.email %} · {% endif %}{{ p.patient.phone_number }}{% endif %}
+                </div>
+              </td>
+
+              <td style="padding:10px;">
+                <span class="badge" style="padding:4px 8px; border-radius:999px;">
+                  {{ p.get_status_display|default:p.status }}
+                </span>
+              </td>
+
+              <td style="padding:10px; white-space:nowrap;">
+                <div class="ac-muted">
+                  {% if p.received_at %}Reçue: {{ p.received_at|date:"Y-m-d H:i" }}{% endif %}
+                  {% if not p.received_at and p.established_at %}Créée: {{ p.established_at|date:"Y-m-d H:i" }}{% endif %}
+                  {% if not p.received_at and not p.established_at and p.updated_at %}MAJ: {{ p.updated_at|date:"Y-m-d H:i" }}{% endif %}
+                </div>
+              </td>
+
+              <td style="padding:10px; white-space:nowrap;">
+                <a class="btn" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir</a>
+                <form method="post" action="{% url 'core_adminconsole:prescription_soft_delete' p.id %}" style="display:inline;">
+  {% csrf_token %}
+  <button class="px-trash-btn"
+          title="Mettre en corbeille"
+          onclick="return confirm('Mettre cette ordonnance en corbeille ?')">
+    <svg class="px-trash-icon" viewBox="0 0 24 24" width="18" height="18"
+ fill="none" stroke="currentColor" stroke-width="2"
+ stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="3 6 5 6 21 6"/>
+  <path d="M19 6l-1 14H6L5 6"/>
+  <path d="M10 11v6"/>
+  <path d="M14 11v6"/>
+  <path d="M9 6V4h6v2"/>
+</svg>
+  </button>
+</form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" style="padding:16px;">
+                <div class="ac-muted">Aucune ordonnance trouvée.</div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+      <div style="margin-top:14px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+        <div class="ac-muted">
+          Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          {% if page_obj.has_previous %}
+            <a class="btn" href="?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}">← Précédent</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a class="btn" href="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}">Suivant →</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+/* ORDO_ADMINCONSOLE_ORDOS_LIST_PREMIUM_V2 */
+
+/* Fond SaaS léger (sans casser le layout existant) */
+body {
+  background: radial-gradient(1200px 700px at 30% 10%, rgba(59,130,246,.10), transparent 60%),
+              radial-gradient(900px 600px at 80% 30%, rgba(99,102,241,.10), transparent 55%),
+              #f6f8fc;
+}
+
+/* Cards */
+.px-card, .px-tablewrap, .px-table-wrap > div, .px-table-wrap, .ac-card {
+  border: 1px solid rgba(15,23,42,.08) !important;
+  box-shadow: 0 14px 40px rgba(2,8,23,.08) !important;
+  border-radius: 18px !important;
+  background: rgba(255,255,255,.92) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Header */
+.px-pagehead {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding-bottom: 10px;
+}
+.px-title {
+  font-size: 30px !important;
+  letter-spacing: -0.02em;
+}
+.px-subtitle, .px-sub {
+  color: rgba(15,23,42,.60) !important;
+}
+.px-badge, .px-pill {
+  border-radius: 999px !important;
+  background: rgba(37,99,235,.10) !important;
+  border: 1px solid rgba(37,99,235,.18) !important;
+  color: rgba(37,99,235,.95) !important;
+  padding: 6px 10px !important;
+  font-weight: 700 !important;
+}
+
+/* Barre de recherche */
+.px-search {
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  flex-wrap: wrap;
+  background: rgba(2,8,23,.02);
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 16px;
+  padding: 12px;
+}
+.px-input {
+  border-radius: 14px !important;
+  border: 1px solid rgba(15,23,42,.10) !important;
+  background: rgba(255,255,255,.95) !important;
+  padding: 10px 12px !important;
+}
+.px-input:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,.14) !important;
+  border-color: rgba(37,99,235,.35) !important;
+}
+
+/* Boutons premium */
+.px-btn {
+  border-radius: 12px !important;
+  border: 1px solid rgba(15,23,42,.10) !important;
+  background: rgba(255,255,255,.96) !important;
+  padding: 9px 12px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 6px 16px rgba(2,8,23,.06);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+.px-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(2,8,23,.10);
+}
+.px-btn-primary {
+  background: rgba(22,163,74,.12) !important;
+  border-color: rgba(22,163,74,.22) !important;
+}
+.px-btn-ghost {
+  background: rgba(2,8,23,.03) !important;
+  border-color: rgba(15,23,42,.10) !important;
+}
+
+/* Table premium */
+.px-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+.px-table thead th {
+  background: rgba(2,8,23,.03) !important;
+  color: rgba(15,23,42,.70) !important;
+  font-size: 12px !important;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.px-table tbody tr {
+  transition: background .12s ease;
+}
+.px-table tbody tr:hover {
+  background: rgba(37,99,235,.04);
+}
+.px-table td, .px-table th {
+  border-bottom: 1px solid rgba(15,23,42,.06) !important;
+}
+
+/* Actions : alignement + spacing */
+.px-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  align-items:center;
+}
+
+/* Corbeille icon premium (si déjà présent) */
+.px-trash-btn {
+  width:38px;
+  height:38px;
+  border-radius: 12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(37,99,235,.08);
+  border: 1px solid rgba(37,99,235,.15);
+  color: rgba(37,99,235,.95);
+  transition: all .18s ease;
+  box-shadow: 0 6px 16px rgba(2,8,23,.06);
+}
+.px-trash-btn:hover {
+  background: rgba(220,38,38,.10);
+  border-color: rgba(220,38,38,.25);
+  color: rgba(220,38,38,.95);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(2,8,23,.10);
+}
+</style>
+
+{% endblock %}

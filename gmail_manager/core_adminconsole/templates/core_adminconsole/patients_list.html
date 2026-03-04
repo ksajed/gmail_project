@@ -1,0 +1,216 @@
+{% extends "core_adminconsole/base.html" %}
+
+
+{% block content %}
+
+<!-- ORDO_PATIENTS_SAAS_PREMIUM_V1 -->
+
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0;">
+    <label class="px-muted" style="min-width:70px;">Filtre</label>
+    
+<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><select name="filter" class="px-input" style="max-width:280px;">
+      <option value="all" {% if filter == "all" %}selected{% endif %}>Tous</option>
+      <option value="active" {% if filter == "active" %}selected{% endif %}>Actifs (ordonnances ouvertes)</option>
+      <option value="inactive" {% if filter == "inactive" %}selected{% endif %}>Inactifs</option>
+      <option value="delivered" {% if filter == "delivered" %}selected{% endif %}>Avec livrées</option>
+      <option value="archived" {% if filter == "archived" %}selected{% endif %}>Avec archivées</option>
+      <option value="trash" {% if filter == "trash" %}selected{% endif %}>Avec corbeille</option>
+    </select>
+<button type="submit" class="btn btn--primary" data-filter-ok="1">OK</button>
+</div>
+
+  </div>
+
+<div class="px-page">
+  <div class="px-card">
+    <div class="px-pagehead">
+      <div>
+        <h1 class="px-title">Patients</h1>
+
+<!-- ADMINCONSOLE_FILTER_CHIPS_PATIENTS_V1 -->
+<div class="ac-chipbar" style="display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 16px;">
+  {% for key,label,count in filter_items %}
+    <a class="ac-chip {% if filter == key %}ac-chip--active{% endif %}"
+       href="?filter={{ key }}{% if q %}&q={{ q|urlencode }}{% endif %}&per_page={{ per_page }}">
+      <span class="ac-chip__label">{{ label }}</span>
+      <span class="ac-chip__count">{{ count }}</span>
+    </a>
+  {% endfor %}
+</div>
+
+<style>
+  .ac-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(0,0,0,.10);
+    background:#fff;
+    text-decoration:none;
+    color:inherit;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  .ac-chip:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.08); }
+  .ac-chip__label{ font-weight:600; }
+  .ac-chip__count{
+    min-width:26px;
+    height:22px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+    font-size:12px;
+    padding:0 8px;
+    background:rgba(99,102,241,.10);
+  }
+  .ac-chip--active{
+    border-color:rgba(99,102,241,.45);
+    background:rgba(99,102,241,.06);
+  }
+</style>
+
+
+
+<p class="px-subtitle">Recherche  •  modification</p>
+      </div>
+
+<!-- ADMINCONSOLE_HELP_PATIENTS_V1 -->
+<div class="ac-help" style="margin:10px 0 16px; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,0,0,.08); background:rgba(99,102,241,.05);">
+  <div style="font-weight:700; margin-bottom:6px;">📌 Comment lire “Ordonnances” ?</div>
+  <div class="px-muted" style="line-height:1.55;">
+    <b>Ordonnances</b> = total des ordonnances du patient (historique complet).<br>
+    <b>En cours</b> = ordonnances encore à traiter (<i>non livrées</i>, <i>non archivées</i>, <i>non supprimées</i>).<br>
+    <b>Statut</b> :
+    <span style="font-weight:700;">Actif</span> = au moins 1 ordonnance en cours •
+    <span style="font-weight:700;">Inactif</span> = aucune ordonnance en cours (dossier clôturé).
+  </div>
+</div>
+
+
+    
+    </div>
+<div class="admin-premium">
+
+  <div class="ac-card">
+    <!-- ORDO_PREMIUM_PATIENTS_V1 -->
+
+    <div class="px-head">
+      <div>
+        <div class="px-sub">Recherche nom / email / téléphone • Admin Console</div>
+      </div>
+      <div class="px-pill">
+        {% if total_count %}{{ total_count }}{% elif page_obj and page_obj.paginator %}{{ page_obj.paginator.count }}{% elif patients %}{{ patients|length }}{% else %}0{% endif %}
+        résultat(s)
+      </div>
+    </div>
+
+    <form method="get" class="px-search">
+<input type="hidden" name="q" value="{{ q }}">
+<input type="hidden" name="per_page" value="{{ per_page }}">
+      <input class="px-input" name="q" value="{{ q|default:'' }}" placeholder="Rechercher (nom, email, téléphone)..." />
+      <!-- ORDO_PATIENTS_PAGINATION_V1_TEMPLATE -->
+      <label class="px-muted" style="font-weight:800; font-size:12px;">Lignes</label>
+      <select class="px-input px-select" name="per_page" style="width:140px;">
+  <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+  <option value="15" {% if per_page == 15 %}selected{% endif %}>15</option>
+  <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+  <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+  <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+</select>
+
+      <button class="px-btn px-btn-primary" type="submit" class="px-btn px-btn--primary">Rechercher</button>
+      <a class="px-btn px-btn-ghost" href="{% url 'core_adminconsole:patients_list' %}">Reset</a>
+    </form>
+
+    <div class="px-table-wrap">
+      <div class="px-tablewrap"><table class="px-table" class="px-table">
+        <thead>
+          <tr>
+            <th style="width:90px;">ID</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th style="width:190px;">Téléphone</th>
+            <th style="width:140px; text-align:center;">Ordonnances</th>
+            <th style="width:140px;">Statut</th>
+            <th style="width:180px;">Créé le</th>
+            <th style="width:220px; text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in patients %}
+            <tr>
+              <td class="px-mono">#{{ p.id }}</td>
+              <td><strong>{{ p.full_name|default:"—" }}</strong></td>
+              <td class="px-muted">{{ p.email|default:"—" }}</td>
+
+              <td class="px-mono">
+                {% if p.phone_number %}
+                  {% with v=p.phone_number|cut:" "|cut:"-"|cut:"." %}
+                    {% if v|length == 10 and v|slice:":2" in "06,07" %}
+                      {{ v|slice:":2" }} {{ v|slice:"2:4" }} {{ v|slice:"4:6" }} {{ v|slice:"6:8" }} {{ v|slice:"8:10" }}
+                    {% else %}
+                      {{ p.phone_number }}
+                    {% endif %}
+                  {% endwith %}
+                {% else %}
+                  <span class="px-muted">—</span>
+                {% endif %}
+              </td>
+
+              
+              <td style="text-align:center;">
+                <span class="px-pill">
+                  {% if p.prescriptions_total %}{{ p.prescriptions_total }}{% else %}0{% endif %}
+                </span>
+                <span class="px-muted" style="margin-left:6px;">
+                  en cours : {% if p.prescriptions_active %}{{ p.prescriptions_active }}{% else %}0{% endif %}
+                </span>
+              </td>
+
+              <td>
+                {% if p.prescriptions_active|default:0|add:0 > 0 %}
+                  <span class="ac-pill ac-pill--active">Actif</span>
+                {% else %}
+                  <span class="ac-pill ac-pill--inactive">Inactif</span>
+                {% endif %}
+              </td>
+
+<td class="px-muted">{{ p.created_at|date:"Y-m-d H:i" }}</td>
+
+              <td>
+                <div class="px-actions">
+                  <a class="px-btn px-btn-sm" href="{% url 'core_adminconsole:patient_edit' p.id %}">Modifier</a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8"><div class="px-empty">Aucun titulaire trouvé.</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+
+    {% if page_obj %}
+      <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
+        {% if page_obj.has_previous %}
+          <a class="px-btn px-btn-sm" href="?q={{ q|urlencode }}&per_page={{ per_page }}&page={{ page_obj.previous_page_number }}">← Préc.</a>
+        {% endif %}
+        <span class="px-btn px-btn-sm" style="cursor:default;">
+          Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+        {% if page_obj.has_next %}
+          <a class="px-btn px-btn-sm" href="?q={{ q|urlencode }}&per_page={{ per_page }}&page={{ page_obj.next_page_number }}">Suiv. →</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+    <!-- /px-card -->
+  </div>
+</div>
+<!-- /ORDO_PATIENTS_SAAS_PREMIUM_V1 -->
+
+
+{% endblock %}

@@ -1,0 +1,80 @@
+{# ORDO — Timeline Premium (SaaS) #}
+{# Contexte attendu: timeline_events (list de TimelineEvent) #}
+
+{% if timeline_events %}
+  <div class="tlp">
+    <div class="tlp__head">
+      <div class="tlp__title">
+        <div class="tlp__h">Activité</div>
+        <div class="tlp__s">Historique lisible (détails repliables)</div>
+      </div>
+
+      <div class="tlp__actions">
+        <button class="tlp-btn tlp-btn--ghost" type="button" data-tlp-expand-all>Tout développer</button>
+        <button class="tlp-btn tlp-btn--ghost" type="button" data-tlp-collapse-all>Tout réduire</button>
+      </div>
+    </div>
+
+    <ol class="tlp__list" role="list">
+      {% for e in timeline_events %}
+        <li class="tlp__item" data-tone="{{ e.tone }}" role="listitem">
+          <div class="tlp__rail" aria-hidden="true">
+            <span class="tlp__dot"></span>
+            <span class="tlp__line"></span>
+          </div>
+
+          <div class="tlp__card" id="{{ e.uid }}">
+            <div class="tlp__top">
+              <div class="tlp__main">
+                <div class="tlp__row1">
+                  <div class="tlp__left">
+                    <div class="tlp__title1">{{ e.title }}</div>
+                    <div class="tlp__subtitle">{{ e.subtitle }}</div>
+                  </div>
+
+                  <div class="tlp__meta">
+                    <div class="tlp__who">
+                      {{ e.actor_label }}{% if e.actor_sub %} • {{ e.actor_sub }}{% endif %}
+                    </div>
+                    <div class="tlp__when">{{ e.ts|date:"d/m/Y H:i" }}</div>
+                  </div>
+                </div>
+
+                {% if e.chips %}
+                  <div class="tlp__chips">
+                    {% for c in e.chips %}
+                      <span class="tlp-chip" data-tone="{{ c.tone }}">{{ c.label }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                {% if e.details or e.tech %}
+                  <details class="tlp__details">
+                    <summary class="tlp__summary">Détails</summary>
+
+                    {% if e.details %}
+                      <ul class="tlp__detail-list">
+                        {% for line in e.details %}
+                          <li>{{ line }}</li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+
+                    {% if e.tech %}
+                      <div class="tlp__tech">
+                        <div class="tlp__tech-h">Audit technique</div>
+                        <pre class="tlp__tech-pre">{{ e.tech|pprint }}</pre>
+                      </div>
+                    {% endif %}
+                  </details>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  </div>
+{% else %}
+  <div class="v muted">Aucun historique disponible.</div>
+{% endif %}

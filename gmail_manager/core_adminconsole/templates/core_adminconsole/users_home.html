@@ -1,0 +1,70 @@
+{% extends "core_adminconsole/base.html" %}
+
+{% block title %}Personnes
+{% if page_obj %}
+  {% if page_obj.paginator %}
+    <div class="ac-pagination" style="margin-top:16px; display:flex; gap:10px; align-items:center;">
+      {% if page_obj.has_previous %}
+        <a class="btn" href="?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}">← Précédent</a>
+      {% endif %}
+
+      <span class="ac-muted" style="font-weight:600;">
+        Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a class="btn" href="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}">Suivant →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}
+
+{% block content %}
+
+<form method="get" class="ac-card" style="margin-bottom:14px;">
+  <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+    <div style="min-width:260px; flex:1;">
+      <label class="ac-label">Recherche</label>
+      <input name="q" value="{{ q }}" placeholder="id / email / téléphone / statut..." />
+    </div>
+    <div>
+      <button class="btn btn--primary" type="submit">Rechercher</button>
+      <a class="btn" href="?">Reset</a>
+    </div>
+  </div>
+</form>
+
+<div class="ac-card">
+  <h2>👥 Personnes</h2>
+
+  <div class="ac-grid" style="grid-template-columns:repeat(2, 1fr); gap:20px; margin-top:20px;">
+
+    <div class="ac-kpi">
+      <div class="ac-muted">Propriétaires d’ordonnances</div>
+      <div class="n">{{ patients_count }}</div>
+      <div style="margin-top:10px;">
+        <a class="btn btn--primary" href="{% url 'core_adminconsole:patients_list' %}">
+          Ouvrir
+        </a>
+      </div>
+    </div>
+
+    <div class="ac-kpi">
+      <div class="ac-muted">Infirmiers mandatés</div>
+      <div class="n">{{ nurses_count }}</div>
+      <div style="margin-top:10px;">
+        <a class="btn btn--primary" href="{% url 'core_adminconsole:nurses_list' %}">
+          Ouvrir
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="ac-sub" style="margin-top:20px;">
+    Total personnes référencées : <strong>{{ people_count }}</strong>
+  </div>
+</div>
+{% endblock %}

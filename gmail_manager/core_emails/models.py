@@ -5,6 +5,7 @@ logger = logging.getLogger(__name__)
 # core_emails/models.py
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from core_patients.models import Patient
 from .states import PrescriptionStatusEnum
@@ -180,6 +181,17 @@ class Prescription(models.Model):
         help_text="Utilisateur de la pharmacie",
     )
 
+    # === SaaS blindé: soft-delete (corbeille) ===
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    deleted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name="deleted_prescriptions",
+    )
+    delete_reason = models.CharField(max_length=255, blank=True, default="")
+
     def __str__(self):
         return f"Ordonnance #{self.id} – {self.get_status_display()}"
 
@@ -197,6 +209,27 @@ class Prescription(models.Model):
     @property
     def has_assigned_nurse(self) -> bool:
         return self.assigned_nurse is not None
+
+
+    def soft_delete(self, *, actor, reason: str = "") -> None:
+        """Mise à la corbeille (réversible)."""
+        if self.is_deleted:
+            return
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.deleted_by = actor
+        self.delete_reason = (reason or "").strip()[:255]
+        self.save(update_fields=["is_deleted", "deleted_at", "deleted_by", "delete_reason"])
+
+    def restore(self, *, actor) -> None:
+        """Restaure depuis la corbeille."""
+        if not self.is_deleted:
+            return
+        self.is_deleted = False
+        self.deleted_at = None
+        self.deleted_by = None
+        self.delete_reason = ""
+        self.save(update_fields=["is_deleted", "deleted_at", "deleted_by", "delete_reason"])
 
 class PrescriptionStatusHistory(models.Model):
     """

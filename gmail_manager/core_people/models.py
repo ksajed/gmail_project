@@ -40,6 +40,12 @@ class Person(models.Model):
     )
 
 
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Mandataire actif (désactivation = accès retiré)",
+    )
+
+
     @property
     def phone_number(self) -> str:
         """Compat: alias de 'phone' (certains modules utilisent phone_number)."""

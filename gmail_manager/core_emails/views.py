@@ -47,6 +47,7 @@ from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
 from core_emails.services import compute_renewals_watch_from_delivered
+from core_emails.timeline import build_prescription_timeline_events
 
 # =====================================================
 # EXTERNES
@@ -121,7 +122,7 @@ def dashboard(request):
         except ValueError:
             pass
 
-    prescriptions_qs = Prescription.objects.select_related("patient")
+    prescriptions_qs = Prescription.objects.select_related("patient").filter(is_deleted=False)
 
     if view_filter == "todo":
         prescriptions_qs = prescriptions_qs.filter(
@@ -141,7 +142,7 @@ def dashboard(request):
     paginator = Paginator(prescriptions_qs, per_page)
     prescriptions = paginator.get_page(page_number)
 
-    raw_stats = Prescription.objects.values("status").annotate(total=Count("id"))
+    raw_stats = Prescription.objects.filter(is_deleted=False).values("status").annotate(total=Count("id"))
 
     counters = {
         PrescriptionStatus.RECEIVED: 0,
@@ -205,7 +206,7 @@ def renewals_dashboard(request):
     # On ne calcule des échéances que si on a une 1ère délivrance => status DELIVERED
     qs = (
         Prescription.objects
-        .filter(type=PrescriptionType.RENOUVELLEMENT, status=PrescriptionStatus.DELIVERED)
+        .filter(is_deleted=False, type=PrescriptionType.RENOUVELLEMENT, status=PrescriptionStatus.DELIVERED)
         .select_related("patient")
         .order_by("-id")
     )
@@ -323,6 +324,8 @@ def prescription_detail(request, pk):
         .order_by("-changed_at")
     )
 
+
+    timeline_events = build_prescription_timeline_events(prescription)
     current_enum = PrescriptionStatusEnum(prescription.status)
     allowed_enums = PRESCRIPTION_STATUS_TRANSITIONS.get(current_enum, set())
 
@@ -402,6 +405,7 @@ def prescription_detail(request, pk):
     "prescription": prescription,
     "attachments": attachments,
     "history": history,
+    "timeline_events": timeline_events,
     "allowed_statuses": allowed_statuses,
     "persons_nurses": persons_nurses,
     "assigned_nurse": assigned_nurse,

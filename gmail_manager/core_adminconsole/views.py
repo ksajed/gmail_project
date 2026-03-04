@@ -1,55 +1,964 @@
-from __future__ import annotations
+from django import forms
+from .permissions import require_perm
+from core_emails.models import Prescription, PrescriptionStatus
+import datetime as dt
+from django.utils import timezone
+import datetime
+from django.contrib import messages
+from django.db.models.deletion import ProtectedError
+
+
+def _prescription_ordering() -> str:
+    """Retourne le meilleur champ d'ordre pour Prescription selon les champs existants."""
+    try:
+        from core_emails.models import Prescription
+        fields = {f.name for f in Prescription._meta.get_fields() if hasattr(f, "name")}
+    except Exception:
+        fields = set()
+    for f in ("created_at", "established_at", "updated_at", "id"):
+        if f in fields:
+            return f"-{f}"
+    return "-id"
+
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q
+from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 
-from .permissions import superuser_required
+from .permissions import superuser_required, require_perm
+from .forms_accounts import UserAdminCreateForm
+
+from .permissions import require_console_perm
+
 from .services import audit
+from .services import guard_not_last_superuser_change, guard_not_last_superuser_deactivate, guard_self_lockout
+from .services import soft_delete_user, reactivate_user
+
 from .models import AdminAuditEvent
 
 from django.contrib.auth import get_user_model
+from core_people.models import Person
+from core_patients.models import Patient
+from core_emails.models import Prescription
+
 User = get_user_model()
 
-@login_required
-@superuser_required
-def admin_home(request: HttpRequest) -> HttpResponse:
-    audit(request, action=AdminAuditEvent.Action.LOGIN, summary="Ouverture Admin Console")
-    return render(request, "core_adminconsole/home.html", {"users_count": User.objects.count()})
+# --- ADMINCONSOLE_AUDIT_LABELS_V1:BEGIN ---
 
-@login_required
-@superuser_required
-def accounts_list(request: HttpRequest) -> HttpResponse:
-    q = (request.GET.get("q") or "").strip()
-    qs = User.objects.all().order_by("-date_joined")
-    if q:
-        qs = qs.filter(Q(username__icontains=q) | Q(email__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q))
-    return render(request, "core_adminconsole/accounts_list.html", {"q": q, "users": qs[:200]})
-
-@login_required
-@superuser_required
-@require_POST
-def account_toggle_active(request: HttpRequest, user_id: int) -> HttpResponse:
-    u = User.objects.filter(pk=user_id).first()
+def _user_label(u) -> str:
     if not u:
-        return redirect("core_adminconsole:accounts_list")
-    u.is_active = not u.is_active
-    u.save(update_fields=["is_active"])
-    audit(
-        request,
-        action=AdminAuditEvent.Action.ACCOUNT_DISABLE if not u.is_active else AdminAuditEvent.Action.ACCOUNT_ENABLE,
-        summary=f"User {u.pk} active={u.is_active}",
-        target_type="User",
-        target_id=str(u.pk),
-    )
-    return redirect("core_adminconsole:accounts_list")
+        return "—"
+    username = getattr(u, "username", "") or ""
+    first = getattr(u, "first_name", "") or ""
+    last = getattr(u, "last_name", "") or ""
+    email = getattr(u, "email", "") or ""
+    name = (first + " " + last).strip()
+    parts = [p for p in [username, name, email] if p]
+    return " — ".join(parts) if parts else str(u)
 
+
+def _person_label(p) -> str:
+    if not p:
+        return "—"
+    fn = getattr(p, "first_name", "") or ""
+    ln = getattr(p, "last_name", "") or ""
+    email = getattr(p, "email", "") or ""
+    phone = getattr(p, "phone", "") or ""
+    name = (fn + " " + ln).strip() or ("Personne #%s" % (getattr(p, "id", "?"),))
+    parts = [name]
+    if email:
+        parts.append(email)
+    if phone:
+        parts.append(phone)
+    return " — ".join(parts)
+
+
+def _action_fr(code: str) -> str:
+    c = (code or "").upper().strip()
+    mapping = {
+    "LOGIN": "Connexion Admin",
+    "ACCOUNT_ENABLE": "Réactivation compte",
+    "ACCOUNT_DISABLE": "Mise en veille compte",
+    "NURSE_CREATE": "Création infirmier mandaté",
+    "NURSE_EDIT": "Modification infirmier mandaté",
+    "ACTIVATE_NURSE": "Activation infirmier mandaté",
+    "DEACTIVATE_NURSE": "Désactivation infirmier mandaté",
+    "UPDATE_NURSE": "Mise à jour infirmier mandaté",
+    "CREATE_NURSE": "Création infirmier mandaté",
+    "EDIT_NURSE": "Modification infirmier mandaté",
+    }
+    return mapping.get(c, c)
+
+# --- ADMINCONSOLE_AUDIT_LABELS_V1:END ---
+
+
+@require_POST
+@require_perm("core_adminconsole.prescriptions_purge")
 @login_required
 @superuser_required
-def audit_log(request: HttpRequest) -> HttpResponse:
+def prescription_purge(request, pk: int):
+    """Purge définitive (superuser-only).
+    - Normal: taper l'ID (ex: 334) dans 'confirm'
+    - Force: taper '1' dans 'confirm' (ignore la règle des 30 jours et les garde-fous métier)
+    """
+    confirm = (request.POST.get("confirm") or "").strip()
+    force = (confirm == "1")
+
+    if not force and confirm != str(pk):
+        messages.error(request, "Confirmation incorrecte. Tape l'ID (ou '1' pour forcer).")
+        return redirect("core_adminconsole:prescriptions_trash")
+
+    p = get_object_or_404(Prescription, pk=pk)
+
+    # garde-fous (sauf si force)
+    if not force:
+        try:
+            if not _can_purge_prescription(p):
+                messages.error(request, f"Purge refusée: possible après {PURGE_MIN_DAYS} jours + règles de sécurité.")
+                return redirect("core_adminconsole:prescriptions_trash")
+        except Exception:
+            pass
+
+    # supprimer fichiers liés si possible (optionnel)
+    try:
+        rel = getattr(p, "attachments", None)
+        if rel is not None and hasattr(rel, "all"):
+            for a in rel.all():
+                f = getattr(a, "file", None)
+                if f:
+                    try:
+                        f.delete(save=False)
+                    except Exception:
+                        pass
+                try:
+                    a.delete()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # HARD DELETE (évite un delete() override soft-delete)
+    try:
+        deleted_count, _ = Prescription.objects.filter(pk=pk).delete()
+        if deleted_count:
+            messages.success(request, f"Ordonnance #{pk} purgée définitivement.")
+        else:
+            messages.error(request, "Purge: aucun enregistrement supprimé (déjà supprimé ?).")
+    except ProtectedError as e:
+        messages.error(request, "Purge bloquée: dépendances protégées (PROTECT). Supprime d'abord les objets liés.")
+    except Exception as e:
+        messages.error(request, f"Erreur purge: {e}")
+
+    return redirect("core_adminconsole:prescriptions_trash")
+@require_perm("core_adminconsole.patients_write")
+
+def patient_edit(request, pk: int):
+    """Admin Console: édition safe d'un titulaire (nom complet + téléphone)."""
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404, redirect, render
+
+    patient = get_object_or_404(Patient, pk=pk)
+
+    # Champs réellement présents dans ton modèle Patient (selon l'erreur Django)
+    PHONE_FIELD = "phone_number"
+
+    class PatientEditForm(forms.Form):
+        full_name = forms.CharField(label="Nom complet", required=False, max_length=255)
+        phone_number = forms.CharField(label="Téléphone", required=False, max_length=64)
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            # init depuis l'objet
+            if hasattr(patient, "full_name"):
+                self.fields["full_name"].initial = getattr(patient, "full_name") or ""
+            if hasattr(patient, PHONE_FIELD):
+                self.fields["phone_number"].initial = getattr(patient, PHONE_FIELD) or ""
+
+        def save(self):
+            changed_fields = []
+
+            if hasattr(patient, "full_name"):
+                val = (self.cleaned_data.get("full_name") or "").strip()
+                if getattr(patient, "full_name") != val:
+                    setattr(patient, "full_name", val)
+                    changed_fields.append("full_name")
+
+            if hasattr(patient, PHONE_FIELD):
+                val = (self.cleaned_data.get("phone_number") or "").strip()
+                if getattr(patient, PHONE_FIELD) != val:
+                    setattr(patient, PHONE_FIELD, val)
+                    changed_fields.append(PHONE_FIELD)
+
+            if changed_fields:
+                patient.save(update_fields=changed_fields)
+            return changed_fields
+
+    if request.method == "POST":
+        form = PatientEditForm(request.POST)
+        if form.is_valid():
+            changed = form.save()
+            if changed:
+                messages.success(request, "Patient mis à jour ✅")
+            else:
+                messages.info(request, "Aucune modification.")
+            return redirect("core_adminconsole:patients_list")
+        messages.error(request, "Formulaire invalide (vérifie les champs).")
+    else:
+        form = PatientEditForm()
+
+    return render(request, "core_adminconsole/patient_edit.html", {
+        "patient": patient,
+        "form": form,
+    })
+
+
+
+@require_perm("core_adminconsole.prescriptions_list")
+def prescriptions_search(request: HttpRequest) -> HttpResponse:
+    """
+    Admin Console — Ordonnances (liste + recherche + pagination).
+    Route attendue par urls.py : views.prescriptions_search
+    """
     q = (request.GET.get("q") or "").strip()
-    qs = AdminAuditEvent.objects.all()
+    try:
+        per_page_i = int(request.GET.get("per_page") or 25)
+    except Exception:
+        per_page_i = 25
+    if per_page_i not in (10, 15, 25, 50, 100):
+        per_page_i = 25
+
+    qs = Prescription.objects.select_related("patient").all()
+
+    # si le modèle a is_deleted, on peut masquer la corbeille ici
+    try:
+        qs = qs.filter(is_deleted=False)
+    except Exception:
+        pass
+
     if q:
-        qs = qs.filter(Q(summary__icontains=q) | Q(action__icontains=q) | Q(target_id__icontains=q))
-    return render(request, "core_adminconsole/audit_log.html", {"q": q, "events": qs[:200]})
+        qs = qs.filter(
+            Q(id__icontains=q)
+            | Q(patient__full_name__icontains=q)
+            | Q(patient__email__icontains=q)
+            | Q(patient__phone_number__icontains=q)
+        )
+
+    qs = qs.order_by("-id")
+
+    paginator = Paginator(qs, per_page_i)
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+
+    return render(
+        request,
+        "core_adminconsole/prescriptions_list.html",
+        {
+            "q": q,
+            "page_obj": page_obj,
+            "per_page": per_page_i,
+            "total_count": paginator.count,
+        },
+    )
+
+# compat: certaines routes/templates utilisent prescriptions_list
+prescriptions_list = prescriptions_search
+
+
+# === ADMINCONSOLE — CORBEILLE ORDONNANCES (V1 SAFE) ===
+# But: réparer urls.py (views.prescriptions_trash + purge/restore/delete)
+# et fournir un comportement stable même si certains champs n'existent pas.
+
+PURGE_MIN_DAYS = 30
+
+def _can_purge_prescription_safe(p) -> bool:
+    """Garde-fou soft: si deleted_at existe, exiger >= PURGE_MIN_DAYS, sinon autoriser."""
+    try:
+        if hasattr(p, "is_deleted") and not getattr(p, "is_deleted", False):
+            return False
+        da = getattr(p, "deleted_at", None)
+        if da:
+            return da <= timezone.now() - dt.timedelta(days=PURGE_MIN_DAYS)
+        return True
+    except Exception:
+        return True
+
+
+@require_perm("core_adminconsole.prescriptions_trash")
+def prescriptions_trash(request):
+    q = (request.GET.get("q") or "").strip()
+    try:
+        per_page_i = int(request.GET.get("per_page") or 25)
+    except Exception:
+        per_page_i = 25
+    if per_page_i not in (10, 15, 25, 50, 100):
+        per_page_i = 25
+
+    qs = Prescription.objects.all()
+    # ne lister que la corbeille si le champ existe
+    try:
+        qs = qs.filter(is_deleted=True)
+    except Exception:
+        # fallback: pas de corbeille possible sans champ => liste vide
+        qs = qs.none()
+
+    if q:
+        qs = qs.filter(
+            Q(id__icontains=q)
+            | Q(patient__email__icontains=q)
+            | Q(patient__phone_number__icontains=q)
+            | Q(patient__full_name__icontains=q)
+        )
+
+    # tri
+    try:
+        qs = qs.order_by("-deleted_at", "-id")
+    except Exception:
+        qs = qs.order_by("-id")
+
+    paginator = Paginator(qs, per_page_i)
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+
+    return render(
+        request,
+        "core_adminconsole/prescriptions_trash.html",
+        {"q": q, "page_obj": page_obj, "per_page": per_page_i, "purge_min_days": PURGE_MIN_DAYS},
+    )
+
+
+@require_POST
+@require_perm("core_adminconsole.prescription_soft_delete")
+def prescription_soft_delete(request, pk: int):
+    p = get_object_or_404(Prescription, pk=pk)
+    reason = (request.POST.get("reason") or "").strip()
+
+    # si méthode soft_delete existe, l'utiliser
+    if hasattr(p, "soft_delete") and callable(getattr(p, "soft_delete")):
+        try:
+            p.soft_delete(actor=request.user, reason=reason)
+        except TypeError:
+            p.soft_delete()
+    else:
+        # fallback champs
+        if hasattr(p, "is_deleted"):
+            p.is_deleted = True
+        if hasattr(p, "deleted_at"):
+            p.deleted_at = timezone.now()
+        if hasattr(p, "deleted_by"):
+            p.deleted_by = request.user
+        if hasattr(p, "delete_reason"):
+            p.delete_reason = reason[:255]
+        try:
+            p.save()
+        except Exception:
+            pass
+
+    try:
+        audit(
+            request,
+            action="PRESCRIPTION_TRASH",
+            summary=f"Ordonnance en corbeille id={p.pk}",
+            target_type="Prescription",
+            target_id=str(p.pk),
+            metadata={"reason": reason[:255]},
+        )
+    except Exception:
+        pass
+
+    messages.success(request, "Ordonnance mise à la corbeille.")
+    return redirect("core_adminconsole:prescriptions_list")
+
+
+@require_POST
+@require_perm("core_adminconsole.prescription_restore")
+def prescription_restore(request, pk: int):
+    p = get_object_or_404(Prescription, pk=pk)
+
+    if hasattr(p, "restore") and callable(getattr(p, "restore")):
+        try:
+            p.restore(actor=request.user)
+        except TypeError:
+            p.restore()
+    else:
+        if hasattr(p, "is_deleted"):
+            p.is_deleted = False
+        if hasattr(p, "deleted_at"):
+            p.deleted_at = None
+        if hasattr(p, "deleted_by"):
+            p.deleted_by = None
+        if hasattr(p, "delete_reason"):
+            p.delete_reason = ""
+        try:
+            p.save()
+        except Exception:
+            pass
+
+    try:
+        audit(
+            request,
+            action="PRESCRIPTION_RESTORE",
+            summary=f"Ordonnance restaurée id={p.pk}",
+            target_type="Prescription",
+            target_id=str(p.pk),
+            metadata={},
+        )
+    except Exception:
+        pass
+
+    messages.success(request, "Ordonnance restaurée.")
+    return redirect("core_adminconsole:prescriptions_trash")
+
+
+@require_POST
+@login_required
+@superuser_required
+@require_perm("core_adminconsole.prescription_purge")
+def prescription_purge(request, pk: int):
+    """
+    Purge définitive (superuser-only).
+    Confirmation: taper l'ID dans le champ POST 'confirm' (ou '1' pour override).
+    """
+    p = get_object_or_404(Prescription, pk=pk)
+    confirm = (request.POST.get("confirm") or "").strip()
+
+    if confirm not in (str(pk), "1"):
+        messages.error(request, "Confirmation incorrecte. Tape l'ID de l'ordonnance pour purger.")
+        return redirect("core_adminconsole:prescriptions_trash")
+
+    # délai mini (soft)
+    if confirm != "1":
+        if not _can_purge_prescription_safe(p):
+            messages.error(request, f"Purge refusée: délai minimum {PURGE_MIN_DAYS}j non atteint (ou ordonnance non en corbeille).")
+            return redirect("core_adminconsole:prescriptions_trash")
+
+    # tenter de supprimer fichiers pièces jointes si relation connue
+    try:
+        rel = getattr(p, "attachments", None)
+        if rel is not None and hasattr(rel, "all"):
+            for a in rel.all():
+                f = getattr(a, "file", None)
+                if f:
+                    try:
+                        f.delete(save=False)
+                    except Exception:
+                        pass
+                try:
+                    a.delete()
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    pid = getattr(p, "id", pk)
+    try:
+        p.delete()
+        messages.success(request, f"Ordonnance #{pid} purgée définitivement.")
+    except Exception as e:
+        messages.error(request, f"Erreur purge: {e}")
+
+    return redirect("core_adminconsole:prescriptions_trash")
+
+# === /ADMINCONSOLE — CORBEILLE ORDONNANCES (V1 SAFE) ===
+
+# --- ADMINCONSOLE_AUDIT_VIEWS_V1:BEGIN ---
+
+import csv
+from django.http import HttpResponse
+from django.views.decorators.http import require_http_methods
+
+def _audit_filter_qs(qs, q: str):
+    q = (q or "").strip()
+    if not q:
+        return qs, ""
+    return qs.filter(
+        Q(action__icontains=q)
+        | Q(summary__icontains=q)
+        | Q(target_type__icontains=q)
+        | Q(target_id__icontains=q)
+        | Q(actor__username__icontains=q)
+        | Q(actor__email__icontains=q)
+        | Q(ip_address__icontains=q)
+        | Q(user_agent__icontains=q)
+    ), q
+
+@require_perm("core_adminconsole.audit_log")
+def audit_log(request):
+    q = (request.GET.get("q") or "").strip()
+    try:
+        page_size = int(request.GET.get("page_size") or 25)
+    except Exception:
+        page_size = 25
+    if page_size not in (10, 15, 25, 50, 100, 200):
+        page_size = 25
+
+    qs = AdminAuditEvent.objects.select_related("actor").all().order_by("-created_at", "-id")
+    qs, q = _audit_filter_qs(qs, q)
+
+    paginator = Paginator(qs, page_size)
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+
+    return render(
+        request,
+        "core_adminconsole/audit_log.html",
+        {"page_obj": page_obj,
+            "events": page_obj.object_list, "paginator": paginator, "q": q, "page_size": page_size},
+    )
+
+@require_perm("core_adminconsole.audit_export_csv")
+def audit_export_csv(request):
+    q = (request.GET.get("q") or "").strip()
+
+    qs = AdminAuditEvent.objects.select_related("actor").all().order_by("-created_at", "-id")
+    qs, q = _audit_filter_qs(qs, q)
+
+    resp = HttpResponse(content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = "attachment; filename=audit_adminconsole.csv"
+
+    w = csv.writer(resp)
+    w.writerow([
+        "created_at", "action", "actor_id", "actor_username", "actor_email",
+        "target_type", "target_id", "ip_address", "user_agent", "summary", "metadata",
+    ])
+
+    for e in qs.iterator():
+        actor = getattr(e, "actor", None)
+        w.writerow([
+            getattr(e, "created_at", "") or "",
+            getattr(e, "action", "") or "",
+            getattr(e, "actor_id", "") or "",
+            getattr(actor, "username", "") if actor else "",
+            getattr(actor, "email", "") if actor else "",
+            getattr(e, "target_type", "") or "",
+            getattr(e, "target_id", "") or "",
+            getattr(e, "ip_address", "") or "",
+            getattr(e, "user_agent", "") or "",
+            getattr(e, "summary", "") or "",
+            getattr(e, "metadata", {}) or {},
+        ])
+
+    # journaliser l'export (best-effort)
+    try:
+        audit(request, action=AdminAuditEvent.Action.EXPORT_CSV, summary=f"Export CSV audit (q={q!r})", target_type="AdminAuditEvent", target_id="*")
+    except Exception:
+        pass
+
+    return resp
+
+@require_perm("core_adminconsole.audit_clear")
+@require_POST
+def audit_clear(request):
+    # garde-fou: confirmation double
+    confirm = (request.POST.get("confirm") or "").strip().lower()
+    if confirm not in ("oui", "yes", "y", "ok", "confirm"):
+        messages.error(request, "Confirmation requise. Tape 'oui' pour vider l'audit.")
+        return redirect("core_adminconsole:audit_log")
+
+    n = AdminAuditEvent.objects.count()
+    AdminAuditEvent.objects.all().delete()
+
+    try:
+        audit(request, action=AdminAuditEvent.Action.PURGE, summary=f"Audit vidé ({n} lignes)", target_type="AdminAuditEvent", target_id="*")
+    except Exception:
+        pass
+
+    messages.success(request, f"Audit vidé ({n} lignes).")
+    return redirect("core_adminconsole:audit_log")
+# --- ADMINCONSOLE_AUDIT_VIEWS_V1:END ---
+
+# --- ADMINCONSOLE_URL_STUBS_V1:BEGIN ---
+
+from django.http import HttpResponse
+from django.shortcuts import redirect
+
+def admin_home(request):
+    # Fallback: page d'accueil Admin Console
+    try:
+        return redirect('core_adminconsole:prescriptions_list')
+    except Exception:
+        return HttpResponse('Admin Console', content_type='text/plain; charset=utf-8')
+
+def account_create(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.account_create', content_type='text/plain; charset=utf-8')
+
+def account_edit(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.account_edit', content_type='text/plain; charset=utf-8')
+
+def account_reactivate(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.account_reactivate', content_type='text/plain; charset=utf-8')
+
+def account_soft_delete(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.account_soft_delete', content_type='text/plain; charset=utf-8')
+
+def account_soft_delete_confirm(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.account_soft_delete_confirm', content_type='text/plain; charset=utf-8')
+
+def account_toggle_active(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.account_toggle_active', content_type='text/plain; charset=utf-8')
+
+def accounts_list(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.accounts_list', content_type='text/plain; charset=utf-8')
+
+def gmail_tools(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.gmail_tools', content_type='text/plain; charset=utf-8')
+
+def group_create(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.group_create', content_type='text/plain; charset=utf-8')
+
+def group_delete(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.group_delete', content_type='text/plain; charset=utf-8')
+
+def group_delete_confirm(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.group_delete_confirm', content_type='text/plain; charset=utf-8')
+
+def group_edit(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.group_edit', content_type='text/plain; charset=utf-8')
+
+def groups_list(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.groups_list', content_type='text/plain; charset=utf-8')
+
+def iam_matrix(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.iam_matrix', content_type='text/plain; charset=utf-8')
+
+from .permissions import require_console_perm
+
+@require_console_perm("access_console")
+def notifications_settings(request):
+    """
+    Admin Console — Notifications (Global)
+    V1: page UI (placeholder) pour:
+      - kill-switch SMS / Email
+      - templates globaux
+      - garde-fous RGPD (pas de nom patient / pas d’info médicale dans SMS)
+    """
+    from django.shortcuts import render
+
+    return render(
+        request,
+        "core_adminconsole/notifications_settings.html",
+        {
+            "section": "notifications",
+        },
+    )
+
+def nurse_create(request):
+    """
+    Admin Console — Création d'un mandataire de retrait (Infirmier)
+    Métier:
+      - crée une Person avec role="nurse"
+      - is_active=True par défaut
+      - champs: first_name, last_name, email, phone
+    UI:
+      - réutilise le template core_adminconsole/nurse_form.html (mode=create)
+    """
+    from django.contrib import messages
+    from django.shortcuts import redirect, render
+    from django import forms
+    from core_people.models import Person
+
+    class NurseCreateForm(forms.ModelForm):
+        class Meta:
+            model = Person
+            fields = ["first_name", "last_name", "email", "phone"]
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            # style UI cohérent (si tes classes existent)
+            for f in self.fields.values():
+                try:
+                    f.widget.attrs.setdefault("class", "px-input")
+                except Exception:
+                    pass
+
+        def clean_email(self):
+            email = (self.cleaned_data.get("email") or "").strip()
+            return email
+
+        def clean_phone(self):
+            phone = (self.cleaned_data.get("phone") or "").strip()
+            return phone
+
+    if request.method == "POST":
+        form = NurseCreateForm(request.POST)
+        if form.is_valid():
+            nurse = form.save(commit=False)
+            nurse.role = "nurse"
+            nurse.is_active = True
+            nurse.save()
+            messages.success(request, "✅ Mandataire de retrait créé.")
+            return redirect("core_adminconsole:nurses_list")
+        messages.error(request, "❌ Merci de corriger les erreurs du formulaire.")
+    else:
+        form = NurseCreateForm()
+
+    return render(
+        request,
+        "core_adminconsole/nurse_form.html",
+        {"form": form, "mode": "create"},
+    )
+
+def nurse_edit(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.nurse_edit', content_type='text/plain; charset=utf-8')
+
+def nurse_toggle_confirm(request, pk: int, action: str):
+    """
+    Admin Console — Confirmation + exécution (Activer/Désactiver) d'un mandataire de retrait.
+
+    URL:
+      /admin-console/nurses/<pk>/activate/
+      /admin-console/nurses/<pk>/deactivate/
+
+    Sécurité:
+      - GET = affiche la confirmation
+      - POST + CSRF + confirm=1 = exécute l'action
+    """
+    from django.contrib import messages
+    from django.http import Http404
+    from django.shortcuts import get_object_or_404, redirect, render
+
+    # Audit (optionnel selon ton code)
+    try:
+        from .services import audit as audit_log
+    except Exception:
+        audit_log = None
+
+    try:
+        from core_people.models import Person
+    except Exception as e:
+        raise Http404("Modèle Person introuvable") from e
+
+    action = (action or "").strip().lower()
+    if action not in ("activate", "deactivate"):
+        raise Http404("Action inconnue")
+
+    nurse = get_object_or_404(Person, pk=pk)
+
+    # garde-fou métier : on ne toggle que les Person role nurse
+    # (si ton modèle ne possède pas role, on évite de casser)
+    role = getattr(nurse, "role", None)
+    if role is not None and str(role) != "nurse":
+        raise Http404("Ce profil n’est pas un mandataire de retrait")
+
+    if request.method == "POST":
+        if (request.POST.get("confirm") or "") != "1":
+            messages.error(request, "Confirmation requise (confirm=1).")
+            return redirect("core_adminconsole:nurses_list")
+
+        want_active = True if action == "activate" else False
+
+        # no-op friendly
+        if getattr(nurse, "is_active", True) == want_active:
+            if want_active:
+                messages.info(request, "ℹ️ Ce mandataire est déjà actif.")
+            else:
+                messages.info(request, "ℹ️ Ce mandataire est déjà inactif.")
+            return redirect("core_adminconsole:nurses_list")
+
+        nurse.is_active = want_active
+        nurse.save(update_fields=["is_active"])
+
+        # Audit SaaS
+        if audit_log:
+            try:
+                audit_log(
+                    request,
+                    action=f"nurse.{action}",
+                    summary=("Réactivation mandataire" if want_active else "Désactivation mandataire"),
+                    target_type="Person",
+                    target_id=str(nurse.pk),
+                    metadata={
+                        "role": getattr(nurse, "role", None),
+                        "email": getattr(nurse, "email", None),
+                    },
+                )
+            except Exception:
+                pass
+
+        if want_active:
+            messages.success(request, "✅ Mandataire réactivé.")
+        else:
+            messages.success(request, "✅ Mandataire désactivé.")
+
+        return redirect("core_adminconsole:nurses_list")
+
+    # GET = page de confirmation
+    return render(
+        request,
+        "core_adminconsole/nurse_confirm_toggle.html",
+        {"nurse": nurse, "action": action},
+    )
+
+def nurses_list(request, *args, **kwargs):
+    """
+    Admin Console — Infirmiers mandatés (Person.role="nurse")
+    - filtre chips state: all|active|inactive
+    - compteurs chips
+    """
+    from django.shortcuts import render
+    from django.db.models import Q, Count
+    from core_people.models import Person
+
+    q = (request.GET.get("q") or "").strip()
+    state = (request.GET.get("state") or "all").strip().lower()
+
+    base = (
+        Person.objects
+        .filter(role="nurse")
+        .annotate(
+            assigned_total=Count("assigned_prescriptions", distinct=True),
+            assigned_active=Count(
+                "assigned_prescriptions",
+                filter=Q(assigned_prescriptions__prescription__is_deleted=False),
+                distinct=True,
+            ),
+        )
+        .order_by("-updated_at", "-id")
+    )
+
+    if q:
+        base = base.filter(
+            Q(first_name__icontains=q)
+            | Q(last_name__icontains=q)
+            | Q(email__icontains=q)
+            | Q(phone__icontains=q)
+        )
+
+    counts = {
+        "all": base.count(),
+        "active": base.filter(is_active=True).count(),
+        "inactive": base.filter(is_active=False).count(),
+    }
+
+    qs = base
+    if state == "active":
+        qs = qs.filter(is_active=True)
+    elif state == "inactive":
+        qs = qs.filter(is_active=False)
+    else:
+        state = "all"
+
+    state_items = [
+        ("all", "Tous", counts["all"]),
+        ("active", "Actifs", counts["active"]),
+        ("inactive", "Inactifs", counts["inactive"]),
+    ]
+
+    return render(
+        request,
+        "core_adminconsole/nurses_list.html",
+        {"nurses": qs, "q": q, "state": state, "state_items": state_items},
+    )
+
+def patients_list(request, *args, **kwargs):
+    """
+    Admin Console — Patients (métier)
+    - base: uniquement patients ayant >=1 ordonnance
+    - compteurs par filtre (chips): all/active/inactive/delivered/archived/trash
+    - actif = ordonnance ouverte (non supprimée, non livrée, non archivée)
+    """
+    from django.shortcuts import render
+    from django.core.paginator import Paginator
+    from django.db.models import Q, Count
+    from core_patients.models import Patient
+
+    q = (request.GET.get("q") or "").strip()
+    flt = (request.GET.get("filter") or "all").strip().lower()
+
+    try:
+        per_page = int(request.GET.get("per_page") or 25)
+    except Exception:
+        per_page = 25
+    if per_page not in (10, 15, 25, 50, 100):
+        per_page = 25
+
+    CLOSED_STATUSES = ["Livrée", "Archivée"]
+
+    base = (
+        Patient.objects
+        .filter(prescriptions__isnull=False)
+        .distinct()
+        .annotate(
+            prescriptions_total=Count("prescriptions", distinct=True),
+            prescriptions_trash=Count("prescriptions", filter=Q(prescriptions__is_deleted=True), distinct=True),
+            prescriptions_delivered=Count(
+                "prescriptions",
+                filter=Q(prescriptions__is_deleted=False) & Q(prescriptions__status="Livrée"),
+                distinct=True,
+            ),
+            prescriptions_archived=Count(
+                "prescriptions",
+                filter=Q(prescriptions__is_deleted=False) & Q(prescriptions__status="Archivée"),
+                distinct=True,
+            ),
+            prescriptions_active=Count(
+                "prescriptions",
+                filter=Q(prescriptions__is_deleted=False) & ~Q(prescriptions__status__in=CLOSED_STATUSES),
+                distinct=True,
+            ),
+        )
+    )
+
+    if q:
+        base = base.filter(
+            Q(full_name__icontains=q)
+            | Q(email__icontains=q)
+            | Q(phone_number__icontains=q)
+        )
+
+    # Compteurs (chips) calculés AVANT application du filtre courant
+    counts = {
+        "all": base.count(),
+        "active": base.filter(prescriptions_active__gt=0).count(),
+        "inactive": base.filter(prescriptions_active__lte=0).count(),
+        "delivered": base.filter(prescriptions_delivered__gt=0).count(),
+        "archived": base.filter(prescriptions_archived__gt=0).count(),
+        "trash": base.filter(prescriptions_trash__gt=0).count(),
+    }
+
+    # Appliquer filtre courant
+    qs = base
+    if flt == "active":
+        qs = qs.filter(prescriptions_active__gt=0)
+    elif flt == "inactive":
+        qs = qs.filter(prescriptions_active__lte=0)
+    elif flt == "delivered":
+        qs = qs.filter(prescriptions_delivered__gt=0)
+    elif flt == "archived":
+        qs = qs.filter(prescriptions_archived__gt=0)
+    elif flt == "trash":
+        qs = qs.filter(prescriptions_trash__gt=0)
+    else:
+        flt = "all"
+
+    qs = qs.order_by("-created_at", "-id")
+
+    paginator = Paginator(qs, per_page)
+    page_obj = paginator.get_page(request.GET.get("page") or 1)
+
+    filter_items = [
+        ("all", "Tous", counts["all"]),
+        ("active", "Actifs", counts["active"]),
+        ("inactive", "Inactifs", counts["inactive"]),
+        ("delivered", "Livrées", counts["delivered"]),
+        ("archived", "Archivées", counts["archived"]),
+        ("trash", "Corbeille", counts["trash"]),
+    ]
+
+    return render(
+        request,
+        "core_adminconsole/patients_list.html",
+        {
+            "patients": page_obj.object_list,
+            "page_obj": page_obj,
+            "q": q,
+            "per_page": per_page,
+            "filter": flt,
+            "filter_items": filter_items,
+            "total_count": paginator.count,
+        },
+    )
+
+def users_home(request, *args, **kwargs):
+    return HttpResponse('Not implemented: core_adminconsole.views.users_home', content_type='text/plain; charset=utf-8')
+
+# --- ADMINCONSOLE_URL_STUBS_V1:END ---

@@ -1,0 +1,44 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}IAM — Matrice des droits{% endblock %}
+{% block content %}
+  <div class="ac-card">
+    <div class="ac-row" style="justify-content:space-between; align-items:center;">
+      <div>
+        <div class="ac-title">IAM — Matrice des droits</div>
+        <div class="ac-muted">Qui peut faire quoi (groupes × actions). Superuser = tout.</div>
+      </div>
+      <a class="btn" href="{% url 'core_adminconsole:groups_list' %}">Gérer Groupes</a>
+    </div>
+
+    <div style="overflow:auto; margin-top:12px;">
+      <table class="ac-table" style="min-width:900px;">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Codename</th>
+            {% for g in groups %}
+              <th>{{ g.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in actions %}
+            <tr>
+              <td><strong>{{ a.label }}</strong></td>
+              <td class="ac-muted">{{ a.codename }}</td>
+              {% for g in groups %}
+                <td style="text-align:center;">
+                  {% if g.id in a.groups_has %}✅{% else %}❌{% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ac-muted" style="margin-top:10px;">
+      Astuce: exécute <code>python gmail_manager/manage.py adminconsole_bootstrap_roles</code> pour créer les groupes standards.
+    </div>
+  </div>
+{% endblock %}

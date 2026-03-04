@@ -1,0 +1,31 @@
+/* Admin Console Hotfix — Anti overlay / Anti click-blocker */
+
+.ac-main, .ac-content, .table-wrap, .ac-card { position: relative; }
+
+/* Beaucoup d’overlays sont des pseudo-elements : ils captent les clics sans être visibles */
+.ac-main *::before,
+.ac-main *::after,
+.table-wrap *::before,
+.table-wrap *::after,
+.ac-card *::before,
+.ac-card *::after {
+  pointer-events: none !important;
+}
+
+/* Si un calque absolu recouvre le tableau, on remet les liens/boutons au-dessus */
+.table-wrap, table, thead, tbody, tr, td, th {
+  position: relative;
+  z-index: 1;
+}
+
+/* Liens et boutons : au-dessus et cliquables */
+a, button, .btn {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 9999 !important;
+}
+
+/* Cas fréquents: overlay/backdrop */
+.overlay, .backdrop, .modal-backdrop, .ac-overlay, .drawer-backdrop, .sidebar-backdrop {
+  pointer-events: none !important;
+}

@@ -1,0 +1,20 @@
+/* --- Admin Console: sous-menu pro (Dossiers patients) --- */
+.nav-sub{
+  margin: 6px 0 10px 34px;     /* indentation sous l'item parent */
+  padding-left: 10px;
+  border-left: 2px solid rgba(0,0,0,0.08);
+  display: grid;
+  gap: 6px;
+}
+.nav-sub-item{
+  display: block;
+  font-size: 13px;
+  line-height: 1.25;
+  color: rgba(0,0,0,0.72);
+  text-decoration: none;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+.nav-sub-item:hover{
+  background: rgba(0,0,0,0.04);
+}

@@ -1,0 +1,50 @@
+{% extends "core_adminconsole/base.html" %}
+
+{% block title %}Suppression d’un mandataire de retrait{% endblock %}
+
+{% block content %}
+<div class="ac-card">
+  <h2 style="margin-top:0;">Confirmer la suppression</h2>
+  <p class="ac-muted" style="margin-top:6px;">
+    Vous êtes sur le point de supprimer définitivement ce <strong>mandataire de retrait</strong>.
+    Cette action retire l’infirmier de la base et n’est pas réversible.
+  </p>
+
+  <div style="margin:14px 0; padding:12px; border:1px solid var(--border); border-radius:14px; background:#fbfdff;">
+    <div style="font-weight:900;">Mandataire</div>
+    <div style="margin-top:6px;">
+      <span class="ac-pill">ID #{{ nurse.id }}</span>
+      <span style="font-weight:900; margin-left:8px;">{{ nurse.first_name }} {{ nurse.last_name }}</span>
+      {% if nurse.email %}<span class="ac-muted"> • {{ nurse.email }}</span>{% endif %}
+      {% if nurse.phone %}<span class="ac-muted"> • {{ nurse.phone }}</span>{% endif %}
+    </div>
+  </div>
+
+  {% if active_count > 0 %}
+    <div style="padding:12px; border:1px solid rgba(220,38,38,.25); border-radius:14px; background:rgba(220,38,38,.06);">
+      <div style="font-weight:950; color:var(--danger);">Suppression impossible</div>
+      <div style="margin-top:6px;">
+        Ce mandataire est associé à <strong>{{ active_count }}</strong> ordonnance(s) <strong>non archivée(s)</strong>.
+        Pour protéger le dossier patient et la traçabilité, vous devez d’abord :
+        <ul style="margin:10px 0 0 18px;">
+          <li>Archiver les ordonnances concernées, ou</li>
+          <li>Réaffecter les ordonnances à un autre mandataire.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="margin-top:14px; display:flex; justify-content:flex-end; gap:10px;">
+      <a class="btn btn--ghost" href="{% url 'core_adminconsole:nurses_list' %}">Retour</a>
+    </div>
+  {% else %}
+    <form method="post" action="{% url 'core_adminconsole:nurse_delete' nurse.id %}" style="margin-top:14px;">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="1">
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <a class="btn btn--ghost" href="{% url 'core_adminconsole:nurses_list' %}">Annuler</a>
+        <button class="btn btn--danger" type="submit">Supprimer définitivement</button>
+      </div>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

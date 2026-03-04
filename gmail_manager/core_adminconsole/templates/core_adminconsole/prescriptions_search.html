@@ -1,0 +1,33 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Ordonnances{% endblock %}
+{% block content %}
+  <div class="ac-card">
+    <form method="get" class="ac-row" style="margin-bottom:10px;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Recherche patient/email/téléphone/id…" style="flex:1; min-width:260px;">
+      <input type="text" name="status" value="{{ status }}" placeholder="status exact (optionnel)" style="width:220px;">
+      <button class="btn btn--primary" type="submit">Rechercher</button>
+      <a class="btn" href="{% url 'core_adminconsole:prescriptions_search' %}">Reset</a>
+    </form>
+
+    <table class="ac-table">
+      <thead><tr><th>ID</th><th>Créée</th><th>Patient</th><th>Statut</th><th>Type</th><th>Voir</th></tr></thead>
+      <tbody>
+        {% for p in prescriptions %}
+          <tr>
+            <td class="ac-muted">#{{ p.id }}</td>
+            <td class="ac-muted">{{ p.created_at|date:"d/m/Y H:i" }}</td>
+            <td>
+              <strong>{{ p.patient.full_name|default:"—" }}</strong>
+              <div class="ac-muted">{{ p.patient.email|default:"—" }} • {{ p.patient.phone_number|default:"—" }}</div>
+            </td>
+            <td><strong>{{ p.status }}</strong></td>
+            <td class="ac-muted">{{ p.type|default:"—" }}</td>
+            <td><a class="btn" href="{% url 'core_emails:prescription_detail' p.id %}">Ouvrir</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="ac-muted">Aucune ordonnance.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

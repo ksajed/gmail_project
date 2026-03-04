@@ -1,0 +1,55 @@
+{% extends "core_adminconsole/base.html" %}
+{% comment %} ORDO_PREMIUM_PATIENT_EDIT_V1 {% endcomment %}
+
+{% block title %}Modifier patient{% endblock %}
+
+{% block content %}
+<div class="admin-premium">
+  <div class="ac-card">
+
+    <div class="px-head">
+      <div>
+        <h2 class="px-title">Modifier le titulaire</h2>
+        <div class="px-sub">Nom / Prénom / Téléphone</div>
+      </div>
+      <div>
+        <a class="px-link" href="{% url 'core_adminconsole:patients_list' %}">← Retour</a>
+      </div>
+    </div>
+
+    <form method="post" class="px-form">
+      {% csrf_token %}
+
+      <div class="px-field">
+        <label for="id_full_name">Nom complet</label>
+        <input class="px-input" type="text" name="full_name" id="id_full_name"
+               value="{{ form.full_name.value|default_if_none:'' }}"
+               placeholder='Exemple : "Khalid Sajed"'
+               autocomplete="name" />
+        {% if form.full_name.errors %}
+          <div class="px-errors">{{ form.full_name.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="px-field">
+        <label for="id_phone_number">Téléphone</label>
+        <input class="px-input" type="tel" name="phone_number" id="id_phone_number"
+               value="{{ form.phone_number.value|default_if_none:'' }}"
+               placeholder="06 12 34 56 78"
+               autocomplete="tel"
+               inputmode="tel" />
+        <div class="px-help">⚠️ RGPD : pas d'info médicale ici, uniquement identité + contact. <span class="px-muted">Stockage interne normalisé en +33 (E.164).</span></div>
+        {% if form.phone_number.errors %}
+          <div class="px-errors">{{ form.phone_number.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="px-actionsbar">
+        <a class="px-btn px-btn-ghost" href="{% url 'core_adminconsole:patients_list' %}">Annuler</a>
+        <button class="px-btn px-btn-primary" type="submit">Enregistrer</button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

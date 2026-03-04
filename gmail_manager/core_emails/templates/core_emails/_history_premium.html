@@ -1,0 +1,115 @@
+{% comment %}
+ORDO — Historique premium (anti-chevauchement).
+Contexte attendu: history (QuerySet/list de PrescriptionStatusHistory)
+{% endcomment %}
+
+<style>
+/* ORDO — Historique premium (anti-chevauchement garanti) */
+.history-premium {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.history-premium__header {
+  display:grid;
+  grid-template-columns:170px 140px 260px 1fr;
+  gap:10px;
+  padding:8px 10px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  color:rgba(0,0,0,.55);
+  border-bottom:1px solid rgba(0,0,0,.08);
+}
+.history-premium__row {
+  display:grid;
+  grid-template-columns:170px 140px 260px 1fr;
+  gap:10px;
+  padding:10px 10px;
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 0 rgba(0,0,0,.02);
+  align-items:start;
+}
+.history-premium__cell {
+  min-width:0;              /* CRITIQUE: empêche chevauchement */
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  white-space:normal;
+  line-height:1.35;
+}
+.history-premium__date { font-variant-numeric:tabular-nums; color:rgba(0,0,0,.75); }
+.history-premium__user { font-weight:800; color:rgba(0,0,0,.75); }
+.history-premium__action { font-weight:900; color:rgba(0,0,0,.82); }
+.history-premium__comment { color:rgba(0,0,0,.75); }
+
+.history-premium summary {
+  cursor:pointer;
+  user-select:none;
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  font-weight:800;
+  font-size:12px;
+  color:rgba(0,0,0,.70);
+  margin-top:6px;
+}
+.history-premium summary::marker { content:""; }
+
+.history-premium__preview {
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+
+@media (max-width:1100px) {
+  .history-premium__header { display:none; }
+  .history-premium__row { grid-template-columns:1fr; }
+}
+</style>
+
+{% if history %}
+<div class="history-premium">
+  <div class="history-premium__header">
+    <div>Date</div>
+    <div>Utilisateur</div>
+    <div>Action</div>
+    <div>Commentaire</div>
+  </div>
+
+  {% for h in history %}
+  <div class="history-premium__row">
+    <div class="history-premium__cell history-premium__date">
+      {{ h.changed_at|date:"d/m/Y H:i" }}
+    </div>
+
+    <div class="history-premium__cell history-premium__user">
+      {{ h.user|default:"—" }}
+    </div>
+
+    <div class="history-premium__cell history-premium__action">
+      {{ h.get_old_status_display|default:h.old_status }} → {{ h.get_new_status_display|default:h.new_status }}
+    </div>
+
+    <div class="history-premium__cell history-premium__comment">
+      {% if h.comment %}
+        <div class="history-premium__preview">{{ h.comment }}</div>
+        {% if h.comment|length > 180 %}
+          <details>
+            <summary>Voir plus</summary>
+            <div style="margin-top:8px; white-space:pre-wrap;">{{ h.comment }}</div>
+          </details>
+        {% endif %}
+      {% else %}
+        —
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="v muted">Aucun historique disponible.</div>
+{% endif %}

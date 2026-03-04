@@ -1,0 +1,33 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Confirmation{% endblock %}
+{% block content %}
+<div class="ac-card" style="max-width:720px;">
+  <h2 style="margin-top:0;">
+    {% if action == "deactivate" %}🛑 Désactiver un mandataire de retrait{% else %}✅ Réactiver un mandataire de retrait{% endif %}
+  </h2>
+
+  <p class="ac-muted" style="margin-top:6px;">
+    Action sensible : confirmation requise (POST + CSRF + confirm=1). Tout est audité.
+  </p>
+
+  <div style="margin-top:14px; padding:12px 14px; border:1px solid var(--border); border-radius:14px;">
+    <div><strong>ID :</strong> #{{ nurse.id }}</div>
+    <div><strong>Nom :</strong> {{ nurse.first_name }} {{ nurse.last_name }}</div>
+    <div><strong>E-mail :</strong> {{ nurse.email|default:"—" }}</div>
+    <div><strong>Téléphone :</strong> {{ nurse.phone|default:"—" }}</div>
+  </div>
+
+  <form method="post" style="margin-top:16px;">
+    {% csrf_token %}
+    <input type="hidden" name="confirm" value="1">
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      {% if action == "deactivate" %}
+        <button class="btn btn--danger" type="submit">Confirmer la désactivation</button>
+      {% else %}
+        <button class="btn btn--success" type="submit">Confirmer la réactivation</button>
+      {% endif %}
+      <a class="btn btn--ghost" href="{% url 'core_adminconsole:nurses_list' %}">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

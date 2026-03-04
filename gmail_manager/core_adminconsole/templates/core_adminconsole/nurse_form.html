@@ -1,0 +1,40 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Mandataire de retrait{% endblock %}
+{% block content %}
+<div class="ac-card">
+  <h2 style="margin-top:0;">
+    {% if mode == "edit" %}✏ Modifier le mandataire de retrait{% else %}➕ Ajouter un mandataire de retrait{% endif %}
+  </h2>
+
+  <form method="post" style="max-width:560px;">
+    {% csrf_token %}
+    <div style="display:grid; gap:10px;">
+          <div class="ac-grid" style="display:grid; gap:12px;">
+      <div>
+        <label class="ac-label" for="{{ form.first_name.id_for_label }}">Prénom :</label>
+        {{ form.first_name }}
+      </div>
+
+      <div>
+        <label class="ac-label" for="{{ form.last_name.id_for_label }}">Nom :</label>
+        {{ form.last_name }}
+      </div>
+
+      <div>
+        <label class="ac-label" for="{{ form.email.id_for_label }}">Adresse e-mail :</label>
+        {{ form.email }}
+      </div>
+
+      <div>
+        <label class="ac-label" for="{{ form.phone.id_for_label }}">Téléphone :</label>
+        {{ form.phone }}
+      </div>
+    </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button class="btn btn--primary" type="submit">Enregistrer</button>
+      <a class="btn btn--ghost" href="{% url 'core_adminconsole:nurses_list' %}">Annuler</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

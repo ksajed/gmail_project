@@ -11,6 +11,9 @@
   <!-- CSS popup (modals) -->
   <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=501">
 
+  <link rel="stylesheet" href="{% static 'css/timeline_premium.css' %}?v=1">
+  <script defer src="{% static 'js/timeline_premium.js' %}?v=1"></script>
+
   <style>
     :root{
       --bg:#f6f8fb;
@@ -996,29 +999,8 @@
         </div>
 
         <div class="card__body">
-          {% if history %}
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th class="col-date">Date</th>
-                    <th class="col-user">Utilisateur</th>
-                    <th class="col-action">Action</th>
-                    <th class="col-comment">Commentaire</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for h in history %}
-                    <tr>
-                      <td class="nowrap col-date">{{ h.changed_at|date:"d/m/Y H:i" }}</td>
-                      <td class="col-user">{{ h.changed_by|default:"Système" }}</td>
-                      <td class="nowrap col-action">{{ h.old_status }} → {{ h.new_status }}</td>
-                      <td class="comment col-comment">{{ h.comment|default:"—" }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
+          {% if timeline_events %}
+            {% include "core_emails/_history_timeline_premium.html" with timeline_events=timeline_events %}
           {% else %}
             <div class="v muted">Aucun historique disponible.</div>
           {% endif %}
@@ -1132,21 +1114,6 @@
   </div>
 </div>
 
-      <div class="modal__actions">
-        <button type="button" class="btn" onclick="closeModal('createNurseModal')">Annuler</button>
-        <button type="submit" class="btn btn--primary">Ajouter</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-      <div class="modal__actions">
-        <button type="button" class="btn" onclick="closeModal('createNurseModal')">Annuler</button>
-        <button type="submit" class="btn btn--primary">Ajouter</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <script>
   function openModal(id){

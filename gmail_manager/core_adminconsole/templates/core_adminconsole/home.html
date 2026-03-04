@@ -1,7 +1,108 @@
 {% extends "core_adminconsole/base.html" %}
-{% block content %}
-  <div class="card" style="padding:14px;">
-    <div style="font-weight:900;">Users: {{ users_count }}</div>
-    <div class="muted" style="margin-top:6px;">/admin-console/ • superuser-only</div>
+
+{% comment %} ORDO_PREMIUM_V1 {% endcomment %}
+
+{% block title %}
+<div class="admin-page">
+
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Propriétaires d’ordonnances</h1>
+      <div class="page-subtitle">Recherche nom / email / téléphone • Admin Console</div>
+    </div>
+
+    {% if total_count %}
+      <div class="pill">{{ total_count }} résultat(s)</div>
+    {% elif page_obj and page_obj.paginator %}
+      <div class="pill">{{ page_obj.paginator.count }} résultat(s)</div>
+    {% elif patients %}
+      <div class="pill">{{ patients|length }} résultat(s)</div>
+    {% else %}
+      <div class="pill">0 résultat</div>
+    {% endif %}
   </div>
+
+  <div class="card card-pad" style="margin-bottom:12px;">
+    <form method="get" class="search-row">
+      <input class="input" name="q" value="{{ q|default:'' }}" placeholder="Rechercher (nom, email, téléphone)..." />
+      <button class="btn btn-primary" type="submit">Rechercher</button>
+      <a class="btn btn-ghost" href="{% url 'core_adminconsole:patients_list' %}">Reset</a>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:90px;">ID</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th style="width:190px;">Téléphone</th>
+            <th style="width:180px;">Créé le</th>
+            <th style="width:220px; text-align:right;">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% for p in patients %}
+          <tr>
+            <td class="mono">#{{ p.id }}</td>
+            <td><strong>{{ p.full_name|default:"—" }}</strong></td>
+            <td class="muted">{{ p.email|default:"—" }}</td>
+
+            <td class="mono">
+              {% if p.phone_number %}
+                {% with v=p.phone_number|cut:" "|cut:"-"|cut:"." %}
+                  {% if v|length == 10 and v|slice:":2" in "06,07" %}
+                    {{ v|slice:":2" }} {{ v|slice:"2:4" }} {{ v|slice:"4:6" }} {{ v|slice:"6:8" }} {{ v|slice:"8:10" }}
+                  {% else %}
+                    {{ p.phone_number }}
+                  {% endif %}
+                {% endwith %}
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
+
+            <td class="muted">
+              {{ p.created_at|date:"Y-m-d H:i" }}
+            </td>
+
+            <td>
+              <div class="actions">
+                <a class="btn btn-sm" href="{% url 'core_adminconsole:patient_edit' p.id %}">Modifier</a>
+                {% if 'core_adminconsole:patient_detail' %}
+                  <a class="btn btn-sm btn-primary" href="{% url 'core_adminconsole:patient_detail' p.id %}">Ouvrir</a>
+                {% else %}
+                  <a class="btn btn-sm btn-primary" href="{% url 'core_adminconsole:patients_list' %}">Ouvrir</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6"><div class="empty">Aucun titulaire trouvé.</div></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj %}
+    <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
+      {% if page_obj.has_previous %}
+        <a class="btn btn-sm" href="?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}">← Préc.</a>
+      {% endif %}
+      <span class="btn btn-sm" style="cursor:default;">
+        Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+      </span>
+      {% if page_obj.has_next %}
+        <a class="btn btn-sm" href="?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}">Suiv. →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}

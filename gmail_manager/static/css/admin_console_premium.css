@@ -1,0 +1,168 @@
+/* ORDO_PREMIUM_PATIENTS_V1 */
+.admin-premium .ac-card {
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
+  border: 1px solid #e6e8f0;
+}
+
+.px-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:16px;
+  margin-bottom:14px;
+}
+.px-title {
+  margin:0;
+  font-size: 22px;
+  letter-spacing: -.2px;
+}
+.px-sub {
+  margin-top:4px;
+  color:#64748b;
+  font-size:13px;
+}
+.px-pill {
+  display:inline-flex;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#eaf1ff;
+  color:#2563eb;
+  font-weight:800;
+  font-size:12px;
+  white-space:nowrap;
+}
+
+.px-search {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin: 12px 0 6px;
+}
+.px-input {
+  width: 420px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e6e8f0;
+  outline: none;
+}
+.px-input:focus {
+  border-color: rgba(37,99,235,.35);
+  box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+}
+
+.px-btn {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e6e8f0;
+  background: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  text-decoration:none;
+  cursor:pointer;
+}
+.px-btn-primary {
+  background:#16a34a;
+  border-color:#16a34a;
+  color:#fff;
+}
+.px-btn-ghost {
+  background:transparent;
+}
+
+.px-table-wrap { overflow:auto; margin-top:10px; }
+.px-table {
+  width:100%;
+  border-collapse: collapse;
+  min-width: 880px;
+}
+.px-table th {
+  text-align:left;
+  font-size:12px;
+  color:#64748b;
+  font-weight:900;
+  padding: 12px 14px;
+  border-bottom:1px solid #e6e8f0;
+  background:#fbfcff;
+}
+.px-table td {
+  padding: 12px 14px;
+  border-bottom:1px solid #e6e8f0;
+  font-size:13px;
+}
+.px-table tr:hover td {
+  background: rgba(37,99,235,.03);
+}
+
+.px-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.px-muted { color:#64748b; }
+
+.px-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+.px-btn-sm {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.px-empty {
+  padding: 24px 10px;
+  text-align:center;
+  color:#64748b;
+}
+
+
+/* ORDO_PREMIUM_PATIENT_EDIT_V1 */
+.px-form {
+  display:grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.px-field label {
+  display:block;
+  font-size: 12px;
+  font-weight: 900;
+  color: #334155;
+  margin-bottom: 6px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.px-help {
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.px-errors {
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.px-actionsbar {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top: 14px;
+}
+
+.px-link {
+  color: #2563eb;
+  font-weight: 800;
+  text-decoration: none;
+}
+.px-link:hover { text-decoration: underline; }

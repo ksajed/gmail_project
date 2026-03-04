@@ -1,0 +1,129 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Créer un compte{% endblock %}
+
+{% block content %}
+<div class="ac-page">
+  <div class="ac-header">
+    <div>
+      <div class="ac-kicker">Admin Console</div>
+      <h1 class="ac-h1">Créer un compte</h1>
+      <div class="ac-subtitle">Gestion IAM (SaaS) — privilégier les groupes, permissions directes avec parcimonie.</div>
+    </div>
+    <div class="ac-actions">
+      <a class="btn btn--ghost" href="{% url 'core_adminconsole:accounts_list' %}">← Retour</a>
+    </div>
+  </div>
+
+  {% if form.errors %}
+    <div class="ac-alert ac-alert--danger">
+      <div class="ac-alert__title">Le formulaire contient des erreurs</div>
+      <div class="ac-alert__body">
+        {{ form.non_field_errors }}
+        <ul class="ac-errors">
+          {% for field in form %}
+            {% for e in field.errors %}
+              <li><strong>{{ field.label }}</strong> — {{ e }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" class="ac-form">
+    {% csrf_token %}
+
+    <div class="ac-grid">
+      <!-- Col gauche -->
+      <div class="ac-card">
+        <div class="ac-card__title">Identité</div>
+        <div class="ac-card__desc">Informations de base du compte.</div>
+
+        <div class="ac-field">
+          <label class="ac-label">Username</label>
+          {{ form.username }}
+          <div class="ac-hint">Unique, sans espaces. Ex: <code>bfellah</code></div>
+        </div>
+
+        <div class="ac-grid-2">
+          <div class="ac-field">
+            <label class="ac-label">Prénom</label>
+            {{ form.first_name }}
+          </div>
+          <div class="ac-field">
+            <label class="ac-label">Nom</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+
+        <div class="ac-field">
+          <label class="ac-label">Email</label>
+          {{ form.email }}
+          <div class="ac-hint">Optionnel, mais recommandé.</div>
+        </div>
+
+        <div class="ac-divider"></div>
+
+        <div class="ac-card__title">Sécurité</div>
+        <div class="ac-card__desc">Mot de passe + règles.</div>
+
+        <div class="ac-grid-2">
+          <div class="ac-field">
+            <label class="ac-label">Mot de passe</label>
+            {{ form.password1 }}
+          </div>
+          <div class="ac-field">
+            <label class="ac-label">Confirmation</label>
+            {{ form.password2 }}
+          </div>
+        </div>
+
+        <div class="ac-divider"></div>
+
+        <div class="ac-card__title">Flags</div>
+        <div class="ac-card__desc">Statuts Django. En prod, éviter superuser.</div>
+
+        <div class="ac-chips">
+          <label class="ac-chip">{{ form.is_active }} <span>Actif</span></label>
+          <label class="ac-chip">{{ form.is_staff }} <span>Staff</span></label>
+          <label class="ac-chip ac-chip--warn">{{ form.is_superuser }} <span>Superuser</span></label>
+        </div>
+      </div>
+
+      <!-- Col droite -->
+      <div class="ac-card">
+        <div class="ac-card__title">IAM</div>
+        <div class="ac-card__desc">Attribue des groupes “métier” (recommandé).</div>
+
+        <div class="ac-field">
+          <label class="ac-label">Groupes</label>
+          <div class="ac-selectbox">
+            {{ form.groups }}
+          </div>
+          <div class="ac-hint">Ex: <strong>Pharmacien — Employé</strong>, <strong>Vendeuse — Staff</strong>…</div>
+        </div>
+
+        <div class="ac-divider"></div>
+
+        <div class="ac-card__title">Permissions directes</div>
+        <div class="ac-card__desc">À utiliser uniquement pour des exceptions.</div>
+
+        <div class="ac-field">
+          <label class="ac-label">Permissions</label>
+          <div class="ac-selectbox">
+            {{ form.user_permissions }}
+          </div>
+          <div class="ac-hint">Astuce: dans Ordo, on préfère centraliser via groupes.</div>
+        </div>
+
+        <div class="ac-divider"></div>
+
+        <div class="ac-footer">
+          <button class="btn btn--primary" type="submit">Enregistrer</button>
+          <a class="btn" href="{% url 'core_adminconsole:accounts_list' %}">Annuler</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

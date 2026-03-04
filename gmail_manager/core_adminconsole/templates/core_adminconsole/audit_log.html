@@ -1,16 +1,478 @@
 {% extends "core_adminconsole/base.html" %}
-{% block content %}
-  <div class="card" style="padding:14px;">
-    <form method="get" style="display:flex; gap:8px; margin-bottom:10px;">
-      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher…" style="flex:1;">
-      <button class="btn btn--primary" type="submit">Rechercher</button>
-    </form>
-    <ul style="margin:0; padding-left:18px;">
-      {% for e in events %}
-        <li><strong>{{ e.action }}</strong> — {{ e.created_at|date:"d/m/Y H:i" }} — {{ e.summary|default:"—" }}</li>
-      {% empty %}
-        <li class="muted">Aucun événement.</li>
-      {% endfor %}
-    </ul>
+{% block title %}Audit{# --- AUDIT_CLEAR_MODAL_V1:BEGIN --- #}
+<style>
+  .ac-modal-backdrop{
+    position:fixed; inset:0;
+    background: rgba(15,23,42,.55);
+    display:none;
+    align-items:center; justify-content:center;
+    padding: 18px;
+    z-index: 9999;
+  }
+  .ac-modal{
+    width:min(520px, 100%);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 70px rgba(2,6,23,.25);
+    border: 1px solid rgba(15,23,42,.08);
+    overflow:hidden;
+  }
+  .ac-modal__hd{
+    padding: 16px 18px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    border-bottom: 1px solid rgba(15,23,42,.08);
+  }
+  .ac-modal__ttl{ font-weight: 950; font-size: 16px; margin:0; }
+  .ac-modal__sub{ margin:6px 0 0; color: rgba(15,23,42,.65); font-weight: 650; font-size: 13px; }
+  .ac-modal__bd{ padding: 16px 18px; }
+  .ac-modal__ft{
+    padding: 14px 18px;
+    display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;
+    border-top: 1px solid rgba(15,23,42,.08);
+    background: rgba(248,250,252,1);
+  }
+  .ac-modal__x{
+    border: none; background: transparent; cursor:pointer;
+    font-size: 18px; line-height: 1; padding: 6px 10px;
+    color: rgba(15,23,42,.65);
+  }
+  .ac-modal__err{
+    display:none;
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(220,38,38,.20);
+    background: rgba(220,38,38,.06);
+    color: rgba(153,27,27,1);
+    font-weight: 750;
+    font-size: 13px;
+  }
+</style>
+
+<div class="ac-modal-backdrop" id="auditClearModal">
+  <div class="ac-modal" role="dialog" aria-modal="true" aria-labelledby="auditClearTitle">
+    <div class="ac-modal__hd">
+      <div>
+        <h3 class="ac-modal__ttl" id="auditClearTitle">⚠️ Confirmation requise</h3>
+        <p class="ac-modal__sub">
+          Pour vider le journal d’audit (filtre courant), tapez exactement <strong>VIDER</strong>.
+        </p>
+      </div>
+      <button class="ac-modal__x" type="button" aria-label="Fermer" data-audit-clear-close="1">✕</button>
+    </div>
+
+    <div class="ac-modal__bd">
+      <label class="ac-muted" style="font-weight:900; display:block; margin-bottom:8px;">
+        Tapez VIDER
+      </label>
+      <input class="ac-input"
+             id="auditClearInput"
+             placeholder="VIDER"
+             autocomplete="off"
+             style="width:100%; font-weight:900; letter-spacing:.04em;" />
+
+      <div class="ac-modal__err" id="auditClearErr">
+        Merci de taper exactement <strong>VIDER</strong>.
+      </div>
+    </div>
+
+    <div class="ac-modal__ft">
+      <button class="btn btn--ghost" type="button" data-audit-clear-close="1">Annuler</button>
+      <button class="btn btn--primary" type="button" id="auditClearConfirmBtn">Confirmer</button>
+    </div>
   </div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById("auditClearModal");
+  const input = document.getElementById("auditClearInput");
+  const err = document.getElementById("auditClearErr");
+  const confirmBtn = document.getElementById("auditClearConfirmBtn");
+  const hidden = document.getElementById("auditClearConfirmText") || document.querySelector('input[name="confirm_text"]');
+
+  // On vise le 1er form audit_clear de la page (suffisant ici)
+  const form = document.querySelector('form[action="{% url "core_adminconsole:audit_clear" %}"]');
+
+  function openModal(){
+    if(!modal) return;
+    modal.style.display = "flex";
+    if(err) err.style.display = "none";
+    if(input){
+      input.value = "";
+      setTimeout(()=>input.focus(), 60);
+    }
+  }
+  function closeModal(){
+    if(!modal) return;
+    modal.style.display = "none";
+  }
+  function validateAndSubmit(){
+    const v = (input ? input.value : "").trim().toUpperCase();
+    if(v !== "VIDER"){
+      if(err) err.style.display = "block";
+      if(input) input.focus();
+      return;
+    }
+    if(hidden) hidden.value = v;
+    if(form) form.submit();
+  }
+
+  // Open triggers
+  document.querySelectorAll('[data-audit-clear-open="1"]').forEach(btn=>{
+    btn.addEventListener("click", function(ev){
+      ev.preventDefault();
+      openModal();
+    });
+  });
+
+  // Close triggers
+  document.querySelectorAll('[data-audit-clear-close="1"]').forEach(btn=>{
+    btn.addEventListener("click", function(ev){
+      ev.preventDefault();
+      closeModal();
+    });
+  });
+
+  // Backdrop click = close
+  if(modal){
+    modal.addEventListener("click", function(ev){
+      if(ev.target === modal) closeModal();
+    });
+  }
+
+  // Confirm
+  if(confirmBtn) confirmBtn.addEventListener("click", validateAndSubmit);
+
+  // Enter/Escape
+  document.addEventListener("keydown", function(ev){
+    if(!modal || modal.style.display !== "flex") return;
+    if(ev.key === "Escape"){ closeModal(); }
+    if(ev.key === "Enter"){ validateAndSubmit(); }
+  });
+})();
+</script>
+{# --- AUDIT_CLEAR_MODAL_V1:END --- #}
+
+
+{% endblock %}
+{% block content %}
+
+<div class="ac-card">
+
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h2 style="margin:0;">🧾 Audit Log</h2>
+      <div class="ac-muted" style="margin-top:6px;">
+        Journal des actions Admin Console .
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      {# Bouton Export CSV (garde q/action/page_size) #}
+      <a class="btn btn--ghost"
+         href="{% url 'core_adminconsole:audit_export_csv' %}?q={{ q|urlencode }}&action={{ action|urlencode }}&page_size={{ page_size }}">
+        📥 Export CSV
+      </a>
+
+    <form method="post" action="{% url 'core_adminconsole:audit_clear' %}" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="q" value="{{ q }}">
+      <input type="hidden" name="action" value="{{ action }}">
+      <input type="hidden" name="page_size" value="{{ page_size }}">
+      <input type="hidden" name="confirm_text" value="" id="auditClearConfirmText">
+      <button class="btn btn--ghost"
+        type="button"
+        data-audit-clear-open="1">
+  🧹 Vider (confirmation)
+</button>
+    </form>
+
+
+    
+
+  <div class="ac-card" style="margin-top:12px;">
+    <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      {# on force page=1 lors d'un filtre #}
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="page_size" value="{{ page_size }}">
+
+      <input class="ac-input" name="q" value="{{ q }}" placeholder="Recherche globale (résumé, action, cible, id…)" style="min-width:320px;">
+      <input class="ac-input" name="action" value="{{ action }}" placeholder="Filtre action (ex: NURSE_*)" style="min-width:220px;">
+
+      <button class="btn btn--primary" type="submit">Filtrer</button>
+
+      <a class="btn btn--ghost" href="{% url 'core_adminconsole:audit_log' %}?page_size={{ page_size }}">Reset</a>
+    </form>
+  </div>
+
+
+</div>
+  </div>
+
+  <div class="table-wrap" style="margin-top:14px;">
+    <table class="ac-table">
+      <thead>
+        <tr>
+          <th style="width:170px;">Date</th>
+          <th style="width:240px;">Action</th>
+          <th>Résumé</th>
+          <th style="width:220px;">Acteur</th>
+          <th style="width:320px;">Cible</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in events %}
+          <tr>
+            <td class="nowrap">{{ e.created_at|date:"Y-m-d H:i:s" }}</td>
+            <td>
+              <span class="ac-badge" style="display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:900; font-size:12px; border:1px solid rgba(15,23,42,.10); background:rgba(2,132,199,.08);">
+                {{ e.action_fr|default:e.action }}
+              </span>
+            </td>
+            <td style="font-weight:800;">{{ e.summary }}</td>
+            <td class="nowrap">
+              {% if e.actor %}
+                {{ e.actor.username }}
+                {% if e.actor.first_name or e.actor.last_name %}
+                  — {{ e.actor.first_name }} {{ e.actor.last_name }}
+                {% endif %}
+                {% if e.actor.email %}
+                  — {{ e.actor.email }}
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>
+              {# priorité à un label enrichi si la view le fournit #}
+              {% if e.cible_label %}
+                {{ e.cible_label }}
+              {% else %}
+                {% if e.target_type %}
+                  {{ e.target_type }}{% if e.target_id %} #{{ e.target_id }}{% endif %}
+                {% else %}
+                  —
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="ac-muted">Aucun événement.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# --- PAGINATION UNIQUE --- #}
+  {% if page_obj %}
+    <div class="ac-card" style="margin-top:14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div class="ac-muted" style="font-weight:800;">
+          Page <strong>{{ page_obj.number }}</strong> / {{ paginator.num_pages }}
+          — {{ paginator.count }} événement{{ paginator.count|pluralize }}
+        </div>
+
+        <form method="get" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input type="hidden" name="q" value="{{ q }}">
+          <input type="hidden" name="action" value="{{ action }}">
+          <label class="ac-muted" style="font-weight:900;">Par page</label>
+          <select class="ac-input" name="page_size" onchange="this.form.submit()" style="min-width:110px;">
+            <option value="10"  {% if page_size == 10 %}selected{% endif %}>10</option>
+            <option value="25"  {% if page_size == 25 %}selected{% endif %}>25</option>
+            <option value="50"  {% if page_size == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+            <option value="200" {% if page_size == 200 %}selected{% endif %}>200</option>
+          </select>
+          <noscript><button class="btn btn--ghost" type="submit">OK</button></noscript>
+        </form>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; flex-wrap:wrap;">
+        {% if page_obj.has_previous %}
+          <a class="btn btn--ghost" href="?page=1&q={{ q|urlencode }}&action={{ action|urlencode }}&page_size={{ page_size }}">« Première</a>
+          <a class="btn btn--ghost" href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&action={{ action|urlencode }}&page_size={{ page_size }}">‹ Précédente</a>
+        {% else %}
+          <span class="btn btn--ghost" style="opacity:.45; cursor:not-allowed;">« Première</span>
+          <span class="btn btn--ghost" style="opacity:.45; cursor:not-allowed;">‹ Précédente</span>
+        {% endif %}
+
+        {% for p in page_numbers %}
+          {% if p == page_obj.number %}
+            <span class="btn btn--primary">{{ p }}</span>
+          {% else %}
+            <a class="btn btn--ghost" href="?page={{ p }}&q={{ q|urlencode }}&action={{ action|urlencode }}&page_size={{ page_size }}">{{ p }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <a class="btn btn--ghost" href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&action={{ action|urlencode }}&page_size={{ page_size }}">Suivante ›</a>
+          <a class="btn btn--ghost" href="?page={{ paginator.num_pages }}&q={{ q|urlencode }}&action={{ action|urlencode }}&page_size={{ page_size }}">Dernière »</a>
+        {% else %}
+          <span class="btn btn--ghost" style="opacity:.45; cursor:not-allowed;">Suivante ›</span>
+          <span class="btn btn--ghost" style="opacity:.45; cursor:not-allowed;">Dernière »</span>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+  {# --- /PAGINATION UNIQUE --- #}
+
+</div>
+
+{# --- AUDIT_CLEAR_MODAL_V1:BEGIN --- #}
+<style>
+  .ac-modal-backdrop{
+    position:fixed; inset:0;
+    background: rgba(15,23,42,.55);
+    display:none;
+    align-items:center; justify-content:center;
+    padding: 18px;
+    z-index: 9999;
+  }
+  .ac-modal{
+    width:min(520px, 100%);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 70px rgba(2,6,23,.25);
+    border: 1px solid rgba(15,23,42,.08);
+    overflow:hidden;
+  }
+  .ac-modal__hd{
+    padding: 16px 18px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    border-bottom: 1px solid rgba(15,23,42,.08);
+  }
+  .ac-modal__ttl{ font-weight: 950; font-size: 16px; margin:0; }
+  .ac-modal__sub{ margin:6px 0 0; color: rgba(15,23,42,.65); font-weight: 650; font-size: 13px; }
+  .ac-modal__bd{ padding: 16px 18px; }
+  .ac-modal__ft{
+    padding: 14px 18px;
+    display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;
+    border-top: 1px solid rgba(15,23,42,.08);
+    background: rgba(248,250,252,1);
+  }
+  .ac-modal__x{
+    border: none; background: transparent; cursor:pointer;
+    font-size: 18px; line-height: 1; padding: 6px 10px;
+    color: rgba(15,23,42,.65);
+  }
+  .ac-modal__err{
+    display:none;
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(220,38,38,.20);
+    background: rgba(220,38,38,.06);
+    color: rgba(153,27,27,1);
+    font-weight: 750;
+    font-size: 13px;
+  }
+</style>
+
+<div class="ac-modal-backdrop" id="auditClearModal">
+  <div class="ac-modal" role="dialog" aria-modal="true" aria-labelledby="auditClearTitle">
+    <div class="ac-modal__hd">
+      <div>
+        <h3 class="ac-modal__ttl" id="auditClearTitle">⚠️ Confirmation requise</h3>
+        <p class="ac-modal__sub">
+          Pour vider le journal d’audit (filtre courant), tapez exactement <strong>VIDER</strong>.
+        </p>
+      </div>
+      <button class="ac-modal__x" type="button" aria-label="Fermer" data-audit-clear-close="1">✕</button>
+    </div>
+
+    <div class="ac-modal__bd">
+      <label class="ac-muted" style="font-weight:900; display:block; margin-bottom:8px;">
+        Tapez VIDER
+      </label>
+      <input class="ac-input"
+             id="auditClearInput"
+             placeholder="VIDER"
+             autocomplete="off"
+             style="width:100%; font-weight:900; letter-spacing:.04em;" />
+
+      <div class="ac-modal__err" id="auditClearErr">
+        Merci de taper exactement <strong>VIDER</strong>.
+      </div>
+    </div>
+
+    <div class="ac-modal__ft">
+      <button class="btn btn--ghost" type="button" data-audit-clear-close="1">Annuler</button>
+      <button class="btn btn--primary" type="button" id="auditClearConfirmBtn">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById("auditClearModal");
+  const input = document.getElementById("auditClearInput");
+  const err = document.getElementById("auditClearErr");
+  const confirmBtn = document.getElementById("auditClearConfirmBtn");
+  const hidden = document.getElementById("auditClearConfirmText") || document.querySelector('input[name="confirm_text"]');
+
+  // On vise le 1er form audit_clear de la page (suffisant ici)
+  const form = document.querySelector('form[action="{% url "core_adminconsole:audit_clear" %}"]');
+
+  function openModal(){
+    if(!modal) return;
+    modal.style.display = "flex";
+    if(err) err.style.display = "none";
+    if(input){
+      input.value = "";
+      setTimeout(()=>input.focus(), 60);
+    }
+  }
+  function closeModal(){
+    if(!modal) return;
+    modal.style.display = "none";
+  }
+  function validateAndSubmit(){
+    const v = (input ? input.value : "").trim().toUpperCase();
+    if(v !== "VIDER"){
+      if(err) err.style.display = "block";
+      if(input) input.focus();
+      return;
+    }
+    if(hidden) hidden.value = v;
+    if(form) form.submit();
+  }
+
+  // Open triggers
+  document.querySelectorAll('[data-audit-clear-open="1"]').forEach(btn=>{
+    btn.addEventListener("click", function(ev){
+      ev.preventDefault();
+      openModal();
+    });
+  });
+
+  // Close triggers
+  document.querySelectorAll('[data-audit-clear-close="1"]').forEach(btn=>{
+    btn.addEventListener("click", function(ev){
+      ev.preventDefault();
+      closeModal();
+    });
+  });
+
+  // Backdrop click = close
+  if(modal){
+    modal.addEventListener("click", function(ev){
+      if(ev.target === modal) closeModal();
+    });
+  }
+
+  // Confirm
+  if(confirmBtn) confirmBtn.addEventListener("click", validateAndSubmit);
+
+  // Enter/Escape
+  document.addEventListener("keydown", function(ev){
+    if(!modal || modal.style.display !== "flex") return;
+    if(ev.key === "Escape"){ closeModal(); }
+    if(ev.key === "Enter"){ validateAndSubmit(); }
+  });
+})();
+</script>
+{# --- AUDIT_CLEAR_MODAL_V1:END --- #}
+
+
 {% endblock %}
