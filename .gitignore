@@ -30,3 +30,4 @@ backups/*.json
 IN_PROGRESS
 backups_last_patch_anti_double_email.txt
 logs/
+.backups_chatgpt/
