@@ -261,6 +261,47 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
     # 2️⃣ MISE À JOUR DU STATUT
     # =====================================================
     prescription.status = new_status
+
+    # ===== ORDO RENEWAL ENGINE =====
+    from core_emails.models import PrescriptionRenewalInfo, PrescriptionRenewalCycle
+    from django.utils import timezone
+
+    if prescription.type == PrescriptionType.RENOUVELLEMENT and new_status == PrescriptionStatus.DELIVERED:
+
+        renewal_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+
+        done = int(renewal_info.renewal_done_count or 0)
+        times = int(renewal_info.renewal_times or 0)
+
+        cycle_number = done + 1
+
+        cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
+            prescription=prescription,
+            cycle_number=cycle_number
+        )
+
+        cycle.status = PrescriptionStatus.DELIVERED
+        cycle.closed_at = timezone.now()
+        cycle.save()
+
+        done += 1
+        renewal_info.renewal_done_count = done
+        renewal_info.save()
+
+        if done < times:
+            # nouveau cycle
+            next_cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
+                prescription=prescription,
+                cycle_number=done + 1,
+                defaults={"status": PrescriptionStatus.RECEIVED},
+            )
+
+            prescription.status = PrescriptionStatus.RECEIVED
+
+        else:
+            prescription.status = PrescriptionStatus.ARCHIVED
+
+
     prescription.save(update_fields=["status", "updated_at"])
 
     # =====================================================

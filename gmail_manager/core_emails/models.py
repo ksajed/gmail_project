@@ -173,6 +173,12 @@ class Prescription(models.Model):
         auto_now=True,
     )
 
+    processing_started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date du premier démarrage réel du traitement.",
+    )
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -353,6 +359,47 @@ class PrescriptionRenewalEvent(models.Model):
         return f"RenewalEvent(p={self.prescription_id}, n={self.number})"
 
 
+
+
+# =====================================================
+# CYCLES DE RENOUVELLEMENT (V9 — Cycle autonome)
+# Chaque cycle est une instance opérationnelle autonome :
+# - statut propre (comme une nouvelle ordonnance)
+# - notifications propres (J-5/J-3 + médecin)
+# =====================================================
+class PrescriptionRenewalCycle(models.Model):
+    prescription = models.ForeignKey(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="renewal_cycles",
+    )
+
+    # 1..N : numéro de cycle (prochain renouvellement à traiter)
+    cycle_number = models.PositiveSmallIntegerField()
+
+    # Statut opérationnel du cycle (réutilise les statuts d'ordonnance existants)
+    status = models.CharField(
+        max_length=20,
+        choices=PrescriptionStatus.choices,
+        default=PrescriptionStatus.RECEIVED,
+    )
+
+    started_at = models.DateTimeField(auto_now_add=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    # Notifications (portées au cycle, pas au global RenewalInfo)
+    reminder_5_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_5_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_3_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_3_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    doctor_email_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+        unique_together = [("prescription", "cycle_number")]
+
+    def __str__(self):
+        return f"RenewalCycle(p={self.prescription_id}, n={self.cycle_number}, status={self.status})"
 # =====================================================
 # 🔍 TRACEUR TEMPORAIRE — QUI ÉCRASE Prescription.type ?
 # =====================================================
@@ -382,6 +429,11 @@ def trace_prescription_type(sender, instance, **kwargs):
 def ensure_renewal_info(sender, instance, created, **kwargs):
     if instance.type == PrescriptionType.RENOUVELLEMENT:
         PrescriptionRenewalInfo.objects.get_or_create(prescription=instance)
+        PrescriptionRenewalCycle.objects.get_or_create(
+            prescription=instance,
+            cycle_number=1,
+            defaults={"status": PrescriptionStatus.RECEIVED},
+        )
 
 
 # =====================================================

@@ -6,7 +6,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Ordonnance n°{{ prescription.id }}</title>
+  <title>Ordonnance n°
+{% if context_structure_locked %}
+<span style="
+background:#dc2626;
+color:white;
+padding:3px 8px;
+border-radius:6px;
+font-size:12px;
+margin-left:10px;
+">
+🔒 Ordonnance verrouillée
+</span>
+{% endif %}
+{{ prescription.id }}</title>
 
   <!-- CSS popup (modals) -->
   <link rel="stylesheet" href="{% static 'css/modals.css' %}?v=501">
@@ -422,6 +435,16 @@
   </div>
 
   <main class="container">
+    {% if context_structure_locked %}
+      <section class="card full" style="border:1px solid rgba(180,83,9,.18); background:#fff7ed;">
+        <div class="card__body">
+          <div style="font-weight:950; color:#b45309; margin-bottom:6px;">🔒 Paramètres médicaux verrouillés</div>
+          <div class="hint" style="margin-top:0; color:#92400e;">
+            Cette ordonnance a déjà commencé son traitement. Les informations médicales ne peuvent plus être modifiées.
+          </div>
+        </div>
+      </section>
+    {% endif %}
     <div class="grid">
 
       <!-- PATIENT -->
@@ -483,7 +506,7 @@
   <div class="field">
     <label>Type d’ordonnance</label>
 
-    <select name="type" required>
+    <select name="type" required {% if context_structure_locked %}disabled{% endif %}>
       {% for value, label in context_prescription_types %}
         <option value="{{ value }}"
                     {% if prescription.type == value %}selected{% endif %}>
@@ -499,7 +522,7 @@
   </div>
 
   <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
-    <button type="submit" class="btn btn--primary btn--sm">
+    <button type="submit" class="btn btn--primary btn--sm" {% if context_structure_locked %}disabled{% endif %}>
       Enregistrer
     </button>
   </div>
@@ -532,6 +555,9 @@
         value="{% if prescription.established_at %}{{ prescription.established_at|date:'Y-m-d' }}{% endif %}"
       />
       <div class="hint">Base du calcul J-5 / J-3.</div>
+      {% if context_structure_locked %}
+        <div class="hint" style="color:#92400e; margin-top:8px;">Paramètres de renouvellement verrouillés : traitement déjà commencé.</div>
+      {% endif %}
     </div>
 
     <div class="field">
@@ -555,23 +581,15 @@
     </div>
 
     <div class="btnrow" style="justify-content:flex-start; margin-top:10px;">
-      <button type="submit" class="btn btn--primary btn--sm">Enregistrer</button>
+      <button type="submit" class="btn btn--primary btn--sm" {% if context_structure_locked %}disabled{% endif %}>Enregistrer</button>
     </div>
   </form>
-
-    <form method="post" action="{% url 'core_emails:mark_renewal_done' prescription.id %}" style="margin-top:10px;">
-      {% csrf_token %}
-      <button type="submit" class="btn btn--sm btn--primary">
-        Marquer renouvellement réalisé
-      </button>
-    </form>
-
-    <div class="hint" style="margin-top:8px;">
-      <strong>Réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}
+<div class="hint" style="margin-top:8px;">
+      <strong>Renouvellements effectués :</strong> {{ renewal_info.renewal_done_count|default:0 }}
       / {{ renewal_info.renewal_times|default:0 }}
-      — <strong>Restants :</strong> {{ renewal_remaining|default:0 }}
+      — <strong>Renouvellements restants :</strong> {{ renewal_remaining|default:0 }}
       {% if renewal_info.last_renewal_ordered_at %}
-        — <strong>Dernier :</strong> {{ renewal_info.last_renewal_ordered_at }}
+        — <strong>Dernier :</strong> {{ renewal_info.last_renewal_ordered_at|date:"j F Y à H:i" }}
       {% endif %}
     </div>
 
@@ -598,7 +616,7 @@
     <!-- BLOC 1 : VALIDITÉ ORDONNANCE (DATE MÉDECIN) -->
     <div style="padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2);">
       <div style="font-weight:950; margin-bottom:8px;">
-        Validité ordonnance (date médecin)
+        Validité de l’ordonnance
       </div>
 
       <div>
@@ -631,11 +649,11 @@
       <div class="divider" style="margin:10px 0;"></div>
 
       <div><strong>Renouvellements autorisés :</strong> {{ renewal_info.renewal_times|default:0 }}</div>
-      <div><strong>Réalisés :</strong> {{ renewal_info.renewal_done_count|default:0 }}</div>
-      <div><strong>Restants :</strong> {{ renewal_remaining|default:0 }}</div>
+      <div><strong>Renouvellements effectués :</strong> {{ renewal_info.renewal_done_count|default:0 }}</div>
+      <div><strong>Renouvellements restants :</strong> {{ renewal_remaining|default:0 }}</div>
 
       {% if renewal_info.last_renewal_ordered_at %}
-        <div><strong>Dernier renouvellement :</strong> {{ renewal_info.last_renewal_ordered_at }}</div>
+        <div><strong>Dernier renouvellement :</strong> {{ renewal_info.last_renewal_ordered_at|date:"j F Y à H:i" }}</div>
       {% endif %}
     </div>
 
@@ -646,7 +664,7 @@
       </div>
 
       <div>
-        <strong>1er retrait (DELIVERED) :</strong>
+        <strong>1er retrait (Délivrée) :</strong>
         {% if renewal_patient_first_delivered_at %}
           {{ renewal_patient_first_delivered_at|date:"d/m/Y H:i" }}
         {% else %}
@@ -681,10 +699,11 @@
       <div class="divider" style="margin:10px 0;"></div>
 
       <div style="font-weight:900; margin-bottom:6px;">Rappels envoyés (anti-doublon)</div>
-      <div><strong>J-5 Email :</strong> {{ renewal_info.reminder_5_patient_email_sent_at|default:"—" }}</div>
-      <div><strong>J-5 SMS :</strong> {{ renewal_info.reminder_5_patient_sms_sent_at|default:"—" }}</div>
-      <div><strong>J-3 Email :</strong> {{ renewal_info.reminder_3_patient_email_sent_at|default:"—" }}</div>
-      <div><strong>J-3 SMS :</strong> {{ renewal_info.reminder_3_patient_sms_sent_at|default:"—" }}</div>
+      <div><strong>J-5 Email :</strong> {{ renewal_cycle.reminder_5_patient_email_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
+      <div><strong>J-5 SMS :</strong> {{ renewal_cycle.reminder_5_patient_sms_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
+      <div><strong>J-3 Email :</strong> {{ renewal_cycle.reminder_3_patient_email_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
+      <div><strong>J-3 SMS :</strong> {{ renewal_cycle.reminder_3_patient_sms_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
+      <div><strong>Email médecin :</strong> {{ renewal_cycle.doctor_email_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
     </div>
 
   </div>
@@ -693,47 +712,35 @@
         <div class="divider" style="margin:12px 0;"></div>
 
         <!-- HISTORIQUE -->
-        <h4 style="margin:0 0 8px 0;">Historique des renouvellements</h4>
+        <h4 style="margin:0 0 8px 0;">Historique des délivrances</h4>
 
         {% if renewal_events %}
           <table style="width:100%; border-collapse:collapse;">
             <thead>
               <tr>
-                <th style="text-align:left; padding:6px;">#</th>
-                <th style="text-align:left; padding:6px;">Date</th>
-                <th style="text-align:left; padding:6px;">Utilisateur</th>
-                <th style="text-align:left; padding:6px;">Note</th>
+                <th style="text-align:left; padding:6px;">Délivrance</th>
+                <th style="text-align:left; padding:6px;">Statut</th>
+                <th style="text-align:left; padding:6px;">Clôturé le</th>
+                <th style="text-align:left; padding:6px;">Validation</th>
               </tr>
             </thead>
             <tbody>
               {% for ev in renewal_events %}
                 <tr>
-                  <td style="padding:6px;">{{ ev.number }}</td>
-                  <td style="padding:6px;">{{ ev.ordered_at }}</td>
-                  <td style="padding:6px;">{% if ev.created_by %}{{ ev.created_by }}{% else %}—{% endif %}</td>
-                  <td style="padding:6px;">{{ ev.note|default:"" }}</td>
+                  <td style="padding:6px;">{% if ev.cycle_number == 1 %}Initiale{% else %}Renouvellement {{ ev.cycle_number|add:"-1" }}{% endif %}</td>
+                  <td style="padding:6px;">{{ ev.get_status_display|default:ev.status }}</td>
+                  <td style="padding:6px;">{% if ev.closed_at %}{{ ev.closed_at|date:"j F Y à H:i" }}{% else %}—{% endif %}</td>
+                  <td style="padding:6px;">{% if ev.closed_at %}Validée{% else %}En cours{% endif %}</td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
         {% else %}
-          <div class="hint">Aucun renouvellement enregistré.</div>
+          <div class="hint">Aucune délivrance enregistrée.</div>
         {% endif %}
       </div>
     </div>
 
-    
-
-
-    
-
-
-    <form method="post" action="{% url 'core_emails:send_renewal_doctor_email' prescription.id %}" style="margin:0;">
-      {% csrf_token %}
-  <input type="hidden" name="next" value="{{ request.get_full_path }}">
-
-      <button type="submit" class="btn btn--sm">Email médecin</button>
-    </form>
   </div>
 {% endif %}
 
@@ -742,7 +749,7 @@
             {% csrf_token %}
             <div class="field">
               <label>Expéditeur de l’ordonnance</label>
-              <select name="sender_type" required>
+              <select name="sender_type" required {% if context_structure_locked %}disabled{% endif %}>
                 {% for value, label in context_sender_types %}
                   <option value="{{ value }}" {% if prescription.sender_type == value %}selected{% endif %}>
                     {{ label }}
@@ -999,8 +1006,8 @@
         </div>
 
         <div class="card__body">
-          {% if timeline_events %}
-            {% include "core_emails/_history_timeline_premium.html" with timeline_events=timeline_events %}
+          {% if ui_timeline_events %}
+            {% include "core_emails/_history_timeline_premium.html" with timeline_events=ui_timeline_events %}
           {% else %}
             <div class="v muted">Aucun historique disponible.</div>
           {% endif %}
@@ -1397,7 +1404,7 @@ document.querySelectorAll(".modal-overlay").forEach(overlay => {
     </div>
     <div class="modal-body">
         <form method="post" onsubmit="return onNotificationsSettingsSubmit(this);"
-{% if prescription.status != "ARCHIVED" %}
+{% if not ui_is_archived %}
           action="{% url 'core_emails:update_prescription_notification_settings' prescription.id %}">
       {% csrf_token %}
 

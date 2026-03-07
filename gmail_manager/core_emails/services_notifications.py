@@ -593,7 +593,6 @@ def send_prescription_notifications(
     if pc in ("EMAIL", "BOTH"):
         if patient_email:
             try:
-                from django.core.mail import send_mail
                 subject = f"Mise a jour de votre ordonnance - ref. {ref}"
                 send_mail(
                     subject=subject,
@@ -662,7 +661,6 @@ def send_prescription_notifications(
     if nc in ("EMAIL", "BOTH"):
         if nurse_email:
             try:
-                from django.core.mail import send_mail
                 subject = f"Mise a jour ordonnance - ref. {ref} - {patient_full_name}"
                 send_mail(
                     subject=subject,

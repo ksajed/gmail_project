@@ -38,7 +38,7 @@ from .models import (
     SenderType,
 )
 from .models_assignment import PrescriptionAssignment
-from core_emails.models import PrescriptionRenewalEvent
+from core_emails.models import PrescriptionRenewalEvent, PrescriptionRenewalCycle
 
 # =====================================================
 # STATES & SERVICES
@@ -48,6 +48,15 @@ from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
 from core_emails.services import compute_renewals_watch_from_delivered
 from core_emails.timeline import build_prescription_timeline_events
+
+
+def _is_prescription_structure_locked(prescription) -> bool:
+    """Verrouillage structurel durable.
+
+    Une ordonnance n'est plus structurellement modifiable dès qu'elle a
+    commencé son traitement au moins une fois.
+    """
+    return getattr(prescription, "processing_started_at", None) is not None
 
 # =====================================================
 # EXTERNES
@@ -324,14 +333,47 @@ def prescription_detail(request, pk):
         .order_by("-changed_at")
     )
 
-
     timeline_events = build_prescription_timeline_events(prescription)
+
+    # UI-C: les ordonnances de renouvellement ne doivent pas suivre le mode
+    # "archivé classique" du parent. L'UI suit les cycles, pas le ARCHIVED parent.
+    if prescription.type == PrescriptionType.RENOUVELLEMENT:
+        ui_is_archived = False
+        ui_history = history.exclude(new_status=PrescriptionStatus.ARCHIVED)
+        ui_timeline_events = [
+            e for e in timeline_events
+            if getattr(e, "kind", "") != "archive"
+            and "ARCHIV" not in (getattr(e, "subtitle", "") or "").upper()
+        ]
+    else:
+        ui_is_archived = (prescription.status == PrescriptionStatus.ARCHIVED)
+        ui_history = history
+        ui_timeline_events = timeline_events
+
     current_enum = PrescriptionStatusEnum(prescription.status)
     allowed_enums = PRESCRIPTION_STATUS_TRANSITIONS.get(current_enum, set())
 
     allowed_statuses = [
         (enum.value, enum.name.replace("_", " ").title()) for enum in allowed_enums
     ]
+
+    # UI-E: pour une ordonnance RENOUVELLEMENT encore active,
+    # ne pas proposer ARCHIVED dans le dropdown classique.
+    if prescription.type == PrescriptionType.RENOUVELLEMENT:
+        try:
+            tmp_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+            tmp_times = int(getattr(tmp_info, "renewal_times", 0) or 0)
+            tmp_done = int(getattr(tmp_info, "renewal_done_count", 0) or 0)
+        except Exception:
+            tmp_times = 0
+            tmp_done = 0
+
+        if tmp_done < tmp_times:
+            allowed_statuses = [
+                (value, label)
+                for (value, label) in allowed_statuses
+                if value != PrescriptionStatus.ARCHIVED
+            ]
 
     persons_nurses = Person.objects.filter(role__in=["nurse","NURSE"]).order_by("last_name", "first_name")
     renewal_info = None
@@ -350,6 +392,28 @@ def prescription_detail(request, pk):
     renewal_events = []
     if prescription.type == PrescriptionType.RENOUVELLEMENT:
         renewal_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+    # --- Renewal cycle affiché dans l'UI (V2) ---
+    # Si l'ordonnance parent est ARCHIVED, on affiche le dernier cycle réel.
+    # Sinon, on affiche le cycle courant attendu (done + 1).
+    renewal_cycle = None
+    renewal_cycle_number = None
+    if getattr(prescription, "type", None) == PrescriptionType.RENOUVELLEMENT:
+        try:
+            done = int(getattr(renewal_info, "renewal_done_count", 0) or 0)
+        except Exception:
+            done = 0
+
+        if getattr(prescription, "status", None) == PrescriptionStatus.ARCHIVED:
+            renewal_cycle_number = max(1, done)
+        else:
+            renewal_cycle_number = done + 1
+
+        renewal_cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
+            prescription=prescription,
+            cycle_number=renewal_cycle_number,
+            defaults={"status": PrescriptionStatus.RECEIVED},
+        )
+
         renewal_remaining = max(
             0,
             int(renewal_info.renewal_times) - int(renewal_info.renewal_done_count),
@@ -397,15 +461,25 @@ def prescription_detail(request, pk):
         else:
             renewal_patient_bucket = 'NON_DEMARRE'
 
-        # Historique des renouvellements (ordre 1..N)
+        # Historique des renouvellements — source officielle = cycles
         renewal_events = list(
-            prescription.renewal_events.select_related('created_by').order_by('number')
+            PrescriptionRenewalCycle.objects
+            .filter(prescription=prescription)
+            .order_by('cycle_number')
         )
+    structure_locked = _is_prescription_structure_locked(prescription)
+
     context = {
+        'renewal_cycle': renewal_cycle,
+        'renewal_cycle_number': renewal_cycle_number,
+        "context_structure_locked": structure_locked,
     "prescription": prescription,
     "attachments": attachments,
     "history": history,
     "timeline_events": timeline_events,
+    "ui_history": ui_history,
+    "ui_timeline_events": ui_timeline_events,
+    "ui_is_archived": ui_is_archived,
     "allowed_statuses": allowed_statuses,
     "persons_nurses": persons_nurses,
     "assigned_nurse": assigned_nurse,
@@ -621,6 +695,13 @@ def sync_gmail_now(request):
 def change_sender_type(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
+    if _is_prescription_structure_locked(prescription):
+        messages.error(
+            request,
+            "Cette ordonnance a déjà commencé son traitement. Les paramètres médicaux sont verrouillés."
+        )
+        return redirect("core_emails:prescription_detail", pk=pk)
+
     new_sender_type = request.POST.get("sender_type")
     if new_sender_type not in dict(SenderType.choices):
         return redirect("core_emails:prescription_detail", pk=pk)
@@ -734,6 +815,13 @@ def prescription_create(request):
 def change_prescription_type(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
 
+    if _is_prescription_structure_locked(prescription):
+        messages.error(
+            request,
+            "Cette ordonnance a déjà commencé son traitement. Les paramètres médicaux sont verrouillés."
+        )
+        return redirect("core_emails:prescription_detail", pk=pk)
+
     new_type = request.POST.get("type")
     if new_type not in dict(PrescriptionType.choices):
         return redirect("core_emails:prescription_detail", pk=pk)
@@ -798,6 +886,24 @@ def _renewal_merge_notes(existing: str, addition: str, max_len: int = 255) -> st
         merged = (merged + (chr(10) if merged else "") + addition).strip()
     return _renewal_truncate(merged, max_len)
 # RENEWAL_NOTE_HELPERS:END
+
+# RENEWAL_CYCLE_HELPER_V1:BEGIN
+def _get_or_create_current_renewal_cycle(prescription, info):
+    """Retourne le cycle courant (numéro = renewal_done_count + 1).
+    Idempotent: crée le cycle si absent.
+    """
+    try:
+        current_number = int(getattr(info, "renewal_done_count", 0) or 0) + 1
+    except Exception:
+        current_number = 1
+    cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
+        prescription=prescription,
+        cycle_number=current_number,
+        defaults={"status": PrescriptionStatus.RECEIVED},
+    )
+    return cycle, current_number
+# RENEWAL_CYCLE_HELPER_V1:END
+
 @login_required
 @require_POST
 def mark_renewal_done(request, pk):
@@ -809,7 +915,9 @@ def mark_renewal_done(request, pk):
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
 
-    # Prochain cycle (1..N)
+    # next_number = numéro du renouvellement en cours de validation
+    # renewal_done_count reste le compteur des renouvellements réalisés
+    total_cycles = int(info.renewal_times) + 1
     next_number = int(info.renewal_done_count) + 1
     if next_number > int(info.renewal_times):
         messages.info(request, "Nombre de renouvellements autorisés déjà atteint.", extra_tags="modal_renewal_done")
@@ -850,6 +958,44 @@ def mark_renewal_done(request, pk):
         info.last_renewal_ordered_at = now
         info.save(update_fields=["renewal_done_count", "last_renewal_ordered_at"])
 
+        # CYCLE_V1:BEGIN
+        # Cycle autonome : on clôture le cycle courant (numéro = next_number)
+        # et on crée le cycle suivant si des renouvellements restent disponibles.
+        cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
+            prescription=prescription,
+            cycle_number=next_number,
+            defaults={"status": PrescriptionStatus.DELIVERED},
+        )
+        # On marque le cycle comme clôturé (idempotent)
+        if cycle.closed_at is None:
+            cycle.closed_at = now
+        # Si le cycle n'est pas déjà "Délivrée", on le positionne en fin de cycle
+        if getattr(cycle, "status", None) != PrescriptionStatus.DELIVERED:
+            cycle.status = PrescriptionStatus.DELIVERED
+        cycle.save(update_fields=["closed_at", "status"])
+
+        # Créer le prochain cycle (next_number+1) tant que l'on n'a pas atteint
+        # le nombre total de cycles (renewal_times + 1)
+        if next_number < total_cycles:
+            PrescriptionRenewalCycle.objects.get_or_create(
+                prescription=prescription,
+                cycle_number=next_number + 1,
+                defaults={"status": PrescriptionStatus.RECEIVED},
+            )
+        else:
+            # Dernier cycle total terminé :
+            # on journalise la fin métier du renouvellement,
+            # sans archiver automatiquement le dossier parent.
+            PrescriptionStatusHistory.objects.create(
+                prescription=prescription,
+                old_status=prescription.status,
+                new_status=prescription.status,
+                changed_by=request.user,
+                comment="Dernier cycle de renouvellement clôturé.",
+            )
+        # CYCLE_V1:END
+
+
     # ✅ Message pour popup
     messages.success(request, "Renouvellement marqué comme réalisé.", extra_tags="modal_renewal_done")
     return redirect("core_emails:prescription_detail", pk=pk)
@@ -882,11 +1028,13 @@ def send_renewal_patient_email(request, pk, days):
         return redirect(next_url)
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+    cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
+
     # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
-    if days == 5 and info.reminder_5_patient_email_sent_at is not None:
+    if days == 5 and cycle.reminder_5_patient_email_sent_at is not None:
         messages.info(request, "Email J-5 déjà envoyé.")
         return redirect(next_url)
-    if days == 3 and info.reminder_3_patient_email_sent_at is not None:
+    if days == 3 and cycle.reminder_3_patient_email_sent_at is not None:
         messages.info(request, "Email J-3 déjà envoyé.")
         return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
@@ -942,7 +1090,7 @@ def send_renewal_patient_email(request, pk, days):
     )
 
     # Historique renouvellement (event) — éviter doublons (unique_together)
-    next_number = int(info.renewal_done_count) + 1
+    next_number = int(current_number)
     max_len = _renewal_note_max_len()
     note = (
         "Rappel renouvellement patient (EMAIL) — RETARD."
@@ -969,11 +1117,11 @@ def send_renewal_patient_email(request, pk, days):
 
     now = timezone.now()
     if days == 5:
-        info.reminder_5_patient_email_sent_at = now
-        info.save(update_fields=["reminder_5_patient_email_sent_at"])
+        cycle.reminder_5_patient_email_sent_at = now
+        cycle.save(update_fields=["reminder_5_patient_email_sent_at"])
     elif days == 3:
-        info.reminder_3_patient_email_sent_at = now
-        info.save(update_fields=["reminder_3_patient_email_sent_at"])
+        cycle.reminder_3_patient_email_sent_at = now
+        cycle.save(update_fields=["reminder_3_patient_email_sent_at"])
     # days == 0 => RETARD : on ne touche pas les champs J-5/J-3
 
     PrescriptionStatusHistory.objects.create(
@@ -1021,11 +1169,13 @@ def send_renewal_patient_sms(request, pk, days):
         return redirect(next_url)
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+    cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
+
     # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
-    if days == 5 and info.reminder_5_patient_sms_sent_at is not None:
+    if days == 5 and cycle.reminder_5_patient_sms_sent_at is not None:
         messages.info(request, "SMS J-5 déjà envoyé.")
         return redirect(next_url)
-    if days == 3 and info.reminder_3_patient_sms_sent_at is not None:
+    if days == 3 and cycle.reminder_3_patient_sms_sent_at is not None:
         messages.info(request, "SMS J-3 déjà envoyé.")
         return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
@@ -1060,7 +1210,7 @@ def send_renewal_patient_sms(request, pk, days):
         return redirect(next_url)
 
     # Historique renouvellement (event) — éviter doublons (unique_together)
-    next_number = int(info.renewal_done_count) + 1
+    next_number = int(current_number)
     max_len = _renewal_note_max_len()
     note = (
         "Rappel renouvellement patient (SMS) — RETARD."
@@ -1087,11 +1237,11 @@ def send_renewal_patient_sms(request, pk, days):
 
     now = timezone.now()
     if days == 5:
-        info.reminder_5_patient_sms_sent_at = now
-        info.save(update_fields=["reminder_5_patient_sms_sent_at"])
+        cycle.reminder_5_patient_sms_sent_at = now
+        cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
     elif days == 3:
-        info.reminder_3_patient_sms_sent_at = now
-        info.save(update_fields=["reminder_3_patient_sms_sent_at"])
+        cycle.reminder_3_patient_sms_sent_at = now
+        cycle.save(update_fields=["reminder_3_patient_sms_sent_at"])
     else:
         # Retard: on ne renseigne pas les champs J-5/J-3
         pass
@@ -1116,6 +1266,8 @@ def send_renewal_doctor_email(request, pk):
         return redirect("core_emails:prescription_detail", pk=pk)
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+    cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
+
 
     if not info.doctor_email:
         messages.error(request, "Email médecin manquant.")
@@ -1142,8 +1294,8 @@ def send_renewal_doctor_email(request, pk):
         fail_silently=False,
     )
 
-    info.doctor_email_sent_at = timezone.now()
-    info.save(update_fields=["doctor_email_sent_at"])
+    cycle.doctor_email_sent_at = timezone.now()
+    cycle.save(update_fields=["doctor_email_sent_at"])
 
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
@@ -1163,6 +1315,13 @@ def send_renewal_doctor_email(request, pk):
 @require_POST
 def update_renewal_info(request, pk):
     prescription = get_object_or_404(Prescription, pk=pk)
+
+    if _is_prescription_structure_locked(prescription):
+        messages.error(
+            request,
+            "Cette ordonnance a déjà commencé son traitement. Les paramètres médicaux sont verrouillés."
+        )
+        return redirect("core_emails:prescription_detail", pk=pk)
 
     if prescription.type != PrescriptionType.RENOUVELLEMENT:
         messages.error(request, "Cette ordonnance n’est pas de type Renouvellement.")

@@ -9,8 +9,9 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
-from .models import PrescriptionStatusHistory
+from .models import PrescriptionStatusHistory, PrescriptionType, PrescriptionStatus, PrescriptionRenewalInfo, PrescriptionRenewalCycle
 from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 
 from core_notifications.services import notify_users
@@ -193,8 +194,114 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         comment=final_comment,
     )
 
-    prescription.status = new_status
-    prescription.save(update_fields=["status", "updated_at"])
+    # =====================================================
+    # ORDO RENEWAL ENGINE — règle métier officielle
+    # Chaque renouvellement suit :
+    # Reçue → En cours → Prête → Délivrée
+    # Après chaque Délivrée, si des renouvellements restent,
+    # un nouveau cycle s'ouvre automatiquement en RECEIVED.
+    # =====================================================
+    effective_new_status = new_status
+
+    if prescription.type == PrescriptionType.RENOUVELLEMENT and new_status == PrescriptionStatus.DELIVERED:
+        renewal_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
+
+        done = int(getattr(renewal_info, "renewal_done_count", 0) or 0)
+        times = int(getattr(renewal_info, "renewal_times", 0) or 0)
+
+        # IMPORTANT :
+        # cycle 1 = première délivrance (ne compte PAS comme renouvellement)
+        # cycle 2 = renouvellement 1
+        # cycle 3 = renouvellement 2
+        # ...
+        open_cycle = (
+            PrescriptionRenewalCycle.objects
+            .filter(prescription=prescription, closed_at__isnull=True)
+            .order_by("-cycle_number")
+            .first()
+        )
+
+        if open_cycle:
+            current_cycle_number = int(open_cycle.cycle_number)
+            cycle = open_cycle
+        else:
+            current_cycle_number = done + 1
+            cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
+                prescription=prescription,
+                cycle_number=current_cycle_number,
+                defaults={"status": PrescriptionStatus.DELIVERED},
+            )
+
+        cycle_update_fields = []
+        if getattr(cycle, "status", None) != PrescriptionStatus.DELIVERED:
+            cycle.status = PrescriptionStatus.DELIVERED
+            cycle_update_fields.append("status")
+        if getattr(cycle, "closed_at", None) is None:
+            cycle.closed_at = timezone.now()
+            cycle_update_fields.append("closed_at")
+        if cycle_update_fields:
+            cycle.save(update_fields=cycle_update_fields)
+
+        # La première délivrance (cycle 1) ne compte pas comme renouvellement
+        if current_cycle_number <= 1:
+            done_after = 0
+        else:
+            done_after = current_cycle_number - 1
+
+        renewal_info.renewal_done_count = done_after
+
+        info_update_fields = ["renewal_done_count"]
+
+        # last_renewal_ordered_at = seulement à partir du vrai renouvellement
+        if current_cycle_number > 1:
+            renewal_info.last_renewal_ordered_at = timezone.now()
+            info_update_fields.append("last_renewal_ordered_at")
+
+        renewal_info.save(update_fields=info_update_fields)
+
+        # Tant qu'il reste des renouvellements à consommer,
+        # on ouvre un nouveau cycle normal en RECEIVED.
+        if done_after < times:
+            next_cycle_number = current_cycle_number + 1
+            next_cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
+                prescription=prescription,
+                cycle_number=next_cycle_number,
+                defaults={"status": PrescriptionStatus.RECEIVED},
+            )
+
+            reset_fields = []
+            for fname in [
+                "reminder_5_patient_email_sent_at",
+                "reminder_5_patient_sms_sent_at",
+                "reminder_3_patient_email_sent_at",
+                "reminder_3_patient_sms_sent_at",
+                "doctor_email_sent_at",
+            ]:
+                if getattr(next_cycle, fname, None) is not None:
+                    setattr(next_cycle, fname, None)
+                    reset_fields.append(fname)
+            if reset_fields:
+                next_cycle.save(update_fields=reset_fields)
+
+            effective_new_status = PrescriptionStatus.RECEIVED
+        else:
+            effective_new_status = PrescriptionStatus.ARCHIVED
+
+    prescription.status = effective_new_status
+
+    update_fields = ["status", "updated_at"]
+
+    # Verrouillage structurel durable :
+    # dès la première sortie de RECEIVED, l'ordonnance a commencé son traitement.
+    if (
+        old_status == PrescriptionStatus.RECEIVED
+        and effective_new_status != PrescriptionStatus.RECEIVED
+        and getattr(prescription, "processing_started_at", None) is None
+    ):
+        prescription.processing_started_at = timezone.now()
+        update_fields.append("processing_started_at")
+
+    prescription.save(update_fields=update_fields)
 
     # Effets externes AFTER COMMIT (emails + notifications + NotifResult append)
     def _after_commit():

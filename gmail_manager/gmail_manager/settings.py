@@ -125,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALISATION
 # ============================================================
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "fr"
 TIME_ZONE = "Europe/Paris"
 USE_I18N = True
 USE_TZ = True
@@ -249,3 +249,7 @@ LOGGING = {
 
 # Ordo: custom test runner (ensures global test discovery works)
 TEST_RUNNER = "gmail_manager.test_runner.OrdoDiscoverRunner"
+
+USE_L10N = True
+
+FORMAT_MODULE_PATH = ["django.conf.locale.fr"]
