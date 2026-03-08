@@ -443,15 +443,19 @@ def send_prescription_notifications(
     # --- SMS premium (court / safe)
     text_patient = (
         f"{pharmacy_name}\n"
-        f"L'ordonnance ref. {ref} est desormais {status_label}.\n"
-        f"Contact: {pharmacy_phone}."
+        f"L'ordonnance ref. {ref} est desormais {status_label}."
     )
+    if msg_free:
+        text_patient += f"\nMessage: {_sanitize_free_text(msg_free, 80)}"
+    text_patient += f"\nContact: {pharmacy_phone}."
 
     text_nurse = (
         f"{pharmacy_name}\n"
-        f"Ordonnance ref. {ref} - {patient_full_name} - statut: {status_label}.\n"
-        f"Contact: {pharmacy_phone}."
+        f"Ordonnance ref. {ref} - {patient_full_name} - statut: {status_label}."
     )
+    if msg_free:
+        text_nurse += f"\nMessage: {_sanitize_free_text(msg_free, 80)}"
+    text_nurse += f"\nContact: {pharmacy_phone}."
 
     # --- Email premium (plain + HTML)
     def _html_escape(x: str) -> str:

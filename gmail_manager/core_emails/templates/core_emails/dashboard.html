@@ -317,6 +317,17 @@
         <form method="get" class="filterform">
           {% if current_view %}<input type="hidden" name="view" value="{{ current_view }}">{% endif %}
 
+          <div class="field" style="min-width:240px;">
+            <label>Recherche</label>
+            <input
+              type="text"
+              name="q"
+              value="{{ current_search|default:'' }}"
+              placeholder="Réf, nom, email..."
+              style="height:42px; width:100%; border:1px solid var(--line); border-radius:12px; padding:0 14px; font-weight:700;"
+            >
+          </div>
+
           <div class="field">
             <label>Statut</label>
             <select name="status">
@@ -426,7 +437,7 @@
       {% if prescriptions.has_other_pages %}
         <div class="pagination">
           {% if prescriptions.has_previous %}
-            <a href="?page={{ prescriptions.previous_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">‹</a>
+            <a href="?page={{ prescriptions.previous_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_search %}&q={{ current_search|urlencode }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">‹</a>
           {% else %}
             <span class="disabled">‹</span>
           {% endif %}
@@ -435,12 +446,12 @@
             {% if prescriptions.number == num %}
               <span class="active">{{ num }}</span>
             {% else %}
-              <a href="?page={{ num }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">{{ num }}</a>
+              <a href="?page={{ num }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_search %}&q={{ current_search|urlencode }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">{{ num }}</a>
             {% endif %}
           {% endfor %}
 
           {% if prescriptions.has_next %}
-            <a href="?page={{ prescriptions.next_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">›</a>
+            <a href="?page={{ prescriptions.next_page_number }}{% if current_view %}&view={{ current_view }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_search %}&q={{ current_search|urlencode }}{% endif %}{% if current_per_page %}&per_page={{ current_per_page }}{% endif %}">›</a>
           {% else %}
             <span class="disabled">›</span>
           {% endif %}

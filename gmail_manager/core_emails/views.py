@@ -8,7 +8,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.paginator import Paginator
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.http import JsonResponse
@@ -113,6 +113,7 @@ def dashboard(request):
     """
     status_filter = request.GET.get("status")
     view_filter = request.GET.get("view")
+    search_query = (request.GET.get("q") or "").strip()
     page_number = request.GET.get("page")
 
     allowed_per_page = (10, 25, 50)
@@ -138,13 +139,28 @@ def dashboard(request):
             status__in=[PrescriptionStatus.RECEIVED, PrescriptionStatus.IN_PROGRESS]
         )
     elif view_filter == "blocked":
-        prescriptions_qs = prescriptions_qs.filter(status=PrescriptionStatus.BLOCKED)
+        prescriptions_qs = prescriptions_qs.filter(
+            status__in=[PrescriptionStatus.BLOCKED, PrescriptionStatus.REJECTED]
+        )
     elif view_filter == "archived":
         prescriptions_qs = prescriptions_qs.filter(status=PrescriptionStatus.ARCHIVED)
 
     # Sécurité simple : n'appliquer le filtre que si valeur valide
     if status_filter and status_filter in dict(PrescriptionStatus.choices):
         prescriptions_qs = prescriptions_qs.filter(status=status_filter)
+
+    if search_query:
+        q_obj = (
+            Q(patient__email__icontains=search_query) |
+            Q(patient__full_name__icontains=search_query) |
+            Q(sender_type__icontains=search_query)
+        )
+
+        cleaned_ref = search_query.replace("#", "").strip()
+        if cleaned_ref.isdigit():
+            q_obj = q_obj | Q(id=int(cleaned_ref))
+
+        prescriptions_qs = prescriptions_qs.filter(q_obj)
 
     prescriptions_qs = prescriptions_qs.order_by("-received_at")
 
@@ -158,6 +174,7 @@ def dashboard(request):
         PrescriptionStatus.IN_PROGRESS: 0,
         PrescriptionStatus.READY: 0,
         PrescriptionStatus.DELIVERED: 0,
+        PrescriptionStatus.REJECTED: 0,
         PrescriptionStatus.BLOCKED: 0,
         PrescriptionStatus.ARCHIVED: 0,
     }
@@ -170,13 +187,14 @@ def dashboard(request):
         "statuses": PrescriptionStatus.choices,
         "current_status": status_filter,
         "current_view": view_filter,
+        "current_search": search_query,
         "current_per_page": per_page,
         "total_prescriptions": sum(counters.values()),
         "count_received": counters[PrescriptionStatus.RECEIVED],
         "count_in_progress": counters[PrescriptionStatus.IN_PROGRESS],
         "count_ready": counters[PrescriptionStatus.READY],
         "count_delivered": counters[PrescriptionStatus.DELIVERED],
-        "count_blocked": counters[PrescriptionStatus.BLOCKED],
+        "count_blocked": counters[PrescriptionStatus.BLOCKED] + counters[PrescriptionStatus.REJECTED],
         "count_archived": counters[PrescriptionStatus.ARCHIVED],
         "context_sender_types": SenderType.choices,
     }

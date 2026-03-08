@@ -324,20 +324,10 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
     settings = getattr(prescription, "notification_settings", None)
 
     # =====================================================
-    # 4️⃣ EMAIL PATIENT
+    # 4️⃣ EMAIL PATIENT LEGACY
     # =====================================================
-    # ✅ Anti-double-email : si settings.patient_channel EMAIL/BOTH => on SKIP l'email legacy
-    try:
-        pc = (getattr(settings, "patient_channel", "NONE") or "NONE").upper() if settings else "NONE"
-        if pc not in ("EMAIL", "BOTH"):
-            send_status_email(
-                prescription=prescription,
-                old_status=old_status,
-                new_status=new_status,
-                user=user,
-            )
-    except Exception:
-        pass
+    # Désactivé : on respecte uniquement PrescriptionNotificationSettings
+    # pour éviter tout envoi implicite quand patient_channel = NONE / SMS.
 
 
     # =====================================================
@@ -350,6 +340,7 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
             user=user,
             patient_channel=settings.patient_channel,
             nurse_channel=settings.nurse_channel,
+            notification_message=notification_message,
         )
 
     return prescription

@@ -72,26 +72,28 @@ def _send_external_notifications(*, prescription, old_status, new_status, user, 
     except Exception:
         pass
 
-    # 2) Email “statut” (legacy 'templates')
-    # ✅ Anti-double-email : si notifications paramétrées EMAIL/BOTH => on SKIP l'email legacy
+    # 2) Paramètres de notification par ordonnance
     settings = _get_or_create_notification_settings(prescription)
+
     # ORDO_NOTIF_V9_PATCH_APPLIED: fallback message libre (si POST vide)
     try:
         if settings and not (notification_message or '').strip():
             notification_message = (getattr(settings, 'free_text_message', '') or '').strip()
     except Exception:
         pass
-    try:
-        pc = (getattr(settings, "patient_channel", "NONE") or "NONE").upper() if settings else "NONE"
-        if pc not in ("EMAIL", "BOTH"):
+
+    # 2bis) Email legacy uniquement si aucun settings n'existe.
+    # Si settings existe, patient_channel devient la seule source de vérité.
+    if not settings:
+        try:
             send_status_email(
                 prescription=prescription,
                 old_status=old_status,
                 new_status=new_status,
                 user=user,
             )
-    except Exception:
-        pass
+        except Exception:
+            pass
 
     # 3) Notifications patient/infirmier + résultat réel
     result = None

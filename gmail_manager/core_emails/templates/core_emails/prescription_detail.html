@@ -974,7 +974,17 @@ margin-left:10px;
               <select name="status" required>
                 <option value="">Sélectionner</option>
                 {% for value, label in allowed_statuses %}
-                  <option value="{{ value }}">{{ label }}</option>
+                  <option value="{{ value }}">
+                    {% if value == "RECEIVED" %}Reçue
+                    {% elif value == "IN_PROGRESS" %}En cours
+                    {% elif value == "READY" %}Prête
+                    {% elif value == "DELIVERED" %}Délivrée
+                    {% elif value == "REJECTED" %}Refusée
+                    {% elif value == "BLOCKED" %}Bloquée
+                    {% elif value == "ARCHIVED" %}Archivée
+                    {% else %}{{ label }}
+                    {% endif %}
+                  </option>
                 {% endfor %}
               </select>
               <div class="hint">Le changement de statut peut déclencher des notifications.</div>

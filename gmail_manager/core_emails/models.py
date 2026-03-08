@@ -22,11 +22,12 @@ class PrescriptionStatus(models.TextChoices):
     Statuts métier d'une ordonnance
     (alignés sur PrescriptionStatusEnum).
     """
-    RECEIVED = PrescriptionStatusEnum.RECEIVED.value, "Ordonnance reçue"
-    IN_PROGRESS = PrescriptionStatusEnum.IN_PROGRESS.value, "En cours de préparation"
-    READY = PrescriptionStatusEnum.READY.value, "Prête à être délivrée"
+    RECEIVED = PrescriptionStatusEnum.RECEIVED.value, "Reçue"
+    IN_PROGRESS = PrescriptionStatusEnum.IN_PROGRESS.value, "En cours"
+    READY = PrescriptionStatusEnum.READY.value, "Prête"
     DELIVERED = PrescriptionStatusEnum.DELIVERED.value, "Délivrée"
-    BLOCKED = PrescriptionStatusEnum.BLOCKED.value, "Bloquée (problème)"
+    REJECTED = PrescriptionStatusEnum.REJECTED.value, "Refusée"
+    BLOCKED = PrescriptionStatusEnum.BLOCKED.value, "Bloquée (legacy)"
     ARCHIVED = PrescriptionStatusEnum.ARCHIVED.value, "Archivée"
 
 
