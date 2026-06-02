@@ -543,3 +543,216 @@ class PrescriptionNotificationEvent(models.Model):
             f"{self.result}"
             f")"
         )
+
+
+# ============================================================
+# ORDO V9 - Paramétrage du module Renouvellements
+# Ajout non destructif : ne modifie pas le moteur V8 existant.
+# ============================================================
+
+class RenewalSettings(models.Model):
+    """
+    Configuration globale du module Renouvellements.
+
+    Ce modèle est volontairement séparé de PrescriptionRenewalInfo afin
+    de ne pas modifier le moteur métier existant des renouvellements V8.
+    """
+    pharmacy_name = models.CharField(
+        max_length=255,
+        default="La Grande Pharmacie de Fives",
+        verbose_name="Nom de la pharmacie",
+    )
+    phone = models.CharField(
+        max_length=30,
+        blank=True,
+        default="03 20 56 50 05",
+        verbose_name="Téléphone",
+    )
+    email = models.EmailField(
+        blank=True,
+        default="",
+        verbose_name="Email",
+    )
+    opening_time = models.TimeField(
+        default="10:00",
+        verbose_name="Heure d'ouverture",
+    )
+    closing_time = models.TimeField(
+        default="19:00",
+        verbose_name="Heure de fermeture",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Créé le",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Modifié le",
+    )
+
+    class Meta:
+        verbose_name = "Paramètres renouvellements"
+        verbose_name_plural = "Paramètres renouvellements"
+
+    def __str__(self):
+        return self.pharmacy_name
+
+
+class RenewalNotificationRule(models.Model):
+    """
+    Règle de notification configurable pour les renouvellements.
+
+    Exemple :
+    - J-21 : SMS + Email
+    - J-10 : SMS uniquement
+    - J-5  : SMS + Email
+    - J-2  : SMS uniquement
+    """
+    name = models.CharField(
+        max_length=100,
+        verbose_name="Nom",
+        help_text="Exemple : J-21, J-10, J-5, J-2",
+    )
+    days_before = models.PositiveIntegerField(
+        verbose_name="Nombre de jours avant échéance",
+        help_text="Exemple : 21 pour J-21",
+    )
+    send_sms = models.BooleanField(
+        default=True,
+        verbose_name="Envoyer SMS",
+    )
+    send_email = models.BooleanField(
+        default=False,
+        verbose_name="Envoyer Email",
+    )
+    active = models.BooleanField(
+        default=True,
+        verbose_name="Actif",
+    )
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Ordre d'affichage",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Créé le",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Modifié le",
+    )
+
+    class Meta:
+        verbose_name = "Règle de notification renouvellement"
+        verbose_name_plural = "Règles de notification renouvellement"
+        ordering = ["sort_order", "-days_before", "name"]
+        indexes = [
+            models.Index(fields=["active"]),
+            models.Index(fields=["days_before"]),
+            models.Index(fields=["sort_order"]),
+        ]
+
+    def __str__(self):
+        channels = []
+        if self.send_sms:
+            channels.append("SMS")
+        if self.send_email:
+            channels.append("Email")
+        channel_text = " + ".join(channels) if channels else "Aucun canal"
+        return f"{self.name} ({channel_text})"
+
+
+class RenewalNotificationTemplate(models.Model):
+    """
+    Modèle de message SMS ou Email pour les notifications de renouvellement.
+
+    Variables prévues pour V9 :
+    {numero_ordo}, {nom_patient}, {date_echeance}, {cycle_actuel},
+    {cycles_restants}, {nom_pharmacie}, {telephone_pharmacie}
+    """
+    CHANNEL_SMS = "SMS"
+    CHANNEL_EMAIL = "EMAIL"
+
+    CHANNEL_CHOICES = [
+        (CHANNEL_SMS, "SMS"),
+        (CHANNEL_EMAIL, "Email"),
+    ]
+
+    name = models.CharField(
+        max_length=255,
+        verbose_name="Nom du modèle",
+    )
+    channel = models.CharField(
+        max_length=20,
+        choices=CHANNEL_CHOICES,
+        verbose_name="Canal",
+    )
+    subject = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name="Objet",
+        help_text="Utilisé uniquement pour les emails.",
+    )
+    body = models.TextField(
+        verbose_name="Contenu",
+    )
+    active = models.BooleanField(
+        default=True,
+        verbose_name="Actif",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Créé le",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Modifié le",
+    )
+
+    class Meta:
+        verbose_name = "Modèle notification renouvellement"
+        verbose_name_plural = "Modèles notification renouvellement"
+        ordering = ["channel", "name"]
+        indexes = [
+            models.Index(fields=["channel"]),
+            models.Index(fields=["active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} - {self.channel}"
+
+
+class Holiday(models.Model):
+    """
+    Jour fermé ou jour férié utilisé pour reporter les notifications.
+    """
+    name = models.CharField(
+        max_length=255,
+        verbose_name="Nom",
+    )
+    date = models.DateField(
+        unique=True,
+        verbose_name="Date",
+    )
+    active = models.BooleanField(
+        default=True,
+        verbose_name="Actif",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Créé le",
+    )
+
+    class Meta:
+        verbose_name = "Jour fermé"
+        verbose_name_plural = "Jours fermés"
+        ordering = ["date"]
+        indexes = [
+            models.Index(fields=["date"]),
+            models.Index(fields=["active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} - {self.date}"
+
