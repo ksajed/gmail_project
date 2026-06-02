@@ -5,6 +5,10 @@ from .models import (
     Prescription,
     PrescriptionStatusHistory,
     PrescriptionRenewalInfo,  # ✅ V7
+    RenewalSettings,
+    RenewalNotificationRule,
+    RenewalNotificationTemplate,
+    Holiday,
 )
 from .models_assignment import PrescriptionAssignment
 
@@ -137,3 +141,96 @@ class PrescriptionRenewalInfoAdmin(admin.ModelAdmin):
             )
         }),
     )
+
+
+# ============================================================
+# ORDO V9 - Administration du paramétrage Renouvellements
+# Ajout non destructif : aucun impact sur le moteur V8.
+# ============================================================
+
+@admin.register(RenewalSettings)
+class RenewalSettingsAdmin(admin.ModelAdmin):
+    list_display = (
+        "pharmacy_name",
+        "phone",
+        "email",
+        "opening_time",
+        "closing_time",
+        "updated_at",
+    )
+    search_fields = (
+        "pharmacy_name",
+        "phone",
+        "email",
+    )
+    ordering = ("pharmacy_name",)
+
+
+@admin.register(RenewalNotificationRule)
+class RenewalNotificationRuleAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "days_before",
+        "send_sms",
+        "send_email",
+        "active",
+        "sort_order",
+        "updated_at",
+    )
+    list_filter = (
+        "active",
+        "send_sms",
+        "send_email",
+    )
+    search_fields = (
+        "name",
+    )
+    ordering = (
+        "sort_order",
+        "-days_before",
+        "name",
+    )
+
+
+@admin.register(RenewalNotificationTemplate)
+class RenewalNotificationTemplateAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "channel",
+        "active",
+        "updated_at",
+    )
+    list_filter = (
+        "channel",
+        "active",
+    )
+    search_fields = (
+        "name",
+        "subject",
+        "body",
+    )
+    ordering = (
+        "channel",
+        "name",
+    )
+
+
+@admin.register(Holiday)
+class HolidayAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "date",
+        "active",
+        "created_at",
+    )
+    list_filter = (
+        "active",
+        "date",
+    )
+    search_fields = (
+        "name",
+    )
+    ordering = (
+        "date",
+    )
+
