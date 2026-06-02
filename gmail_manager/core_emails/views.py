@@ -46,6 +46,7 @@ from core_emails.models import PrescriptionRenewalEvent, PrescriptionRenewalCycl
 from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
+from .services_renewal_templates import render_renewal_message
 from core_emails.services import compute_renewals_watch_from_delivered
 from core_emails.timeline import build_prescription_timeline_events
 
@@ -1125,17 +1126,33 @@ def send_renewal_patient_sms(request, pk, days):
     end_date = start_date + datetime.timedelta(
         days=(int(info.renewal_done_count) + 1) * int(info.period_days)
     )
-    msg = (f"Pharmacie: renouvellement en retard. Échéance dépassée ({end_date:%d/%m/%Y}). Merci de nous contacter." if days == 0 else f"Pharmacie: rappel renouvellement. Échéance le {end_date:%d/%m/%Y}. Merci de nous contacter.")
+    # ORDO V9 - SMS via template configurable.
+    # RGPD : ne pas inclure médicament, diagnostic ou pathologie.
+    _subject, msg, _template = render_renewal_message(
+        "SMS",
+        prescription,
+        cycle=cycle,
+        extra_context={
+            "date_echeance": end_date.strftime("%d/%m/%Y"),
+        },
+    )
+    if not msg:
+        # Fallback sécurisé si aucun template actif n'existe.
+        reference = f"#{prescription.pk}"
+        msg = (
+            f"Votre renouvellement est en retard. Référence : {reference}. "
+            "Merci de contacter la pharmacie."
+            if days == 0
+            else
+            f"Votre renouvellement approche. Référence : {reference}. "
+            "Merci de contacter la pharmacie."
+        )
 
     try:
         sms_backend_send(patient.phone_number, msg)
     except NotImplementedError as e:
         messages.error(request, str(e))
         return redirect(next_url)
-
-    cycle.patient_reminder_sent = True
-    cycle.patient_reminder_sent_at = timezone.now()
-    cycle.save(update_fields=["patient_reminder_sent", "patient_reminder_sent_at"])
 
     # Historique renouvellement (event) — éviter doublons (unique_together)
     next_number = int(current_number)
