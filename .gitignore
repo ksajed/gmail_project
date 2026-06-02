@@ -31,3 +31,7 @@ IN_PROGRESS
 backups_last_patch_anti_double_email.txt
 logs/
 .backups_chatgpt/
+
+# Local backups
+/gmail_manager_backup_renewals_v9/
+/gmail_manager/backups/
