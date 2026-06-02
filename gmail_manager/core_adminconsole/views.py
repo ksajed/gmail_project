@@ -102,57 +102,50 @@ def _action_fr(code: str) -> str:
 def prescription_purge(request, pk: int):
     """Purge définitive (superuser-only).
     - Normal: taper l'ID (ex: 334) dans 'confirm'
-    - Force: taper '1' dans 'confirm' (ignore la règle des 30 jours et les garde-fous métier)
+    - Force: taper '1' dans 'confirm' (ignore la règle des 30 jours et certains garde-fous métier)
     """
     confirm = (request.POST.get("confirm") or "").strip()
     force = (confirm == "1")
 
     if not force and confirm != str(pk):
-        messages.error(request, "Confirmation incorrecte. Tape l'ID (ou '1' pour forcer).")
+        messages.error(request, "Confirmation incorrecte. Tape exactement l'ID de l'ordonnance, ou '1' pour forcer.")
         return redirect("core_adminconsole:prescriptions_trash")
 
     p = get_object_or_404(Prescription, pk=pk)
 
-    # garde-fous (sauf si force)
     if not force:
         try:
             if not _can_purge_prescription(p):
-                messages.error(request, f"Purge refusée: possible après {PURGE_MIN_DAYS} jours + règles de sécurité.")
+                messages.error(
+                    request,
+                    f"Purge refusée pour l'ordonnance #{pk} : possible seulement après {PURGE_MIN_DAYS} jours et sous réserve des règles de sécurité."
+                )
                 return redirect("core_adminconsole:prescriptions_trash")
+        except Exception as e:
+            messages.error(request, f"Contrôle de sécurité purge impossible pour l'ordonnance #{pk} : {e}")
+            return redirect("core_adminconsole:prescriptions_trash")
+
+    try:
+        p.delete()
+        try:
+            audit(
+                request,
+                action=AdminAuditEvent.Action.PURGE,
+                summary=f"Ordonnance purgée #{pk}",
+                target_type="Prescription",
+                target_id=str(pk),
+            )
         except Exception:
             pass
 
-    # supprimer fichiers liés si possible (optionnel)
-    try:
-        rel = getattr(p, "attachments", None)
-        if rel is not None and hasattr(rel, "all"):
-            for a in rel.all():
-                f = getattr(a, "file", None)
-                if f:
-                    try:
-                        f.delete(save=False)
-                    except Exception:
-                        pass
-                try:
-                    a.delete()
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-    # HARD DELETE (évite un delete() override soft-delete)
-    try:
-        deleted_count, _ = Prescription.objects.filter(pk=pk).delete()
-        if deleted_count:
-            messages.success(request, f"Ordonnance #{pk} purgée définitivement.")
-        else:
-            messages.error(request, "Purge: aucun enregistrement supprimé (déjà supprimé ?).")
+        messages.success(request, f"Ordonnance #{pk} purgée définitivement.")
     except ProtectedError as e:
-        messages.error(request, "Purge bloquée: dépendances protégées (PROTECT). Supprime d'abord les objets liés.")
+        messages.error(request, f"Purge impossible pour l'ordonnance #{pk} : dépendances protégées ({e}).")
     except Exception as e:
-        messages.error(request, f"Erreur purge: {e}")
+        messages.error(request, f"Purge impossible pour l'ordonnance #{pk} : {e}")
 
     return redirect("core_adminconsole:prescriptions_trash")
+
 @require_perm("core_adminconsole.patients_write")
 
 def patient_edit(request, pk: int):
@@ -266,6 +259,67 @@ def prescriptions_search(request: HttpRequest) -> HttpResponse:
 prescriptions_list = prescriptions_search
 
 
+@require_POST
+@require_perm("core_adminconsole.prescription_soft_delete")
+def prescriptions_bulk_action(request):
+    """
+    Admin Console — action groupée ordonnances.
+
+    V1 SAFE:
+    - action supportée: trash uniquement
+    - utilise les champs de corbeille existants si présents
+    - notifications utilisateur via messages Django uniquement
+    """
+    action = (request.POST.get("bulk_action") or "").strip()
+    raw_ids = request.POST.getlist("selected_prescriptions")
+
+    ids = []
+    for value in raw_ids:
+        try:
+            ids.append(int(value))
+        except (TypeError, ValueError):
+            continue
+
+    if not ids:
+        messages.warning(request, "Aucune ordonnance sélectionnée.")
+        return redirect("core_adminconsole:prescriptions_list")
+
+    if action != "trash":
+        messages.error(request, "Action groupée non autorisée.")
+        return redirect("core_adminconsole:prescriptions_list")
+
+    qs = Prescription.objects.filter(id__in=ids)
+
+    updated = 0
+    now = timezone.now()
+
+    for prescription in qs:
+        changed = False
+
+        if hasattr(prescription, "is_deleted"):
+            setattr(prescription, "is_deleted", True)
+            changed = True
+
+        if hasattr(prescription, "deleted_at"):
+            setattr(prescription, "deleted_at", now)
+            changed = True
+
+        if hasattr(prescription, "deleted_by"):
+            setattr(prescription, "deleted_by", request.user)
+            changed = True
+
+        if changed:
+            prescription.save()
+            updated += 1
+
+    if updated:
+        messages.success(request, f"{updated} ordonnance(s) mise(s) en corbeille.")
+    else:
+        messages.warning(request, "Aucune ordonnance modifiée.")
+
+    return redirect("core_adminconsole:prescriptions_list")
+
+
 # === ADMINCONSOLE — CORBEILLE ORDONNANCES (V1 SAFE) ===
 # But: réparer urls.py (views.prescriptions_trash + purge/restore/delete)
 # et fournir un comportement stable même si certains champs n'existent pas.
@@ -273,17 +327,21 @@ prescriptions_list = prescriptions_search
 PURGE_MIN_DAYS = 30
 
 def _can_purge_prescription_safe(p) -> bool:
-    """Garde-fou soft: si deleted_at existe, exiger >= PURGE_MIN_DAYS, sinon autoriser."""
+    """
+    Garde-fou soft assoupli:
+    - l'ordonnance doit être en corbeille (deleted_at renseigné)
+    - deleted_at doit être antérieur d'au moins PURGE_MIN_DAYS
+    - n'impose pas archived_at ni un statut ARCHIVED
+    """
     try:
-        if hasattr(p, "is_deleted") and not getattr(p, "is_deleted", False):
-            return False
         da = getattr(p, "deleted_at", None)
-        if da:
-            return da <= timezone.now() - dt.timedelta(days=PURGE_MIN_DAYS)
-        return True
+        if not da:
+            return False
+        if timezone.is_naive(da):
+            da = timezone.make_aware(da, timezone.get_current_timezone())
+        return da <= timezone.now() - dt.timedelta(days=PURGE_MIN_DAYS)
     except Exception:
-        return True
-
+        return False
 
 @require_perm("core_adminconsole.prescriptions_trash")
 def prescriptions_trash(request):
@@ -429,7 +487,10 @@ def prescription_purge(request, pk: int):
     # délai mini (soft)
     if confirm != "1":
         if not _can_purge_prescription_safe(p):
-            messages.error(request, f"Purge refusée: délai minimum {PURGE_MIN_DAYS}j non atteint (ou ordonnance non en corbeille).")
+            messages.error(
+                request,
+                f"Purge refusée: délai minimum {PURGE_MIN_DAYS}j non atteint (ou ordonnance non en corbeille)."
+            )
             return redirect("core_adminconsole:prescriptions_trash")
 
     # tenter de supprimer fichiers pièces jointes si relation connue
@@ -451,9 +512,32 @@ def prescription_purge(request, pk: int):
         pass
 
     pid = getattr(p, "id", pk)
+
     try:
-        p.delete()
-        messages.success(request, f"Ordonnance #{pid} purgée définitivement.")
+        # HARD DELETE via QuerySet pour éviter un éventuel delete() override de soft-delete
+        deleted_count, _ = Prescription.objects.filter(pk=pk).delete()
+
+        if deleted_count:
+            try:
+                audit(
+                    request,
+                    action="PRESCRIPTION_PURGE",
+                    summary=f"Ordonnance purgée définitivement id={pid}",
+                    target_type="Prescription",
+                    target_id=str(pid),
+                    metadata={"confirm": confirm},
+                )
+            except Exception:
+                pass
+
+            messages.success(request, f"Ordonnance #{pid} purgée définitivement.")
+        else:
+            messages.error(request, f"Purge: aucune suppression effective pour l'ordonnance #{pid}.")
+    except ProtectedError:
+        messages.error(
+            request,
+            "Purge bloquée: dépendances protégées (PROTECT). Supprime d'abord les objets liés."
+        )
     except Exception as e:
         messages.error(request, f"Erreur purge: {e}")
 
@@ -570,6 +654,12 @@ def audit_clear(request):
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+def is_superuser(user):
+    return user.is_authenticated and user.is_superuser
+
 
 def admin_home(request):
     # Fallback: page d'accueil Admin Console
@@ -579,50 +669,499 @@ def admin_home(request):
         return HttpResponse('Admin Console', content_type='text/plain; charset=utf-8')
 
 def account_create(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.account_create', content_type='text/plain; charset=utf-8')
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/accounts/create/")
 
-def account_edit(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.account_edit', content_type='text/plain; charset=utf-8')
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
 
-def account_reactivate(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.account_reactivate', content_type='text/plain; charset=utf-8')
+    if request.method == "POST":
+        form = UserAdminCreateForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
 
+            user = User.objects.create_user(
+                username=cd["username"],
+                email=cd.get("email") or "",
+                password=cd["password1"],
+            )
+            user.first_name = cd.get("first_name") or ""
+            user.last_name = cd.get("last_name") or ""
+            user.is_active = bool(cd.get("is_active"))
+            user.is_staff = bool(cd.get("is_staff"))
+            user.is_superuser = bool(cd.get("is_superuser"))
+            user.save()
+
+            try:
+                user.groups.set(cd.get("groups") or [])
+            except Exception:
+                pass
+
+            try:
+                user.user_permissions.set(cd.get("user_permissions") or [])
+            except Exception:
+                pass
+
+            try:
+                audit(
+                    request,
+                    action=AdminAuditEvent.Action.ACCOUNT_CREATE,
+                    summary=f"Compte créé: {_user_label(user)}",
+                    target_type="User",
+                    target_id=str(user.pk),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, f"Compte créé: {user.username}")
+            return redirect("core_adminconsole:accounts_list")
+    else:
+        form = UserAdminCreateForm()
+
+    return render(
+        request,
+        "core_adminconsole/account_create.html",
+        {
+            "form": form,
+        },
+    )
+
+@login_required
+@user_passes_test(is_superuser)
+def account_edit(request, user_id):
+    user_obj = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        username = (request.POST.get("username") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        first_name = (request.POST.get("first_name") or "").strip()
+        last_name = (request.POST.get("last_name") or "").strip()
+        is_active = request.POST.get("is_active") == "on"
+        is_staff = request.POST.get("is_staff") == "on"
+        group_ids = request.POST.getlist("groups")
+
+        if not username:
+            messages.error(request, "Le nom d'utilisateur est obligatoire.")
+        else:
+            existing_qs = User.objects.filter(username=username).exclude(id=user_obj.id)
+            if existing_qs.exists():
+                messages.error(request, "Ce nom d'utilisateur existe déjà.")
+            else:
+                user_obj.username = username
+                user_obj.email = email
+                user_obj.first_name = first_name
+                user_obj.last_name = last_name
+                user_obj.is_active = is_active
+                user_obj.is_staff = is_staff
+                user_obj.save()
+
+                groups = Group.objects.filter(id__in=group_ids)
+                user_obj.groups.set(groups)
+
+                messages.success(request, "Compte mis à jour avec succès.")
+                return redirect(request.META.get("HTTP_REFERER", "/admin-console/"))
+
+    groups = Group.objects.all().order_by("name")
+
+    return render(
+        request,
+        "core_adminconsole/account_edit.html",
+        {
+            "edit_user": user_obj,
+            "groups": groups,
+        },
+    )
+
+@login_required
+@user_passes_test(is_superuser)
+def account_reactivate(request, user_id):
+    from django.contrib.auth.models import User
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+
+    user_obj = get_object_or_404(User, id=user_id)
+
+    # Sécurité : éviter de se modifier soi-même si besoin
+    if request.user.id == user_obj.id:
+        messages.warning(request, "Vous ne pouvez pas modifier votre propre statut ici.")
+        return redirect(request.META.get("HTTP_REFERER", "/admin-console/"))
+
+    if user_obj.is_active:
+        messages.info(request, f"Le compte {user_obj.username} est déjà actif.")
+    else:
+        user_obj.is_active = True
+        user_obj.save()
+        messages.success(request, f"Compte {user_obj.username} réactivé avec succès.")
+
+    return redirect(request.META.get("HTTP_REFERER", "/admin-console/"))
 def account_soft_delete(request, *args, **kwargs):
     return HttpResponse('Not implemented: core_adminconsole.views.account_soft_delete', content_type='text/plain; charset=utf-8')
 
 def account_soft_delete_confirm(request, *args, **kwargs):
     return HttpResponse('Not implemented: core_adminconsole.views.account_soft_delete_confirm', content_type='text/plain; charset=utf-8')
 
-def account_toggle_active(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.account_toggle_active', content_type='text/plain; charset=utf-8')
+@login_required
+@user_passes_test(is_superuser)
+def account_toggle_active(request, user_id):
+    from django.contrib.auth.models import User
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
 
+    user_obj = get_object_or_404(User, id=user_id)
+
+    # Sécurité : éviter de désactiver soi-même
+    if request.user.id == user_obj.id:
+        messages.error(request, "Vous ne pouvez pas désactiver votre propre compte.")
+        return redirect(request.META.get("HTTP_REFERER", "/admin-console/"))
+
+    # Toggle actif
+    user_obj.is_active = not user_obj.is_active
+    user_obj.save()
+
+    status = "activé" if user_obj.is_active else "désactivé"
+    messages.success(request, f"Compte {user_obj.username} {status} avec succès.")
+
+    return redirect(request.META.get("HTTP_REFERER", "/admin-console/"))
 def accounts_list(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.accounts_list', content_type='text/plain; charset=utf-8')
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/accounts/")
+
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
+
+    q = (request.GET.get("q") or "").strip()
+
+    qs = User.objects.all().prefetch_related("groups")
+
+    if q:
+        qs = qs.filter(
+            Q(username__icontains=q)
+            | Q(email__icontains=q)
+            | Q(first_name__icontains=q)
+            | Q(last_name__icontains=q)
+        )
+
+    users = qs.order_by("username", "id")
+
+    return render(
+        request,
+        "core_adminconsole/accounts_list.html",
+        {
+            "q": q,
+            "users": users,
+        },
+    )
 
 def gmail_tools(request, *args, **kwargs):
     return HttpResponse('Not implemented: core_adminconsole.views.gmail_tools', content_type='text/plain; charset=utf-8')
 
 def group_create(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.group_create', content_type='text/plain; charset=utf-8')
+    from django.contrib.auth.models import Group, Permission
 
-def group_delete(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.group_delete', content_type='text/plain; charset=utf-8')
+    class GroupAdminCreateForm(forms.Form):
+        name = forms.CharField(max_length=150, required=True, label="Nom du groupe")
+        permissions = forms.ModelMultipleChoiceField(
+            queryset=Permission.objects.all().select_related("content_type").order_by("content_type__app_label", "codename"),
+            required=False,
+            widget=forms.SelectMultiple,
+            label="Permissions",
+        )
 
-def group_delete_confirm(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.group_delete_confirm', content_type='text/plain; charset=utf-8')
+        def clean_name(self):
+            name = (self.cleaned_data.get("name") or "").strip()
+            if not name:
+                raise forms.ValidationError("Nom du groupe obligatoire.")
+            if Group.objects.filter(name=name).exists():
+                raise forms.ValidationError("Un groupe avec ce nom existe déjà.")
+            return name
 
-def group_edit(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.group_edit', content_type='text/plain; charset=utf-8')
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/groups/create/")
+
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
+
+    if request.method == "POST":
+        form = GroupAdminCreateForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+
+            group = Group.objects.create(name=cd["name"])
+
+            try:
+                group.permissions.set(cd.get("permissions") or [])
+            except Exception:
+                pass
+
+            try:
+                audit(
+                    request,
+                    action=getattr(AdminAuditEvent.Action, "GROUP_CREATE", "GROUP_CREATE"),
+                    summary=f"Groupe créé: {group.name}",
+                    target_type="Group",
+                    target_id=str(group.pk),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, f"Groupe créé: {group.name}")
+            return redirect("core_adminconsole:groups_list")
+    else:
+        form = GroupAdminCreateForm()
+
+    return render(
+        request,
+        "core_adminconsole/group_form.html",
+        {
+            "form": form,
+            "mode": "create",
+            "target": None,
+        },
+    )
+
+@require_POST
+def group_delete(request, group_id, *args, **kwargs):
+    from django.contrib.auth.models import Group
+
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/groups/")
+
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
+
+    group = get_object_or_404(Group, pk=group_id)
+    group_label = getattr(group, "name", "") or f"Groupe #{group.pk}"
+
+    try:
+        group.delete()
+        try:
+            audit(
+                request,
+                action=getattr(AdminAuditEvent.Action, "GROUP_DELETE", "GROUP_DELETE"),
+                summary=f"Groupe supprimé: {group_label}",
+                target_type="Group",
+                target_id=str(group_id),
+            )
+        except Exception:
+            pass
+
+        messages.success(request, f"Groupe supprimé: {group_label}")
+    except Exception as e:
+        messages.error(request, f"Suppression impossible: {e}")
+
+    return redirect("core_adminconsole:groups_list")
+
+def group_delete_confirm(request, group_id, *args, **kwargs):
+    from django.contrib.auth.models import Group
+
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/groups/")
+
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
+
+    group = get_object_or_404(
+        Group.objects.prefetch_related("permissions", "user_set"),
+        pk=group_id,
+    )
+
+    return render(
+        request,
+        "core_adminconsole/group_delete_confirm.html",
+        {
+            "target": group,
+            "group": group,
+        },
+    )
+
+def group_edit(request, group_id, *args, **kwargs):
+    from django.contrib.auth.models import Group, Permission
+
+    class GroupAdminEditForm(forms.Form):
+        name = forms.CharField(max_length=150, required=True, label="Nom du groupe")
+        permissions = forms.ModelMultipleChoiceField(
+            queryset=Permission.objects.all().select_related("content_type").order_by("content_type__app_label", "codename"),
+            required=False,
+            widget=forms.SelectMultiple,
+            label="Permissions",
+        )
+
+        def __init__(self, *args, **kwargs):
+            self.instance = kwargs.pop("instance", None)
+            super().__init__(*args, **kwargs)
+
+        def clean_name(self):
+            name = (self.cleaned_data.get("name") or "").strip()
+            if not name:
+                raise forms.ValidationError("Nom du groupe obligatoire.")
+            qs = Group.objects.filter(name=name)
+            if self.instance is not None:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError("Un groupe avec ce nom existe déjà.")
+            return name
+
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/groups/")
+
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
+
+    group = get_object_or_404(Group, pk=group_id)
+
+    if request.method == "POST":
+        form = GroupAdminEditForm(request.POST, instance=group)
+        if form.is_valid():
+            cd = form.cleaned_data
+            old_name = group.name
+
+            group.name = cd["name"]
+            group.save()
+
+            try:
+                group.permissions.set(cd.get("permissions") or [])
+            except Exception:
+                pass
+
+            try:
+                audit(
+                    request,
+                    action=getattr(AdminAuditEvent.Action, "GROUP_EDIT", "GROUP_EDIT"),
+                    summary=f"Groupe modifié: {old_name} -> {group.name}",
+                    target_type="Group",
+                    target_id=str(group.pk),
+                )
+            except Exception:
+                pass
+
+            messages.success(request, f"Groupe modifié: {group.name}")
+            return redirect("core_adminconsole:groups_list")
+    else:
+        form = GroupAdminEditForm(
+            instance=group,
+            initial={
+                "name": group.name,
+                "permissions": group.permissions.all(),
+            },
+        )
+
+    return render(
+        request,
+        "core_adminconsole/group_form.html",
+        {
+            "form": form,
+            "mode": "edit",
+            "target": group,
+        },
+    )
 
 def groups_list(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.groups_list', content_type='text/plain; charset=utf-8')
+    from django.contrib.auth.models import Group
+
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/groups/")
+
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
+
+    q = (request.GET.get("q") or "").strip()
+
+    qs = Group.objects.all().prefetch_related("permissions", "user_set")
+
+    if q:
+        qs = qs.filter(name__icontains=q)
+
+    groups = qs.order_by("name", "id")
+
+    return render(
+        request,
+        "core_adminconsole/groups_list.html",
+        {
+            "q": q,
+            "groups": groups,
+        },
+    )
 
 def iam_matrix(request, *args, **kwargs):
-    return HttpResponse('Not implemented: core_adminconsole.views.iam_matrix', content_type='text/plain; charset=utf-8')
+    from django.contrib.auth.models import Group, Permission
 
-from .permissions import require_console_perm
+    if not getattr(request, "user", None) or not request.user.is_authenticated:
+        return redirect("/accounts/login/?next=/admin-console/iam/")
 
-@require_console_perm("access_console")
+    if not getattr(request.user, "is_superuser", False):
+        return HttpResponse("Forbidden", status=403, content_type="text/plain; charset=utf-8")
+
+    q = (request.GET.get("q") or "").strip()
+
+    groups = list(
+        Group.objects.all().prefetch_related("permissions").order_by("name", "id")
+    )
+
+    permissions_qs = Permission.objects.select_related("content_type").order_by(
+        "content_type__app_label",
+        "codename",
+        "id",
+    )
+
+    if q:
+        permissions_qs = permissions_qs.filter(
+            Q(codename__icontains=q)
+            | Q(name__icontains=q)
+            | Q(content_type__app_label__icontains=q)
+            | Q(content_type__model__icontains=q)
+        )
+        groups = [
+            g for g in groups
+            if q.lower() in (g.name or "").lower()
+            or any(
+                q.lower() in ((p.codename or "").lower())
+                or q.lower() in ((p.name or "").lower())
+                or q.lower() in ((getattr(p.content_type, "app_label", "") or "").lower())
+                for p in g.permissions.all()
+            )
+        ]
+
+    group_perm_ids = {
+        g.id: {p.id for p in g.permissions.all()}
+        for g in groups
+    }
+
+    rows = []
+    for perm in permissions_qs:
+        action = (perm.name or perm.codename or "").strip()
+        row = {
+            "action": action,
+            "codename": perm.codename,
+            "permission": perm,
+            "cells": [],
+        }
+
+        has_any = False
+        for g in groups:
+            enabled = perm.id in group_perm_ids.get(g.id, set())
+            if enabled:
+                has_any = True
+            row["cells"].append({
+                "group": g,
+                "enabled": enabled,
+            })
+
+        if q:
+            if has_any or q.lower() in action.lower() or q.lower() in (perm.codename or "").lower():
+                rows.append(row)
+        else:
+            rows.append(row)
+
+    return render(
+        request,
+        "core_adminconsole/iam_matrix.html",
+        {
+            "q": q,
+            "groups": groups,
+            "rows": rows,
+        },
+    )
+
 def notifications_settings(request):
     """
     Admin Console — Notifications (Global)
@@ -962,3 +1501,42 @@ def users_home(request, *args, **kwargs):
     return HttpResponse('Not implemented: core_adminconsole.views.users_home', content_type='text/plain; charset=utf-8')
 
 # --- ADMINCONSOLE_URL_STUBS_V1:END ---
+
+@login_required
+@user_passes_test(is_superuser)
+def account_soft_delete_confirm(request, user_id):
+    user_obj = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        if request.user.id == user_obj.id:
+            messages.error(request, "Vous ne pouvez pas supprimer logiquement votre propre compte.")
+            return redirect(request.META.get("HTTP_REFERER", "/admin-console/"))
+
+        # Soft delete simplifié :
+        # dans l'état actuel du projet, on conserve les données
+        # et on désactive le compte.
+        user_obj.is_active = False
+        user_obj.save()
+
+        messages.success(
+            request,
+            f"Compte {user_obj.username} marqué comme supprimé logiquement. "
+            f"Le compte est désactivé et les données sont conservées."
+        )
+        return redirect(request.META.get("HTTP_REFERER", "/admin-console/"))
+
+    return render(
+        request,
+        "core_adminconsole/account_soft_delete_confirm.html",
+        {
+            "user_obj": user_obj,
+            "soft_delete_explanation": (
+                "Le soft delete correspond à une suppression logique : "
+                "le compte est retiré de l'usage normal sans suppression physique des données."
+            ),
+            "deactivate_explanation": (
+                "La désactivation bloque simplement l'accès au compte, souvent de façon temporaire."
+            ),
+        },
+    )
+

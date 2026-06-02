@@ -40,6 +40,7 @@ urlpatterns = [
     path("prescriptions/", views.prescriptions_search, name="prescriptions_list"),
     path("prescriptions/", views.prescriptions_search, name="prescriptions_search"),
     path("prescriptions/trash/", views.prescriptions_trash, name="prescriptions_trash"),
+    path("prescriptions/bulk-action/", views.prescriptions_bulk_action, name="prescriptions_bulk_action"),
     path("prescriptions/<int:pk>/trash/", views.prescription_soft_delete, name="prescription_soft_delete"),
     path("prescriptions/<int:pk>/restore/", views.prescription_restore, name="prescription_restore"),
     path("prescriptions/<int:pk>/purge/", views.prescription_purge, name="prescription_purge"),

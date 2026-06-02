@@ -280,5 +280,61 @@ body{
 
 
 
+
+<!-- TOAST UX -->
+<style>
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  min-width: 220px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  animation: fadeIn 0.3s ease;
+}
+.toast.success { background: #22c55e; }
+.toast.error { background: #ef4444; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+(function(){
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const messages = [
+    {% for message in messages %}
+      {text: "{{ message|escapejs }}", tag: "{{ message.tags }}"},
+    {% endfor %}
+  ];
+
+  messages.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = "toast " + (msg.tag.includes("error") ? "error" : "success");
+    div.innerText = msg.text;
+    container.appendChild(div);
+
+    setTimeout(() => {
+      div.remove();
+    }, 4000);
+  });
+})();
+</script>
+
 </body>
 </html>

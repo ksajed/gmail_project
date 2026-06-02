@@ -244,6 +244,12 @@
             Renouvellements
           </a>
 
+        {% if request.user.is_superuser %}
+        <a href="/admin-console/" class="btn btn--soft-info">
+          Admin Console
+        </a>
+        {% endif %}
+
 <a href="{% url 'core_emails:sync_gmail_now' %}" class="btn btn--soft-info js-confirm-nav" data-confirm="Synchroniser Gmail maintenant ? Cette action va récupérer les nouveaux emails." data-ok-text="Synchroniser" data-progress="1" data-progress-title="Synchronisation Gmail" data-progress-text="Synchronisation en cours… Merci de patienter.">
           <span class="ico" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
@@ -803,7 +809,8 @@ if (btnCancel) btnCancel.textContent = "Fermer";
               startProgressFetch(pendingHref, pendingProgressTitle, pendingProgressText);
               return;
             } else {
-              // (no redirect) redirection désactivée
+              window.location.href = pendingHref;
+              return;
             }
           }
         });

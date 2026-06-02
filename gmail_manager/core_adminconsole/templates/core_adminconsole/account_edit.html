@@ -1,0 +1,90 @@
+{% extends "core_adminconsole/base.html" %}
+{% block title %}Modifier un compte{% endblock %}
+
+{% block content %}
+  <div class="ac-card">
+    <div class="ac-row" style="justify-content:space-between; align-items:center;">
+      <div>
+        <div class="ac-title">Modifier le compte : {{ edit_user.username }}</div>
+        <div class="ac-muted">Gestion IAM — modification d'un utilisateur</div>
+      </div>
+      <a class="btn" href="/admin-console/">← Retour</a>
+    </div>
+
+    {% if messages %}
+      <div style="margin-top:12px;">
+        {% for message in messages %}
+          <div class="ac-card" style="margin-bottom:8px; border-color:#e5e7eb;">
+            <strong>{{ message }}</strong>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" class="ac-form" style="margin-top:12px;">
+      {% csrf_token %}
+
+      <div class="ac-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label>Nom d'utilisateur</label>
+          <input type="text" name="username" value="{{ edit_user.username }}">
+        </div>
+
+        <div>
+          <label>Email</label>
+          <input type="email" name="email" value="{{ edit_user.email }}">
+        </div>
+
+        <div>
+          <label>Prénom</label>
+          <input type="text" name="first_name" value="{{ edit_user.first_name }}">
+        </div>
+
+        <div>
+          <label>Nom</label>
+          <input type="text" name="last_name" value="{{ edit_user.last_name }}">
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; grid-column:1 / -1;">
+          <label style="display:flex; gap:6px; align-items:center;">
+            <input type="checkbox" name="is_active" {% if edit_user.is_active %}checked{% endif %}>
+            <span>Actif</span>
+          </label>
+
+          <label style="display:flex; gap:6px; align-items:center;">
+            <input type="checkbox" name="is_staff" {% if edit_user.is_staff %}checked{% endif %}>
+            <span>Staff</span>
+          </label>
+        </div>
+
+        <div style="grid-column:1 / -1;">
+          <div class="ac-row" style="justify-content:space-between;">
+            <div><strong>Groupes</strong></div>
+            <div class="ac-muted">Sélection multiple</div>
+          </div>
+
+          <div class="ac-card" style="margin-top:8px;">
+            {% for group in groups %}
+              <label style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                <input
+                  type="checkbox"
+                  name="groups"
+                  value="{{ group.id }}"
+                  {% if group in edit_user.groups.all %}checked{% endif %}
+                >
+                <span>{{ group.name }}</span>
+              </label>
+            {% empty %}
+              <div class="ac-muted">Aucun groupe disponible.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn btn--primary" type="submit">Enregistrer</button>
+        <a class="btn" href="/admin-console/">Annuler</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

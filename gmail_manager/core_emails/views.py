@@ -208,111 +208,17 @@ def dashboard(request):
 @login_required
 def renewals_dashboard(request):
     """
-    Dashboard Renouvellements — J-5 / J-3 / Retard
-    Base = 1ère délivrance (premier statut DELIVERED)
-    due_date = start_date + (done_count + 1) * period_days
-    Catégories :
-      - J-5 : days_left == 5
-      - J-3 : days_left == 3
-      - Retard : days_left <= 0
+    Dashboard Renouvellements — version propre V8
+    Source unique : compute_renewals_watch
     """
-    import datetime
-    from django.utils import timezone
-    from django.shortcuts import render
+    from core_emails.services import compute_renewals_watch
 
-    from .models import (
-        Prescription,
-        PrescriptionType,
-        PrescriptionStatus,
-        PrescriptionStatusHistory,
-        PrescriptionRenewalInfo,
-    )
-
-    today = timezone.localdate()
-
-    # On ne calcule des échéances que si on a une 1ère délivrance => status DELIVERED
-    qs = (
-        Prescription.objects
-        .filter(is_deleted=False, type=PrescriptionType.RENOUVELLEMENT, status=PrescriptionStatus.DELIVERED)
-        .select_related("patient")
-        .order_by("-id")
-    )
-
-    j5_items, j3_items, late_items = [], [], []
-
-    for p in qs:
-        info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=p)
-
-        # conversions robustes
-        try:
-            done_count = int(info.renewal_done_count or 0)
-            renewal_times = int(info.renewal_times or 0)
-            period_days = int(info.period_days or 30)
-        except Exception:
-            done_count = int(info.renewal_done_count or 0) if str(info.renewal_done_count or "").isdigit() else 0
-            renewal_times = int(info.renewal_times or 0) if str(info.renewal_times or "").isdigit() else 0
-            period_days = 30
-
-        # actif uniquement si cycles restants
-        if renewal_times <= 0 or done_count >= renewal_times:
-            continue
-
-        first_delivered_at = (
-            PrescriptionStatusHistory.objects
-            .filter(prescription=p, new_status=PrescriptionStatus.DELIVERED)
-            .order_by("changed_at")
-            .values_list("changed_at", flat=True)
-            .first()
-        )
-        if not first_delivered_at:
-            continue
-
-        start_date = timezone.localtime(first_delivered_at).date()
-        due_date = start_date + datetime.timedelta(days=(done_count + 1) * period_days)
-        days_left = (due_date - today).days
-        # Attacher les champs calculés directement sur l'objet Prescription (compat template)
-        p.renewal_end_date = due_date
-        p.renewal_days_left = days_left
-        p.renewal_start_date = start_date
-        p.renewal_due_date = due_date
-        p.renewal_done_count = done_count
-        p.renewal_times = renewal_times
-        p.renewal_period_days = period_days
-        p.email_j5_sent = bool(getattr(info, 'reminder_5_patient_email_sent_at', None))
-        p.sms_j5_sent = bool(getattr(info, 'reminder_5_patient_sms_sent_at', None))
-        p.email_j3_sent = bool(getattr(info, 'reminder_3_patient_email_sent_at', None))
-        p.sms_j3_sent = bool(getattr(info, 'reminder_3_patient_sms_sent_at', None))
-
-        if days_left == 5:
-            j5_items.append(p)
-        elif days_left == 3:
-            j3_items.append(p)
-        elif days_left <= 0:
-            late_items.append(p)
-
-    # tri : plus urgent d’abord
-    j5_items.sort(key=lambda p: ((getattr(p, "renewal_due_date", None) or getattr(p, "renewal_end_date", None)), p.id))
-    j3_items.sort(key=lambda p: ((getattr(p, "renewal_due_date", None) or getattr(p, "renewal_end_date", None)), p.id))
-    late_items.sort(key=lambda p: ((getattr(p, "renewal_due_date", None) or getattr(p, "renewal_end_date", None)), p.id))
+    due_5, due_3, overdue = compute_renewals_watch()
 
     context = {
-                # === ALIAS TEMPLATE (compatibilité renewals_dashboard.html) ===
-        "renewals_due_5": j5_items,
-        "renewals_due_3": j3_items,
-        "renewals_overdue": late_items,
-
-"today": today,
-
-        # alias multiples pour matcher ton template quel que soit le nom attendu
-        "j5_items": j5_items, "j5_list": j5_items, "items_j5": j5_items,
-        "j3_items": j3_items, "j3_list": j3_items, "items_j3": j3_items,
-        "late_items": late_items, "late_list": late_items,
-        "retard_items": late_items, "retard_list": late_items,
-        "overdue_items": late_items, "overdue_list": late_items,
-
-        "count_j5": len(j5_items),
-        "count_j3": len(j3_items),
-        "count_late": len(late_items),
+        "renewals_due_5": due_5,
+        "renewals_due_3": due_3,
+        "renewals_overdue": overdue,
     }
 
     return render(request, "core_emails/renewals_dashboard.html", context)
@@ -1226,6 +1132,10 @@ def send_renewal_patient_sms(request, pk, days):
     except NotImplementedError as e:
         messages.error(request, str(e))
         return redirect(next_url)
+
+    cycle.patient_reminder_sent = True
+    cycle.patient_reminder_sent_at = timezone.now()
+    cycle.save(update_fields=["patient_reminder_sent", "patient_reminder_sent_at"])
 
     # Historique renouvellement (event) — éviter doublons (unique_together)
     next_number = int(current_number)
