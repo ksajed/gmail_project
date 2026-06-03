@@ -587,3 +587,78 @@ def send_prescription_notifications(
     )
 
 
+# =====================================================
+# ORDO V9 - Lecture enrichie des renouvellements
+# =====================================================
+
+def compute_renewals_watch_v9():
+    """
+    Retourne une structure enrichie pour préparer le dashboard V9.
+
+    Important :
+    - ne remplace pas compute_renewals_watch()
+    - ne remplace pas compute_renewals_watch_from_delivered()
+    - ne modifie aucune donnée
+    - ne change pas le workflow
+    - garde la compatibilité V8 via renewals_due_5 / renewals_due_3 / renewals_overdue
+
+    Retour :
+    {
+        "renewals_due_5": [...],
+        "renewals_due_3": [...],
+        "renewals_overdue": [...],
+
+        "renewals_notifications_due": [...],
+        "renewals_urgent": [...],
+        "renewals_final": [...],
+        "activity_metrics": {...},
+    }
+    """
+    try:
+        due_5, due_3, overdue = compute_renewals_watch()
+    except Exception:
+        due_5, due_3, overdue = [], [], []
+
+    try:
+        from core_emails.services_renewal_rules import (
+            get_due_notifications,
+            get_overdue_renewals,
+            get_final_renewals,
+            get_urgent_renewals,
+            get_activity_metrics,
+        )
+
+        notifications_due = get_due_notifications()
+        overdue_v9 = get_overdue_renewals()
+        final_renewals = get_final_renewals()
+        urgent = get_urgent_renewals()
+        activity_metrics = get_activity_metrics()
+
+    except Exception:
+        notifications_due = []
+        overdue_v9 = []
+        final_renewals = []
+        urgent = []
+        activity_metrics = {
+            "sms_sent_today": 0,
+            "emails_sent_today": 0,
+            "cycles_created_today": 0,
+            "cycles_closed_today": 0,
+            "overdue_detected": 0,
+            "urgent_detected": 0,
+        }
+
+    return {
+        # Compatibilité V8
+        "renewals_due_5": due_5,
+        "renewals_due_3": due_3,
+        "renewals_overdue": overdue,
+
+        # Données V9
+        "renewals_notifications_due": notifications_due,
+        "renewals_overdue_v9": overdue_v9,
+        "renewals_urgent": urgent,
+        "renewals_final": final_renewals,
+        "activity_metrics": activity_metrics,
+    }
+
