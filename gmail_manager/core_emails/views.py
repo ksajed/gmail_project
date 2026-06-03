@@ -986,25 +986,39 @@ def send_renewal_patient_email(request, pk, days):
         days=(int(info.renewal_done_count) + 1) * int(info.period_days)
     )
 
-    subject = (
-        "Renouvellement en retard — échéance dépassée"
-        if days == 0
-        else f"Rappel renouvellement — échéance dans {days} jours"
+    # ORDO V9 - Email via template configurable.
+    # RGPD : ne pas inclure médicament, diagnostic ou pathologie.
+    subject, body, _template = render_renewal_message(
+        "EMAIL",
+        prescription,
+        cycle=cycle,
+        extra_context={
+            "date_echeance": end_date.strftime("%d/%m/%Y"),
+        },
     )
 
-    body = "\n".join([
-        "Bonjour,",
-        "",
-        (
-            f"Votre ordonnance est en retard depuis le {end_date:%d/%m/%Y}."
+    if not subject:
+        subject = (
+            "Renouvellement en retard"
             if days == 0
-            else f"Votre ordonnance arrive à échéance le {end_date:%d/%m/%Y}."
-        ),
-        "Merci de contacter la pharmacie pour le renouvellement.",
-        "",
-        "Cordialement,",
-        "Pharmacie",
-    ])
+            else "Votre renouvellement approche"
+        )
+
+    if not body:
+        reference = f"#{prescription.pk}"
+        body = "\n".join([
+            "Bonjour,",
+            "",
+            (
+                f"Votre renouvellement est en retard. Référence : {reference}."
+                if days == 0
+                else f"Votre renouvellement approche. Référence : {reference}."
+            ),
+            "Merci de contacter la pharmacie.",
+            "",
+            "Cordialement,",
+            "La pharmacie",
+        ])
 
     send_mail(
         subject,
