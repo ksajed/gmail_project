@@ -47,7 +47,7 @@ from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
 from .services_renewal_templates import render_renewal_message
-from core_emails.services import compute_renewals_watch_from_delivered
+from core_emails.services import compute_renewals_watch, compute_renewals_watch_v9
 from core_emails.timeline import build_prescription_timeline_events
 
 
@@ -183,6 +183,22 @@ def dashboard(request):
     for row in raw_stats:
         if row["status"] in counters:
             counters[row["status"]] = row["total"]
+    # ORDO V9 - Données renouvellements enrichies.
+    # Compatibilité : ces données sont ajoutées au contexte sans modifier l'affichage actuel.
+    try:
+        renewals_v9_context = compute_renewals_watch_v9()
+    except Exception:
+        renewals_v9_context = {
+            "renewals_due_5": [],
+            "renewals_due_3": [],
+            "renewals_overdue": [],
+            "renewals_notifications_due": [],
+            "renewals_overdue_v9": [],
+            "renewals_urgent": [],
+            "renewals_final": [],
+            "activity_metrics": {},
+        }
+
     context = {
         "prescriptions": prescriptions,
         "statuses": PrescriptionStatus.choices,
@@ -199,6 +215,9 @@ def dashboard(request):
         "count_archived": counters[PrescriptionStatus.ARCHIVED],
         "context_sender_types": SenderType.choices,
     }
+
+    # ORDO V9 - Injection non destructive des données renouvellements.
+    context.update(renewals_v9_context)
 
     return render(request, "core_emails/dashboard.html", context)
 
