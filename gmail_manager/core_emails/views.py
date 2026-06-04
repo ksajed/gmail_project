@@ -345,27 +345,31 @@ def prescription_detail(request, pk):
     renewal_events = []
     if prescription.type == PrescriptionType.RENOUVELLEMENT:
         renewal_info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
-    # --- Renewal cycle affiché dans l'UI (V2) ---
-    # Si l'ordonnance parent est ARCHIVED, on affiche le dernier cycle réel.
-    # Sinon, on affiche le cycle courant attendu (done + 1).
+    # --- Renewal cycle affiché dans l'UI (V9) ---
+    # Source officielle : PrescriptionRenewalCycle.
+    # Important : une vue de détail ne doit jamais créer de cycle métier.
     renewal_cycle = None
     renewal_cycle_number = None
     if getattr(prescription, "type", None) == PrescriptionType.RENOUVELLEMENT:
-        try:
-            done = int(getattr(renewal_info, "renewal_done_count", 0) or 0)
-        except Exception:
-            done = 0
-
-        if getattr(prescription, "status", None) == PrescriptionStatus.ARCHIVED:
-            renewal_cycle_number = max(1, done)
-        else:
-            renewal_cycle_number = done + 1
-
-        renewal_cycle, _ = PrescriptionRenewalCycle.objects.get_or_create(
-            prescription=prescription,
-            cycle_number=renewal_cycle_number,
-            defaults={"status": PrescriptionStatus.RECEIVED},
+        open_cycle = (
+            PrescriptionRenewalCycle.objects
+            .filter(prescription=prescription, closed_at__isnull=True)
+            .order_by("-cycle_number")
+            .first()
         )
+
+        if open_cycle:
+            renewal_cycle = open_cycle
+            renewal_cycle_number = int(open_cycle.cycle_number)
+        else:
+            last_cycle = (
+                PrescriptionRenewalCycle.objects
+                .filter(prescription=prescription)
+                .order_by("-cycle_number")
+                .first()
+            )
+            renewal_cycle = last_cycle
+            renewal_cycle_number = int(last_cycle.cycle_number) if last_cycle else None
 
         renewal_remaining = max(
             0,
@@ -398,7 +402,8 @@ def prescription_detail(request, pk):
         if first_delivered_at:
             renewal_patient_first_delivered_at = timezone.localtime(first_delivered_at)
             start_date = renewal_patient_first_delivered_at.date()
-            renewal_patient_next_number = int(renewal_info.renewal_done_count) + 1
+            # V9 : le prochain cycle patient affiché doit être le cycle ouvert réel.
+            renewal_patient_next_number = renewal_cycle_number or (int(renewal_info.renewal_done_count) + 1)
             renewal_patient_end_date = start_date + datetime.timedelta(
                 days=renewal_patient_next_number * int(renewal_info.period_days)
             )
