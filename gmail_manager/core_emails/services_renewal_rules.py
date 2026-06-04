@@ -139,19 +139,25 @@ def move_to_next_open_day(value: Any) -> Optional[date]:
 
 def _get_cycle_due_date(cycle: Any) -> Optional[date]:
     """
-    Récupère l'échéance d'un cycle de façon défensive.
+    Calcule l'échéance réelle d'un cycle de renouvellement V9.
 
-    Les noms possibles sont volontairement larges pour éviter
-    de casser si le modèle existant utilise un autre champ.
+    Règle métier V9 :
+    - le cycle 1 correspond à la délivrance initiale ;
+    - le cycle 2 correspond au renouvellement 1 ;
+    - le cycle 3 correspond au renouvellement 2 ;
+    - échéance patient = date du premier DELIVERED + cycle_number * period_days.
+
+    La fonction reste défensive :
+    - si un ancien champ due_date existe, il est prioritaire ;
+    - sinon, on calcule depuis l'historique DELIVERED.
     """
-    candidates = [
+    # 1) Compatibilité éventuelle avec anciens champs.
+    for attr in [
         "due_date",
         "expected_due_date",
         "next_due_date",
         "renewal_due_date",
-    ]
-
-    for attr in candidates:
+    ]:
         value = getattr(cycle, attr, None)
         if value:
             if isinstance(value, datetime):
@@ -159,23 +165,63 @@ def _get_cycle_due_date(cycle: Any) -> Optional[date]:
             if isinstance(value, date):
                 return value
 
-    # Fallback possible : start_date + period_days si disponible.
-    start = getattr(cycle, "start_date", None) or getattr(cycle, "created_at", None)
-    period_days = None
-
     prescription = getattr(cycle, "prescription", None)
-    renewal_info = getattr(prescription, "renewal_info", None) if prescription else None
+    if prescription is None:
+        return None
 
-    if renewal_info is not None:
-        period_days = getattr(renewal_info, "period_days", None)
+    renewal_info = getattr(prescription, "renewal_info", None)
+    if renewal_info is None:
+        return None
 
-    if start and period_days:
-        if isinstance(start, datetime):
-            start = start.date()
-        if isinstance(start, date):
+    try:
+        period_days = int(getattr(renewal_info, "period_days", 0) or 0)
+        cycle_number = int(getattr(cycle, "cycle_number", 0) or 0)
+    except (TypeError, ValueError):
+        return None
+
+    if period_days <= 0 or cycle_number <= 0:
+        return None
+
+    # 2) Source officielle patient : première délivrance réelle.
+    try:
+        from core_emails.models import PrescriptionStatusHistory, PrescriptionStatus
+
+        first_delivered_at = (
+            PrescriptionStatusHistory.objects
+            .filter(
+                prescription=prescription,
+                new_status=PrescriptionStatus.DELIVERED,
+            )
+            .order_by("changed_at")
+            .values_list("changed_at", flat=True)
+            .first()
+        )
+    except Exception:
+        first_delivered_at = None
+
+    if first_delivered_at:
+        if isinstance(first_delivered_at, datetime):
+            start_date = first_delivered_at.date()
+        elif isinstance(first_delivered_at, date):
+            start_date = first_delivered_at
+        else:
+            start_date = None
+
+        if start_date:
             try:
-                return start + timedelta(days=int(period_days))
-            except (TypeError, ValueError):
+                return start_date + timedelta(days=cycle_number * period_days)
+            except (TypeError, ValueError, OverflowError):
+                return None
+
+    # 3) Fallback si pas encore délivré : date médecin + cycle_number * period_days.
+    established_at = getattr(prescription, "established_at", None)
+    if established_at:
+        if isinstance(established_at, datetime):
+            established_at = established_at.date()
+        if isinstance(established_at, date):
+            try:
+                return established_at + timedelta(days=cycle_number * period_days)
+            except (TypeError, ValueError, OverflowError):
                 return None
 
     return None
