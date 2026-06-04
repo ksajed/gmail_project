@@ -176,33 +176,42 @@
 
   <div class="container">
 
-    <!-- KPI -->
+    <!-- KPI V9 -->
     <div class="kpi-grid">
       <div class="kpi">
-        <div class="kpi__label">J-5 à traiter</div>
+        <div class="kpi__label">Notifications à envoyer</div>
         <div class="kpi__value">
-          {{ renewals_due_5|length }}
-          <span class="badge badge--warn">Pré-échéance</span>
+          {{ renewals_notifications_due|length }}
+          <span class="badge badge--warn">À traiter</span>
         </div>
-        <div class="kpi__hint">Relances planifiées à 5 jours de l’échéance.</div>
+        <div class="kpi__hint">Rappels calculés depuis les règles configurables.</div>
       </div>
 
       <div class="kpi">
-        <div class="kpi__label">J-3 à traiter</div>
+        <div class="kpi__label">Urgences</div>
         <div class="kpi__value">
-          {{ renewals_due_3|length }}
-          <span class="badge badge--warn">Urgent</span>
-        </div>
-        <div class="kpi__hint">Relances planifiées à 3 jours de l’échéance.</div>
-      </div>
-
-      <div class="kpi">
-        <div class="kpi__label">En retard</div>
-        <div class="kpi__value">
-          {{ renewals_overdue|length }}
+          {{ renewals_urgent|length }}
           <span class="badge badge--danger">Priorité</span>
         </div>
-        <div class="kpi__hint">Échéance dépassée — action recommandée.</div>
+        <div class="kpi__hint">Retards, derniers renouvellements ou échéances proches.</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi__label">Retards</div>
+        <div class="kpi__value">
+          {{ renewals_overdue|length }}
+          <span class="badge badge--danger">À relancer</span>
+        </div>
+        <div class="kpi__hint">Échéances dépassées — action recommandée.</div>
+      </div>
+
+      <div class="kpi">
+        <div class="kpi__label">Activité Ordo</div>
+        <div class="kpi__value">
+          {{ activity_metrics.urgent_detected|default:0 }}
+          <span class="badge badge--ok">Auto</span>
+        </div>
+        <div class="kpi__hint">Alertes détectées automatiquement par Ordo.</div>
       </div>
     </div>
 
@@ -221,7 +230,7 @@
       </div>
     </div>
 
-    <!-- À surveiller -->
+    <!-- Dashboard V9 -->
     <section class="card" style="margin-bottom:16px;">
       <div class="card__header">
         <h3 class="card__title">
@@ -231,43 +240,167 @@
               <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
             </svg>
           </span>
-          À surveiller
+          Notifications à envoyer
         </h3>
-
         <div class="chips">
-          <span class="chip">J-5: {{ renewals_due_5|length }}</span>
-          <span class="chip">J-3: {{ renewals_due_3|length }}</span>
+          <span class="chip">À envoyer: {{ renewals_notifications_due|length }}</span>
         </div>
       </div>
 
       <div class="card__body">
-
-        <div class="section-title">
-          <div>Échéance dans 5 jours</div>
-          <span class="badge badge--warn">J-5</span>
-        </div>
-
-        {% if renewals_due_5 %}
+        {% if renewals_notifications_due %}
           <div class="tablewrap">
             <table>
               <thead>
               <tr>
                 <th>Réf.</th>
                 <th>Patient</th>
-                <th>Date médecin</th>
+                <th>Cycle</th>
                 <th>Échéance</th>
-                <th>Statut</th>
+                <th>Règle</th>
+                <th>Canal</th>
                 <th>Action</th>
               </tr>
               </thead>
               <tbody>
-              {% for p in renewals_due_5 %}
+              {% for item in renewals_notifications_due %}
+                {% with p=item.prescription cycle=item.cycle rule=item.rule %}
                 <tr>
-                  <td class="nowrap">#{{ p.id }}</td>
+                  <td class="nowrap">#{% if p %}{{ p.id }}{% else %}—{% endif %}</td>
+                  <td>
+                    {% if p and p.patient %}
+                      <div style="font-weight:900;">{{ p.patient.email|default:"—" }}</div>
+                      {% if p.patient.full_name %}
+                        <div class="patient-sub">{{ p.patient.full_name }}</div>
+                      {% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td class="nowrap">
+                    {% if cycle %}{{ cycle.cycle_number|default:"—" }}{% else %}—{% endif %}
+                  </td>
+                  <td class="nowrap">
+                    {% if item.due_date %}{{ item.due_date|date:"d/m/Y" }}{% else %}—{% endif %}
+                  </td>
+                  <td class="nowrap">
+                    {% if rule %}<span class="badge badge--warn">{{ rule.name }}</span>{% else %}—{% endif %}
+                  </td>
+                  <td class="nowrap">
+                    {% if item.send_email %}<span class="badge">Email</span>{% endif %}
+                    {% if item.send_sms %}<span class="badge">SMS</span>{% endif %}
+                  </td>
+                  <td>
+                    {% if p %}
+                    <div class="actionbar">
+                      {% if item.send_email %}
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
+                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
+                          Email
+                        </button>
+                      </form>
+                      {% endif %}
+
+                      {% if item.send_sms %}
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
+                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
+                          SMS
+                        </button>
+                      </form>
+                      {% endif %}
+
+                      <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
+                    </div>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endwith %}
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="hint">Aucune notification à envoyer aujourd’hui.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Renouvellements actifs -->
+    <section class="card" style="margin-bottom:16px;">
+      <div class="card__header">
+        <h3 class="card__title">Renouvellements actifs</h3>
+        <div class="chips">
+          <span class="chip">Actifs: {{ renewals_active|length }}</span>
+          <span class="chip">Confirmés: {{ renewals_confirmed|length }}</span>
+          <span class="chip">En préparation: {{ renewals_preparing|length }}</span>
+          <span class="chip">Prêts: {{ renewals_ready|length }}</span>
+        </div>
+      </div>
+
+      <div class="card__body">
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi__label">Confirmés</div>
+            <div class="kpi__value">{{ renewals_confirmed|length }} <span class="badge badge--ok">Reçus</span></div>
+            <div class="kpi__hint">Cycles reçus et en attente de traitement.</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi__label">Préparations en cours</div>
+            <div class="kpi__value">{{ renewals_preparing|length }} <span class="badge badge--warn">En cours</span></div>
+            <div class="kpi__hint">Cycles en préparation par l’équipe.</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi__label">Commandes prêtes</div>
+            <div class="kpi__value">{{ renewals_ready|length }} <span class="badge badge--ok">Prêt</span></div>
+            <div class="kpi__hint">Cycles prêts à être délivrés.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Urgences -->
+    <section class="card" style="margin-bottom:16px;">
+      <div class="card__header">
+        <h3 class="card__title">Urgences</h3>
+        <div class="chips">
+          <span class="chip chip--danger">Urgences: {{ renewals_urgent|length }}</span>
+        </div>
+      </div>
+
+      <div class="card__body">
+        {% if renewals_urgent %}
+          <div class="tablewrap">
+            <table>
+              <thead>
+              <tr>
+                <th>Réf.</th>
+                <th>Patient</th>
+                <th>Cycle</th>
+                <th>Restants</th>
+                <th>Échéance</th>
+                <th>Motif</th>
+                <th>Action</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for item in renewals_urgent %}
+                {% with p=item.prescription cycle=item.cycle %}
+                <tr>
+                  <td class="nowrap">#{% if p %}{{ p.id }}{% else %}—{% endif %}</td>
 
                   <td>
-                    {% if p.patient %}
-                      <div style="font-weight:900;">{{ p.patient.email }}</div>
+                    {% if p and p.patient %}
+                      <div style="font-weight:900;">{{ p.patient.email|default:"—" }}</div>
                       {% if p.patient.full_name %}
                         <div class="patient-sub">{{ p.patient.full_name }}</div>
                       {% endif %}
@@ -276,41 +409,162 @@
                     {% endif %}
                   </td>
 
-                  <td class="nowrap">{{ p.established_at|date:"d/m/Y" }}</td>
-                  <td class="nowrap">{{ p.renewal_end_date|date:"d/m/Y" }}</td>
+                  <td class="nowrap">
+                    {% if cycle %}{{ cycle.cycle_number|default:"—" }}{% else %}—{% endif %}
+                  </td>
 
                   <td class="nowrap">
-                    <span class="badge badge--warn">J-{{ p.renewal_days_left }}</span>
+                    {{ item.remaining_cycles|default:"—" }}
+                  </td>
+
+                  <td class="nowrap">
+                    {% if item.due_date %}{{ item.due_date|date:"d/m/Y" }}{% else %}—{% endif %}
+                  </td>
+
+                  <td class="nowrap">
+                    <span class="badge badge--danger">{{ item.reason|default:"Urgence" }}</span>
                   </td>
 
                   <td>
+                    {% if p %}
                     <div class="actionbar">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 5 %}" style="margin:0;">
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="5" data-prescription="{{ p.id }}">
+                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
                           Email
                         </button>
                       </form>
 
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 5 %}" style="margin:0;">
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="5" data-prescription="{{ p.id }}">
+                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
                           SMS
                         </button>
                       </form>
 
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
+                    {% else %}
+                      —
+                    {% endif %}
                   </td>
                 </tr>
+                {% endwith %}
               {% endfor %}
               </tbody>
             </table>
           </div>
+        {% else %}
+          <div class="hint">Aucune urgence détectée.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Derniers renouvellements -->
+    <section class="card" style="margin-bottom:16px;">
+      <div class="card__header">
+        <h3 class="card__title">Derniers renouvellements</h3>
+        <div class="chips">
+          <span class="chip">Final: {{ renewals_final|length }}</span>
+        </div>
+      </div>
+
+      <div class="card__body">
+        {% if renewals_final %}
+          <div class="tablewrap">
+            <table>
+              <thead>
+              <tr>
+                <th>Réf.</th>
+                <th>Patient</th>
+                <th>Cycle</th>
+                <th>Cycles restants</th>
+                <th>Action</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for item in renewals_final %}
+                {% with p=item.prescription cycle=item.cycle %}
+                <tr>
+                  <td class="nowrap">#{% if p %}{{ p.id }}{% else %}—{% endif %}</td>
+
+                  <td>
+                    {% if p and p.patient %}
+                      <div style="font-weight:900;">{{ p.patient.email|default:"—" }}</div>
+                      {% if p.patient.full_name %}
+                        <div class="patient-sub">{{ p.patient.full_name }}</div>
+                      {% endif %}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+
+                  <td class="nowrap">
+                    {% if cycle %}{{ cycle.cycle_number|default:"—" }}{% else %}—{% endif %}
+                  </td>
+
+                  <td class="nowrap">{{ item.remaining_cycles|default:"0" }}</td>
+
+                  <td>
+                    {% if p %}
+                    <div class="actionbar">
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
+                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
+                          Email
+                        </button>
+                      </form>
+
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
+                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
+                          SMS
+                        </button>
+                      </form>
+
+                      <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
+                    </div>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endwith %}
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="hint">Aucun dernier renouvellement détecté.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Legacy V8 -->
+    <section class="card" style="margin-bottom:16px;">
+      <div class="card__header">
+        <h3 class="card__title">Ancien suivi V8 — J-5 / J-3</h3>
+        <div class="chips">
+          <span class="chip">J-5: {{ renewals_due_5|length }}</span>
+          <span class="chip">J-3: {{ renewals_due_3|length }}</span>
+        </div>
+      </div>
+
+      <div class="card__body">
+        <div class="section-title">
+          <div>Échéance dans 5 jours</div>
+          <span class="badge badge--warn">J-5</span>
+        </div>
+        {% if renewals_due_5 %}
+          <div class="hint">{{ renewals_due_5|length }} renouvellement(s) J-5 encore détecté(s) par l’ancien moteur.</div>
         {% else %}
           <div class="hint">Aucun renouvellement J-5.</div>
         {% endif %}
@@ -321,75 +575,11 @@
           <div>Échéance dans 3 jours</div>
           <span class="badge badge--warn">J-3</span>
         </div>
-
         {% if renewals_due_3 %}
-          <div class="tablewrap">
-            <table>
-              <thead>
-              <tr>
-                <th>Réf.</th>
-                <th>Patient</th>
-                <th>Date médecin</th>
-                <th>Échéance</th>
-                <th>Statut</th>
-                <th>Action</th>
-              </tr>
-              </thead>
-              <tbody>
-              {% for p in renewals_due_3 %}
-                <tr>
-                  <td class="nowrap">#{{ p.id }}</td>
-
-                  <td>
-                    {% if p.patient %}
-                      <div style="font-weight:900;">{{ p.patient.email }}</div>
-                      {% if p.patient.full_name %}
-                        <div class="patient-sub">{{ p.patient.full_name }}</div>
-                      {% endif %}
-                    {% else %}
-                      —
-                    {% endif %}
-                  </td>
-
-                  <td class="nowrap">{{ p.established_at|date:"d/m/Y" }}</td>
-                  <td class="nowrap">{{ p.renewal_end_date|date:"d/m/Y" }}</td>
-
-                  <td class="nowrap">
-                    <span class="badge badge--warn">J-{{ p.renewal_days_left }}</span>
-                  </td>
-
-                  <td>
-                    <div class="actionbar">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 3 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="3" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
-                      </form>
-
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 3 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="3" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
-                      </form>
-
-                      <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
-          </div>
+          <div class="hint">{{ renewals_due_3|length }} renouvellement(s) J-3 encore détecté(s) par l’ancien moteur.</div>
         {% else %}
           <div class="hint">Aucun renouvellement J-3.</div>
         {% endif %}
-
       </div>
     </section>
 
