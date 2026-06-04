@@ -648,13 +648,52 @@ def compute_renewals_watch_v9():
             "urgent_detected": 0,
         }
 
+    try:
+        from core_emails.models import PrescriptionRenewalCycle, PrescriptionStatus
+
+        active_cycles = list(
+            PrescriptionRenewalCycle.objects
+            .select_related("prescription", "prescription__patient")
+            .filter(closed_at__isnull=True)
+            .exclude(status=PrescriptionStatus.DELIVERED)
+            .exclude(status=PrescriptionStatus.ARCHIVED)
+            .order_by("-started_at")
+        )
+
+        confirmed_cycles = [
+            cycle for cycle in active_cycles
+            if cycle.status == PrescriptionStatus.RECEIVED
+        ]
+
+        preparing_cycles = [
+            cycle for cycle in active_cycles
+            if cycle.status == PrescriptionStatus.IN_PROGRESS
+        ]
+
+        ready_cycles = [
+            cycle for cycle in active_cycles
+            if cycle.status == PrescriptionStatus.READY
+        ]
+
+    except Exception:
+        active_cycles = []
+        confirmed_cycles = []
+        preparing_cycles = []
+        ready_cycles = []
+
     return {
         # Compatibilité V8
         "renewals_due_5": due_5,
         "renewals_due_3": due_3,
         "renewals_overdue": overdue,
 
-        # Données V9
+        # Données V9 - listes métier
+        "renewals_active": active_cycles,
+        "renewals_confirmed": confirmed_cycles,
+        "renewals_preparing": preparing_cycles,
+        "renewals_ready": ready_cycles,
+
+        # Données V9 - règles/alertes
         "renewals_notifications_due": notifications_due,
         "renewals_overdue_v9": overdue_v9,
         "renewals_urgent": urgent,
