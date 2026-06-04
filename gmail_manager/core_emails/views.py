@@ -228,18 +228,27 @@ def dashboard(request):
 @login_required
 def renewals_dashboard(request):
     """
-    Dashboard Renouvellements — version propre V8
-    Source unique : compute_renewals_watch
+    Dashboard Renouvellements — backend V9 compatible.
+
+    Objectif :
+    - conserver l'ancien affichage V8 ;
+    - ajouter les données V9 au contexte ;
+    - ne pas modifier le template dans ce lot.
     """
-    from core_emails.services import compute_renewals_watch
+    from core_emails.services import compute_renewals_watch_v9
 
-    due_5, due_3, overdue = compute_renewals_watch()
+    context = compute_renewals_watch_v9()
 
-    context = {
-        "renewals_due_5": due_5,
-        "renewals_due_3": due_3,
-        "renewals_overdue": overdue,
-    }
+    # Sécurité : garantir les clés historiques attendues par le template V8.
+    context.setdefault("renewals_due_5", [])
+    context.setdefault("renewals_due_3", [])
+    context.setdefault("renewals_overdue", [])
+
+    # Sécurité : garantir les nouvelles clés V9.
+    context.setdefault("renewals_notifications_due", [])
+    context.setdefault("renewals_urgent", [])
+    context.setdefault("renewals_final", [])
+    context.setdefault("activity_metrics", {})
 
     return render(request, "core_emails/renewals_dashboard.html", context)
 
