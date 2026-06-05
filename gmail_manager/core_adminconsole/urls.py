@@ -1,6 +1,7 @@
 from __future__ import annotations
 from django.urls import path
 from . import views
+from . import views_renewals
 
 app_name = "core_adminconsole"
 
@@ -53,4 +54,12 @@ urlpatterns = [
     path("audit/", views.audit_log, name="audit_log"),
     path("audit/export/", views.audit_export_csv, name="audit_export_csv"),
     path("audit/clear/", views.audit_clear, name="audit_clear"),
+
+    # Renewals Admin Console
+    path("renewals/settings/", views_renewals.renewals_settings, name="renewals_settings"),
+    path("renewals/rules/", views_renewals.renewals_rules, name="renewals_rules"),
+    path("renewals/rules/<int:pk>/delete/", views_renewals.renewals_rule_delete, name="renewals_rule_delete"),
+    path("renewals/templates/", views_renewals.renewals_templates, name="renewals_templates"),
+    path("renewals/holidays/", views_renewals.renewals_holidays, name="renewals_holidays"),
+    path("renewals/holidays/<int:pk>/delete/", views_renewals.renewals_holiday_delete, name="renewals_holiday_delete"),
 ]

@@ -1,0 +1,79 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+
+<style>
+.renewals-grid{display:grid;grid-template-columns:260px 1fr;gap:18px}
+.renewals-menu{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px}
+.renewals-menu a{display:block;padding:10px 12px;border-radius:10px;text-decoration:none;font-weight:800;color:#1f2937}
+.renewals-menu a:hover{background:#f3f4f6}
+.renewals-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px}
+.renewals-table{width:100%;border-collapse:collapse}
+.renewals-table th,.renewals-table td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+.renewals-table th{background:#f8fafc;color:#64748b;font-size:12px;text-transform:uppercase}
+.renewals-form p{margin:10px 0}
+.renewals-form input,.renewals-form select,.renewals-form textarea{max-width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px}
+.btn-danger-small{background:#fee2e2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:7px 10px;font-weight:800}
+.btn-soft-small{background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:8px;padding:7px 10px;font-weight:800;text-decoration:none}
+.badge-ok{background:#dcfce7;color:#166534;border-radius:999px;padding:4px 8px;font-weight:800}
+.badge-off{background:#fee2e2;color:#991b1b;border-radius:999px;padding:4px 8px;font-weight:800}
+</style>
+
+<div class="renewals-grid">
+  <aside class="renewals-menu">
+    <h3>Renouvellements</h3>
+    <a href="{% url 'core_adminconsole:renewals_settings' %}">Paramètres généraux</a>
+    <a href="{% url 'core_adminconsole:renewals_rules' %}">Règles de notification</a>
+    <a href="{% url 'core_adminconsole:renewals_templates' %}">Templates SMS / Email</a>
+    <a href="{% url 'core_adminconsole:renewals_holidays' %}">Jours fermés</a>
+    <hr>
+    <a href="{% url 'core_adminconsole:home' %}">← Admin Console</a>
+  </aside>
+  <main>
+
+<div class="renewals-card">
+  <h1>Règles de notification</h1>
+
+  <form method="post" class="renewals-form">
+    {% csrf_token %}
+    {% if edit_obj %}<input type="hidden" name="rule_id" value="{{ edit_obj.id }}">{% endif %}
+    {{ form.as_p }}
+    <button class="btn-soft-small" type="submit">{% if edit_obj %}Modifier{% else %}Créer{% endif %}</button>
+    {% if edit_obj %}<a class="btn-soft-small" href="{% url 'core_adminconsole:renewals_rules' %}">Annuler</a>{% endif %}
+  </form>
+</div>
+
+<div class="renewals-card">
+  <h2>Règles existantes</h2>
+  <table class="renewals-table">
+    <thead>
+      <tr>
+        <th>Nom</th><th>Actif</th><th>J-</th><th>SMS</th><th>Email</th><th>Ordre</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rules %}
+      <tr>
+        <td>{{ r.name }}</td>
+        <td>{% if r.active %}<span class="badge-ok">Actif</span>{% else %}<span class="badge-off">Inactif</span>{% endif %}</td>
+        <td>{{ r.days_before }}</td>
+        <td>{{ r.send_sms }}</td>
+        <td>{{ r.send_email }}</td>
+        <td>{{ r.sort_order }}</td>
+        <td>
+          <a class="btn-soft-small" href="?edit={{ r.id }}">Modifier</a>
+          <form method="post" action="{% url 'core_adminconsole:renewals_rule_delete' r.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button class="btn-danger-small" type="submit" onclick="return confirm('Supprimer cette règle ?')">Supprimer</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7">Aucune règle.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+  </main>
+</div>
+{% endblock %}
