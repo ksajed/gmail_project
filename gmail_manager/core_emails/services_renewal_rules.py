@@ -381,28 +381,134 @@ def _get_remaining_cycles(cycle: Any) -> Optional[int]:
     return None
 
 
+def _get_final_alert_threshold_cycles() -> int:
+    """
+    Retourne le seuil d'alerte avant dernier renouvellement.
+
+    Par défaut :
+    - 0 = uniquement le dernier cycle réel, exemple Cycle 6/6.
+
+    Si un seuil est configuré plus tard :
+    - 1 = alerte aussi un cycle avant la fin, exemple Cycle 5/6.
+    """
+    try:
+        from django.conf import settings
+        value = getattr(settings, "ORDO_RENEWAL_FINAL_ALERT_THRESHOLD_CYCLES", 0)
+        value = int(value or 0)
+        return max(0, value)
+    except Exception:
+        return 0
+
+
+def _get_cycle_total_cycles(cycle: Any) -> Optional[int]:
+    """
+    Nombre total de cycles patient.
+
+    Règle V9 :
+    total_cycles = renewal_times + 1
+
+    Exemple :
+    renewal_times = 2
+    total_cycles = 3
+    Cycle 1 = initial
+    Cycle 2 = renouvellement 1
+    Cycle 3 = renouvellement 2
+    """
+    prescription = getattr(cycle, "prescription", None)
+    if prescription is None:
+        return None
+
+    renewal_info = getattr(prescription, "renewal_info", None)
+    if renewal_info is None:
+        return None
+
+    try:
+        renewal_times = int(getattr(renewal_info, "renewal_times", 0) or 0)
+    except (TypeError, ValueError):
+        return None
+
+    if renewal_times < 0:
+        return None
+
+    return renewal_times + 1
+
+
+def _get_cycle_remaining_until_final(cycle: Any) -> Optional[int]:
+    """
+    Nombre de cycles restants avant la fin, à partir du cycle courant.
+
+    Exemple :
+    Cycle 5/6 => 1
+    Cycle 6/6 => 0
+    """
+    total_cycles = _get_cycle_total_cycles(cycle)
+    if total_cycles is None:
+        return None
+
+    try:
+        current_cycle_number = int(getattr(cycle, "cycle_number", 0) or 0)
+    except (TypeError, ValueError):
+        return None
+
+    if current_cycle_number <= 0:
+        return None
+
+    return max(0, total_cycles - current_cycle_number)
+
+
 def get_final_renewals(today: Optional[date] = None) -> List[Dict[str, Any]]:
     """
     Retourne les cycles considérés comme derniers renouvellements.
 
-    Lot 4 :
-    seuil simple = remaining_cycles == 0
+    Règle métier V9 :
+    - cycle courant = dernier cycle réel ;
+    - ou seuil configuré atteint si disponible.
 
-    Le seuil administrable pourra être ajouté plus tard.
+    Exemples :
+    - Cycle 6/6 avec seuil 0 => final ;
+    - Cycle 12/12 avec seuil 0 => final ;
+    - Cycle 5/6 avec seuil 1 => final précoce.
+
+    Cette fonction :
+    - ne crée aucun cycle ;
+    - ne modifie aucune donnée ;
+    - ne touche pas renewal_done_count ;
+    - conserve l'historique.
     """
+    threshold = _get_final_alert_threshold_cycles()
     results: List[Dict[str, Any]] = []
 
     for cycle in _get_active_cycles():
-        remaining = _get_remaining_cycles(cycle)
-        if remaining is None:
+        total_cycles = _get_cycle_total_cycles(cycle)
+        remaining_until_final = _get_cycle_remaining_until_final(cycle)
+
+        if total_cycles is None or remaining_until_final is None:
             continue
 
-        if remaining == 0:
-            results.append({
-                "cycle": cycle,
-                "prescription": getattr(cycle, "prescription", None),
-                "remaining_cycles": remaining,
-            })
+        try:
+            current_cycle_number = int(getattr(cycle, "cycle_number", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+
+        is_final = remaining_until_final <= threshold
+
+        if not is_final:
+            continue
+
+        due_date = _get_cycle_due_date(cycle)
+
+        results.append({
+            "cycle": cycle,
+            "prescription": getattr(cycle, "prescription", None),
+            "cycle_number": current_cycle_number,
+            "current_cycle_number": current_cycle_number,
+            "total_cycles": total_cycles,
+            "remaining_cycles": remaining_until_final,
+            "remaining_until_final": remaining_until_final,
+            "threshold": threshold,
+            "due_date": due_date,
+            "reason": "DERNIER_RENOUVELLEMENT" if remaining_until_final == 0 else "PROCHE_DERNIER_RENOUVELLEMENT",
+        })
 
     return results
 
