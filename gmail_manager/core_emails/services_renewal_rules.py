@@ -560,17 +560,115 @@ def get_urgent_renewals(today: Optional[date] = None) -> List[Dict[str, Any]]:
 
 def get_activity_metrics(today: Optional[date] = None) -> Dict[str, int]:
     """
-    Retourne des métriques simples.
+    Retourne les métriques d'activité automatique Ordo V9.
 
-    Lot 4 :
-    on reste défensif et non intrusif.
-    Si une métrique ne peut pas être calculée, elle vaut 0.
+    Objectif :
+    - alimenter le dashboard ;
+    - ne jamais faire planter l'interface ;
+    - ne pas créer de logs parallèles ;
+    - utiliser les modèles existants en priorité.
+
+    Métriques :
+    - sms_sent_today
+    - emails_sent_today
+    - cycles_created_today
+    - cycles_closed_today
+    - overdue_detected
+    - urgent_detected
     """
-    return {
+    current_day = _today(today)
+
+    metrics = {
         "sms_sent_today": 0,
         "emails_sent_today": 0,
         "cycles_created_today": 0,
         "cycles_closed_today": 0,
-        "overdue_detected": len(get_overdue_renewals(today=today)),
-        "urgent_detected": len(get_urgent_renewals(today=today)),
+        "overdue_detected": 0,
+        "urgent_detected": 0,
     }
+
+    day_start = datetime.combine(current_day, datetime.min.time())
+    day_end = datetime.combine(current_day, datetime.max.time())
+
+    try:
+        from django.utils import timezone
+        if timezone.is_naive(day_start):
+            day_start = timezone.make_aware(day_start, timezone.get_current_timezone())
+        if timezone.is_naive(day_end):
+            day_end = timezone.make_aware(day_end, timezone.get_current_timezone())
+    except Exception:
+        pass
+
+    # 1) SMS envoyés aujourd'hui
+    try:
+        from core_notifications.models import SmsMessage
+
+        metrics["sms_sent_today"] = SmsMessage.objects.filter(
+            sent_at__gte=day_start,
+            sent_at__lte=day_end,
+        ).count()
+    except Exception:
+        try:
+            from core_notifications.models import SmsAttempt
+
+            metrics["sms_sent_today"] = SmsAttempt.objects.filter(
+                success=True,
+                requested_at__gte=day_start,
+                requested_at__lte=day_end,
+            ).count()
+        except Exception:
+            metrics["sms_sent_today"] = 0
+
+    # 2) Emails envoyés aujourd'hui
+    # On utilise les champs existants sur PrescriptionRenewalCycle.
+    # Pas de nouveau log parallèle.
+    try:
+        from django.db.models import Q
+        from core_emails.models import PrescriptionRenewalCycle
+
+        email_q = (
+            Q(reminder_5_patient_email_sent_at__gte=day_start, reminder_5_patient_email_sent_at__lte=day_end)
+            | Q(reminder_3_patient_email_sent_at__gte=day_start, reminder_3_patient_email_sent_at__lte=day_end)
+            | Q(doctor_email_sent_at__gte=day_start, doctor_email_sent_at__lte=day_end)
+        )
+
+        metrics["emails_sent_today"] = PrescriptionRenewalCycle.objects.filter(email_q).distinct().count()
+    except Exception:
+        metrics["emails_sent_today"] = 0
+
+    # 3) Cycles créés aujourd'hui
+    try:
+        from core_emails.models import PrescriptionRenewalCycle
+
+        metrics["cycles_created_today"] = PrescriptionRenewalCycle.objects.filter(
+            started_at__gte=day_start,
+            started_at__lte=day_end,
+        ).count()
+    except Exception:
+        metrics["cycles_created_today"] = 0
+
+    # 4) Cycles clôturés aujourd'hui
+    try:
+        from core_emails.models import PrescriptionRenewalCycle
+
+        metrics["cycles_closed_today"] = PrescriptionRenewalCycle.objects.filter(
+            closed_at__gte=day_start,
+            closed_at__lte=day_end,
+        ).count()
+    except Exception:
+        metrics["cycles_closed_today"] = 0
+
+    # 5) Retards détectés
+    try:
+        metrics["overdue_detected"] = len(get_overdue_renewals(today=current_day))
+    except Exception:
+        metrics["overdue_detected"] = 0
+
+    # 6) Urgences détectées
+    try:
+        metrics["urgent_detected"] = len(get_urgent_renewals(today=current_day))
+    except Exception:
+        metrics["urgent_detected"] = 0
+
+    return metrics
+
