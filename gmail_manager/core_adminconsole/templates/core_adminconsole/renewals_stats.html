@@ -1,0 +1,88 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+<h1>Statistiques — Renouvellements V9</h1>
+
+<div class="card">
+  <form method="get" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+    <div>
+      <label><strong>Période</strong></label><br>
+      <select name="period">
+        <option value="today" {% if period == "today" %}selected{% endif %}>Aujourd’hui</option>
+        <option value="7d" {% if period == "7d" %}selected{% endif %}>7 derniers jours</option>
+        <option value="30d" {% if period == "30d" %}selected{% endif %}>30 derniers jours</option>
+        <option value="month" {% if period == "month" %}selected{% endif %}>Mois courant</option>
+        <option value="custom" {% if period == "custom" %}selected{% endif %}>Période personnalisée</option>
+      </select>
+    </div>
+
+    <div>
+      <label><strong>Du</strong></label><br>
+      <input type="date" name="from" value="{{ custom_from }}">
+    </div>
+
+    <div>
+      <label><strong>Au</strong></label><br>
+      <input type="date" name="to" value="{{ custom_to }}">
+    </div>
+
+    <button class="btn" type="submit">Afficher</button>
+  </form>
+
+  <p style="margin-top:12px;">
+    Période affichée :
+    <strong>{{ date_from }}</strong> → <strong>{{ date_to }}</strong>
+  </p>
+</div>
+
+<div class="card">
+  <h2>Activité automatique</h2>
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:14px;">
+    <div class="stat-card"><strong>{{ stats.sms_sent }}</strong><br>SMS envoyés</div>
+    <div class="stat-card"><strong>{{ stats.sms_failed }}</strong><br>SMS échoués</div>
+    <div class="stat-card"><strong>{{ stats.email_marked }}</strong><br>Emails marqués envoyés</div>
+    <div class="stat-card"><strong>{{ stats.due_notifications_today }}</strong><br>Notifications dues aujourd’hui</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Cycles</h2>
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:14px;">
+    <div class="stat-card"><strong>{{ stats.cycles_created }}</strong><br>Cycles créés</div>
+    <div class="stat-card"><strong>{{ stats.cycles_closed }}</strong><br>Cycles clôturés</div>
+    <div class="stat-card"><strong>{{ stats.active_cycles }}</strong><br>Cycles actifs</div>
+    <div class="stat-card"><strong>{{ stats.final_renewals }}</strong><br>Derniers renouvellements</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Statuts opérationnels</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(160px,1fr));gap:14px;">
+    <div class="stat-card"><strong>{{ stats.confirmed_cycles }}</strong><br>Confirmés</div>
+    <div class="stat-card"><strong>{{ stats.preparing_cycles }}</strong><br>En préparation</div>
+    <div class="stat-card"><strong>{{ stats.ready_cycles }}</strong><br>Prêts</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Alertes métier</h2>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:14px;">
+    <div class="stat-card"><strong>{{ stats.overdue_detected }}</strong><br>Retards détectés</div>
+    <div class="stat-card"><strong>{{ stats.urgent_detected }}</strong><br>Urgences détectées</div>
+  </div>
+</div>
+
+<style>
+.stat-card{
+  padding:18px;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  background:#f8fafc;
+  text-align:center;
+}
+.stat-card strong{
+  display:block;
+  font-size:30px;
+  color:#0f172a;
+}
+</style>
+{% endblock %}

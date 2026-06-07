@@ -61,6 +61,7 @@ urlpatterns = [
     path("renewals/rules/<int:pk>/delete/", views_renewals.renewals_rule_delete, name="renewals_rule_delete"),
     path("renewals/templates/", views_renewals.renewals_templates, name="renewals_templates"),
     path("renewals/holidays/", views_renewals.renewals_holidays, name="renewals_holidays"),
+    path("renewals/stats/", views_renewals.renewals_stats, name="renewals_stats"),
     path("renewals/logs/", views_renewals.renewals_logs, name="renewals_logs"),
     path("renewals/holidays/<int:pk>/delete/", views_renewals.renewals_holiday_delete, name="renewals_holiday_delete"),
 ]

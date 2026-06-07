@@ -367,3 +367,129 @@ def renewals_logs(request):
         "date_from": date_from_raw,
         "date_to": date_to_raw,
     })
+
+
+@_admin_required
+def renewals_stats(request):
+    """
+    Statistiques Renouvellements V9.
+    Lecture seule.
+    """
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.utils.dateparse import parse_date
+
+    period = request.GET.get("period", "today")
+    custom_from = request.GET.get("from", "")
+    custom_to = request.GET.get("to", "")
+
+    today = timezone.localdate()
+
+    if period == "7d":
+        date_from = today - timedelta(days=6)
+        date_to = today
+    elif period == "30d":
+        date_from = today - timedelta(days=29)
+        date_to = today
+    elif period == "month":
+        date_from = today.replace(day=1)
+        date_to = today
+    elif period == "custom":
+        date_from = parse_date(custom_from) or today
+        date_to = parse_date(custom_to) or today
+    else:
+        period = "today"
+        date_from = today
+        date_to = today
+
+    stats = {
+        "sms_sent": 0,
+        "sms_failed": 0,
+        "email_marked": 0,
+        "cycles_created": 0,
+        "cycles_closed": 0,
+        "due_notifications_today": 0,
+        "overdue_detected": 0,
+        "urgent_detected": 0,
+        "final_renewals": 0,
+        "active_cycles": 0,
+        "confirmed_cycles": 0,
+        "preparing_cycles": 0,
+        "ready_cycles": 0,
+    }
+
+    def make_dt_range(d1, d2):
+        from datetime import datetime, time
+        start = timezone.make_aware(datetime.combine(d1, time.min))
+        end = timezone.make_aware(datetime.combine(d2, time.max))
+        return start, end
+
+    dt_from, dt_to = make_dt_range(date_from, date_to)
+
+    try:
+        from core_notifications.models import SmsMessage
+        stats["sms_sent"] = SmsMessage.objects.filter(
+            sent_at__gte=dt_from,
+            sent_at__lte=dt_to,
+            status="SENT",
+        ).count()
+        stats["sms_failed"] = SmsMessage.objects.filter(
+            created_at__gte=dt_from,
+            created_at__lte=dt_to,
+            status="FAILED",
+        ).count()
+    except Exception:
+        pass
+
+    try:
+        from django.db.models import Q
+        from core_emails.models import PrescriptionRenewalCycle, PrescriptionStatus
+
+        stats["cycles_created"] = PrescriptionRenewalCycle.objects.filter(
+            started_at__gte=dt_from,
+            started_at__lte=dt_to,
+        ).count()
+
+        stats["cycles_closed"] = PrescriptionRenewalCycle.objects.filter(
+            closed_at__gte=dt_from,
+            closed_at__lte=dt_to,
+        ).count()
+
+        email_q = (
+            Q(reminder_5_patient_email_sent_at__gte=dt_from, reminder_5_patient_email_sent_at__lte=dt_to)
+            | Q(reminder_3_patient_email_sent_at__gte=dt_from, reminder_3_patient_email_sent_at__lte=dt_to)
+            | Q(doctor_email_sent_at__gte=dt_from, doctor_email_sent_at__lte=dt_to)
+        )
+        stats["email_marked"] = PrescriptionRenewalCycle.objects.filter(email_q).distinct().count()
+
+        active_qs = PrescriptionRenewalCycle.objects.filter(closed_at__isnull=True).exclude(status=PrescriptionStatus.DELIVERED)
+        stats["active_cycles"] = active_qs.count()
+        stats["confirmed_cycles"] = active_qs.filter(status=PrescriptionStatus.RECEIVED).count()
+        stats["preparing_cycles"] = active_qs.filter(status=PrescriptionStatus.IN_PROGRESS).count()
+        stats["ready_cycles"] = active_qs.filter(status=PrescriptionStatus.READY).count()
+    except Exception:
+        pass
+
+    try:
+        from core_emails.services_renewal_rules import (
+            get_due_notifications,
+            get_overdue_renewals,
+            get_urgent_renewals,
+            get_final_renewals,
+        )
+
+        stats["due_notifications_today"] = len(get_due_notifications(today=today))
+        stats["overdue_detected"] = len(get_overdue_renewals(today=today))
+        stats["urgent_detected"] = len(get_urgent_renewals(today=today))
+        stats["final_renewals"] = len(get_final_renewals(today=today))
+    except Exception:
+        pass
+
+    return render(request, "core_adminconsole/renewals_stats.html", {
+        "stats": stats,
+        "period": period,
+        "date_from": date_from,
+        "date_to": date_to,
+        "custom_from": custom_from,
+        "custom_to": custom_to,
+    })
