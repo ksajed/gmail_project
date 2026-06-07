@@ -1,0 +1,134 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+<h1>Logs automatiques — Renouvellements V9</h1>
+
+<div class="card">
+  <form method="get" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+    <div>
+      <label><strong>Du</strong></label><br>
+      <input type="date" name="from" value="{{ date_from }}">
+    </div>
+
+    <div>
+      <label><strong>Au</strong></label><br>
+      <input type="date" name="to" value="{{ date_to }}">
+    </div>
+
+    <div>
+      <label><strong>Type</strong></label><br>
+      <select name="type">
+        <option value="all" {% if log_type == "all" %}selected{% endif %}>Tous</option>
+        <option value="sms" {% if log_type == "sms" %}selected{% endif %}>SMS</option>
+        <option value="attempts" {% if log_type == "attempts" %}selected{% endif %}>Tentatives SMS</option>
+        <option value="events" {% if log_type == "events" %}selected{% endif %}>Événements renouvellements</option>
+        <option value="history" {% if log_type == "history" %}selected{% endif %}>Historique métier</option>
+        <option value="cron" {% if log_type == "cron" %}selected{% endif %}>Fichier cron</option>
+      </select>
+    </div>
+
+    <button class="btn" type="submit">Filtrer</button>
+    <a class="btn" href="{% url 'core_adminconsole:renewals_logs' %}">Réinitialiser</a>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Résumé</h2>
+  <p>
+    SMS : <strong>{{ counts.sms }}</strong> —
+    Tentatives : <strong>{{ counts.attempts }}</strong> —
+    Événements : <strong>{{ counts.events }}</strong> —
+    Historique : <strong>{{ counts.history }}</strong> —
+    Cron : <strong>{{ counts.cron }}</strong>
+  </p>
+</div>
+
+{% if log_type == "all" or log_type == "sms" %}
+<div class="card">
+  <h2>SMS envoyés / créés</h2>
+  <table class="admin-table">
+    <tr><th>Date création</th><th>Date envoi</th><th>Prescription</th><th>Téléphone</th><th>Purpose</th><th>Status</th></tr>
+    {% for s in sms_messages %}
+    <tr>
+      <td>{{ s.created_at }}</td>
+      <td>{{ s.sent_at|default:"—" }}</td>
+      <td>{% if s.related_prescription %}#{{ s.related_prescription.id }}{% else %}—{% endif %}</td>
+      <td>{{ s.recipient_phone }}</td>
+      <td>{{ s.purpose }}</td>
+      <td>{{ s.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">Aucun SMS.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if log_type == "all" or log_type == "attempts" %}
+<div class="card">
+  <h2>Tentatives SMS</h2>
+  <table class="admin-table">
+    <tr><th>Date</th><th>SMS</th><th>Essai</th><th>Succès</th><th>Erreur</th></tr>
+    {% for a in sms_attempts %}
+    <tr>
+      <td>{{ a.requested_at }}</td>
+      <td>#{{ a.sms_message_id }}</td>
+      <td>{{ a.attempt_no }}</td>
+      <td>{{ a.success }}</td>
+      <td>{{ a.error_message|default:"—" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Aucune tentative SMS.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if log_type == "all" or log_type == "events" %}
+<div class="card">
+  <h2>Événements renouvellements</h2>
+  <table class="admin-table">
+    <tr><th>Date</th><th>Prescription</th><th>Numéro</th><th>Note</th><th>Utilisateur</th></tr>
+    {% for e in renewal_events %}
+    <tr>
+      <td>{{ e.ordered_at }}</td>
+      <td>#{{ e.prescription_id }}</td>
+      <td>{{ e.number }}</td>
+      <td>{{ e.note }}</td>
+      <td>{{ e.created_by|default:"—" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Aucun événement.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if log_type == "all" or log_type == "history" %}
+<div class="card">
+  <h2>Historique métier renouvellements</h2>
+  <table class="admin-table">
+    <tr><th>Date</th><th>Prescription</th><th>Statut</th><th>Commentaire</th><th>Utilisateur</th></tr>
+    {% for h in status_history %}
+    <tr>
+      <td>{{ h.changed_at }}</td>
+      <td>#{{ h.prescription_id }}</td>
+      <td>{{ h.new_status }}</td>
+      <td>{{ h.comment }}</td>
+      <td>{{ h.changed_by|default:"—" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Aucun historique.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if log_type == "all" or log_type == "cron" %}
+<div class="card">
+  <h2>Fichier cron renewals.log</h2>
+  <pre style="white-space:pre-wrap;background:#0f172a;color:#e5e7eb;padding:16px;border-radius:12px;max-height:420px;overflow:auto;">{% for line in file_logs %}{{ line }}
+{% empty %}Aucune ligne dans renewals.log.{% endfor %}</pre>
+</div>
+{% endif %}
+
+{% endblock %}

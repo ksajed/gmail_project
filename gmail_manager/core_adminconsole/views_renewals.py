@@ -254,3 +254,116 @@ def renewals_holiday_delete(request, pk: int):
     obj.delete()
     messages.success(request, f"Jour fermé supprimé : {label}")
     return redirect("core_adminconsole:renewals_holidays")
+
+
+@_admin_required
+
+@_admin_required
+def renewals_logs(request):
+    """
+    Logs automatiques renouvellements V9.
+    Lecture seule.
+    Filtrage par période et par type de log.
+    """
+    from pathlib import Path
+    from django.utils.dateparse import parse_date
+    from django.utils import timezone
+    from datetime import datetime, time
+
+    log_type = request.GET.get("type", "all")
+    date_from_raw = request.GET.get("from", "")
+    date_to_raw = request.GET.get("to", "")
+
+    date_from = parse_date(date_from_raw) if date_from_raw else None
+    date_to = parse_date(date_to_raw) if date_to_raw else None
+
+    dt_from = None
+    dt_to = None
+
+    if date_from:
+        dt_from = timezone.make_aware(datetime.combine(date_from, time.min))
+    if date_to:
+        dt_to = timezone.make_aware(datetime.combine(date_to, time.max))
+
+    def apply_range(qs, field):
+        if dt_from:
+            qs = qs.filter(**{f"{field}__gte": dt_from})
+        if dt_to:
+            qs = qs.filter(**{f"{field}__lte": dt_to})
+        return qs
+
+    sms_messages = []
+    sms_attempts = []
+    renewal_events = []
+    status_history = []
+    file_logs = []
+
+    if log_type in ("all", "sms"):
+        try:
+            from core_notifications.models import SmsMessage
+            qs = SmsMessage.objects.select_related("related_prescription").order_by("-created_at")
+            qs = apply_range(qs, "created_at")
+            sms_messages = qs[:200]
+        except Exception:
+            sms_messages = []
+
+    if log_type in ("all", "attempts"):
+        try:
+            from core_notifications.models import SmsAttempt
+            qs = SmsAttempt.objects.select_related("sms_message").order_by("-requested_at")
+            qs = apply_range(qs, "requested_at")
+            sms_attempts = qs[:200]
+        except Exception:
+            sms_attempts = []
+
+    if log_type in ("all", "events"):
+        try:
+            from core_emails.models import PrescriptionRenewalEvent
+            qs = PrescriptionRenewalEvent.objects.select_related("prescription", "created_by").order_by("-ordered_at")
+            qs = apply_range(qs, "ordered_at")
+            renewal_events = qs[:200]
+        except Exception:
+            renewal_events = []
+
+    if log_type in ("all", "history"):
+        try:
+            from core_emails.models import PrescriptionStatusHistory
+            qs = (
+                PrescriptionStatusHistory.objects
+                .select_related("prescription", "changed_by")
+                .filter(comment__icontains="renouvellement")
+                .order_by("-changed_at")
+            )
+            qs = apply_range(qs, "changed_at")
+            status_history = qs[:200]
+        except Exception:
+            status_history = []
+
+    if log_type in ("all", "cron"):
+        try:
+            log_path = Path("/home/ksajed/gmail_project/logs/renewals.log")
+            if log_path.exists():
+                lines = log_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+                file_logs = lines[-300:]
+        except Exception:
+            file_logs = []
+
+    counts = {
+        "sms": len(sms_messages),
+        "attempts": len(sms_attempts),
+        "events": len(renewal_events),
+        "history": len(status_history),
+        "cron": len(file_logs),
+    }
+
+    return render(request, "core_adminconsole/renewals_logs.html", {
+        "sms_messages": sms_messages,
+        "sms_attempts": sms_attempts,
+        "renewal_events": renewal_events,
+        "status_history": status_history,
+        "file_logs": file_logs,
+        "counts": counts,
+        "log_type": log_type,
+        "date_from": date_from_raw,
+        "date_to": date_to_raw,
+    })
