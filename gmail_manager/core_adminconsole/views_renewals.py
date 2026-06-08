@@ -493,3 +493,165 @@ def renewals_stats(request):
         "custom_from": custom_from,
         "custom_to": custom_to,
     })
+
+
+@_admin_required
+def renewals_alerts(request):
+    """
+    Centre d'alertes pharmacien — Renouvellements V9.
+    Lecture seule.
+    """
+    from pathlib import Path
+    from datetime import timedelta
+    from django.utils import timezone
+    from django.db.models import Q
+
+    today = timezone.localdate()
+    now = timezone.now()
+    seven_days_ago = now - timedelta(days=7)
+    thirty_days_ago = now - timedelta(days=30)
+    sixty_days_ago = now - timedelta(days=60)
+
+    alerts = {
+        "sms_failed_today": 0,
+        "sms_failed_7d": 0,
+        "renewals_overdue": 0,
+        "urgent_renewals": 0,
+        "cycles_blocked": 0,
+        "missing_phone": 0,
+        "missing_email": 0,
+        "due_notifications": 0,
+        "cron_status": "UNKNOWN",
+        "cron_last_line": "",
+    }
+
+    sms_failed = []
+    overdue_items = []
+    urgent_items = []
+    blocked_cycles = []
+    missing_phone_items = []
+    missing_email_items = []
+    due_notifications = []
+
+    # SMS en erreur
+    try:
+        from core_notifications.models import SmsMessage, SmsStatus
+
+        sms_failed_qs = (
+            SmsMessage.objects
+            .select_related("related_prescription")
+            .filter(status=SmsStatus.FAILED)
+            .order_by("-created_at")
+        )
+
+        alerts["sms_failed_today"] = sms_failed_qs.filter(created_at__date=today).count()
+        alerts["sms_failed_7d"] = sms_failed_qs.filter(created_at__gte=seven_days_ago).count()
+        sms_failed = sms_failed_qs[:20]
+    except Exception:
+        sms_failed = []
+
+    # Retards / urgences / notifications dues
+    try:
+        from core_emails.services_renewal_rules import (
+            get_overdue_renewals,
+            get_urgent_renewals,
+            get_due_notifications,
+        )
+
+        overdue_items = get_overdue_renewals(today=today)[:30]
+        urgent_items = get_urgent_renewals(today=today)[:30]
+        due_notifications = get_due_notifications(today=today)[:30]
+
+        alerts["renewals_overdue"] = len(overdue_items)
+        alerts["urgent_renewals"] = len(urgent_items)
+        alerts["due_notifications"] = len(due_notifications)
+    except Exception:
+        overdue_items = []
+        urgent_items = []
+        due_notifications = []
+
+    # Cycles bloqués : ouverts depuis plus de 60 jours
+    try:
+        from core_emails.models import PrescriptionRenewalCycle, PrescriptionStatus, PrescriptionType
+
+        blocked_cycles_qs = (
+            PrescriptionRenewalCycle.objects
+            .select_related("prescription", "prescription__patient")
+            .filter(closed_at__isnull=True, started_at__lte=sixty_days_ago)
+            .exclude(status=PrescriptionStatus.DELIVERED)
+            .order_by("started_at")
+        )
+
+        alerts["cycles_blocked"] = blocked_cycles_qs.count()
+        blocked_cycles = blocked_cycles_qs[:30]
+
+        base_renewal_qs = PrescriptionRenewalCycle.objects.select_related(
+            "prescription",
+            "prescription__patient",
+        ).filter(
+            closed_at__isnull=True,
+            prescription__type=PrescriptionType.RENOUVELLEMENT,
+        )
+
+        missing_phone_qs = base_renewal_qs.filter(
+            Q(prescription__patient__isnull=True)
+            | Q(prescription__patient__phone_number__isnull=True)
+            | Q(prescription__patient__phone_number="")
+        ).order_by("-started_at")
+
+        missing_email_qs = base_renewal_qs.filter(
+            Q(prescription__patient__isnull=True)
+            | Q(prescription__patient__email__isnull=True)
+            | Q(prescription__patient__email="")
+        ).order_by("-started_at")
+
+        alerts["missing_phone"] = missing_phone_qs.count()
+        alerts["missing_email"] = missing_email_qs.count()
+
+        missing_phone_items = missing_phone_qs[:30]
+        missing_email_items = missing_email_qs[:30]
+
+    except Exception:
+        blocked_cycles = []
+        missing_phone_items = []
+        missing_email_items = []
+
+    # Cron : lecture simple du fichier renewals.log
+    try:
+        log_path = Path("/home/ksajed/gmail_project/logs/renewals.log")
+        if log_path.exists():
+            lines = [l for l in log_path.read_text(encoding="utf-8", errors="ignore").splitlines() if l.strip()]
+            if lines:
+                alerts["cron_last_line"] = lines[-1]
+                # Si le fichier a été modifié aujourd'hui, on considère OK.
+                mtime = timezone.datetime.fromtimestamp(log_path.stat().st_mtime, tz=timezone.get_current_timezone())
+                if mtime.date() == today:
+                    alerts["cron_status"] = "OK"
+                else:
+                    alerts["cron_status"] = "STALE"
+            else:
+                alerts["cron_status"] = "EMPTY"
+        else:
+            alerts["cron_status"] = "NO_LOG_FILE"
+    except Exception:
+        alerts["cron_status"] = "ERROR"
+
+    total_critical = (
+        alerts["sms_failed_today"]
+        + alerts["renewals_overdue"]
+        + alerts["cycles_blocked"]
+        + alerts["missing_phone"]
+    )
+
+    return render(request, "core_adminconsole/renewals_alerts.html", {
+        "alerts": alerts,
+        "sms_failed": sms_failed,
+        "overdue_items": overdue_items,
+        "urgent_items": urgent_items,
+        "blocked_cycles": blocked_cycles,
+        "missing_phone_items": missing_phone_items,
+        "missing_email_items": missing_email_items,
+        "due_notifications": due_notifications,
+        "total_critical": total_critical,
+        "today": today,
+    })

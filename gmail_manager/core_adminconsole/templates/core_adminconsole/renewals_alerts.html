@@ -1,0 +1,174 @@
+{% extends "core_adminconsole/base.html" %}
+{% block content %}
+
+<h1>🚨 Alertes critiques — Renouvellements V9</h1>
+
+<div class="card">
+  <h2>État global</h2>
+  {% if total_critical == 0 %}
+    <div class="alert-ok">✅ Aucun problème critique détecté aujourd’hui.</div>
+  {% elif total_critical <= 5 %}
+    <div class="alert-warn">⚠️ {{ total_critical }} alerte(s) critique(s) à vérifier.</div>
+  {% else %}
+    <div class="alert-danger">🚨 {{ total_critical }} alertes critiques. Action recommandée rapidement.</div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Résumé</h2>
+  <div class="grid-alerts">
+    <div class="stat-card danger"><strong>{{ alerts.sms_failed_today }}</strong><br>SMS échoués aujourd’hui</div>
+    <div class="stat-card danger"><strong>{{ alerts.renewals_overdue }}</strong><br>Renouvellements en retard</div>
+    <div class="stat-card warn"><strong>{{ alerts.urgent_renewals }}</strong><br>Urgences détectées</div>
+    <div class="stat-card danger"><strong>{{ alerts.cycles_blocked }}</strong><br>Cycles bloqués +60j</div>
+    <div class="stat-card warn"><strong>{{ alerts.missing_phone }}</strong><br>Sans téléphone</div>
+    <div class="stat-card warn"><strong>{{ alerts.missing_email }}</strong><br>Sans email</div>
+    <div class="stat-card info"><strong>{{ alerts.due_notifications }}</strong><br>Notifications dues</div>
+    <div class="stat-card info"><strong>{{ alerts.cron_status }}</strong><br>État cron</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Dernier traitement automatique</h2>
+  <p><strong>État :</strong> {{ alerts.cron_status }}</p>
+  <p><strong>Dernière ligne log :</strong> {{ alerts.cron_last_line|default:"—" }}</p>
+  <p style="color:#64748b;">Contrôle basé sur /home/ksajed/gmail_project/logs/renewals.log</p>
+</div>
+
+<div class="card">
+  <h2>SMS échoués</h2>
+  <table class="admin-table">
+    <tr><th>Date</th><th>Prescription</th><th>Téléphone</th><th>Erreur</th><th>Status</th></tr>
+    {% for s in sms_failed %}
+    <tr>
+      <td>{{ s.created_at }}</td>
+      <td>{% if s.related_prescription %}#{{ s.related_prescription_id }}{% else %}—{% endif %}</td>
+      <td>{{ s.recipient_phone }}</td>
+      <td>{{ s.last_error_message|default:"—" }}</td>
+      <td>{{ s.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Aucun SMS échoué.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Renouvellements en retard</h2>
+  <table class="admin-table">
+    <tr><th>Prescription</th><th>Cycle</th><th>Échéance</th><th>Jours retard</th><th>Statut</th></tr>
+    {% for item in overdue_items %}
+    <tr>
+      <td>#{{ item.prescription.id }}</td>
+      <td>{{ item.cycle.cycle_number }}</td>
+      <td>{{ item.due_date }}</td>
+      <td>{{ item.days_overdue|default:"—" }}</td>
+      <td>{{ item.cycle.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Aucun retard.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Urgences</h2>
+  <table class="admin-table">
+    <tr><th>Prescription</th><th>Cycle</th><th>Échéance</th><th>Jours restants</th><th>Statut</th></tr>
+    {% for item in urgent_items %}
+    <tr>
+      <td>#{{ item.prescription.id }}</td>
+      <td>{{ item.cycle.cycle_number }}</td>
+      <td>{{ item.due_date }}</td>
+      <td>{{ item.days_left|default:"—" }}</td>
+      <td>{{ item.cycle.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Aucune urgence.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Cycles bloqués depuis plus de 60 jours</h2>
+  <table class="admin-table">
+    <tr><th>Prescription</th><th>Cycle</th><th>Démarré le</th><th>Statut</th></tr>
+    {% for c in blocked_cycles %}
+    <tr>
+      <td>#{{ c.prescription_id }}</td>
+      <td>{{ c.cycle_number }}</td>
+      <td>{{ c.started_at }}</td>
+      <td>{{ c.status }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">Aucun cycle bloqué.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Ordonnances sans téléphone</h2>
+  <table class="admin-table">
+    <tr><th>Prescription</th><th>Cycle</th><th>Patient</th><th>Email</th></tr>
+    {% for c in missing_phone_items %}
+    <tr>
+      <td>#{{ c.prescription_id }}</td>
+      <td>{{ c.cycle_number }}</td>
+      <td>{{ c.prescription.patient|default:"—" }}</td>
+      <td>{% if c.prescription.patient %}{{ c.prescription.patient.email|default:"—" }}{% else %}—{% endif %}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">Aucun manque téléphone.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Ordonnances sans email</h2>
+  <table class="admin-table">
+    <tr><th>Prescription</th><th>Cycle</th><th>Patient</th><th>Téléphone</th></tr>
+    {% for c in missing_email_items %}
+    <tr>
+      <td>#{{ c.prescription_id }}</td>
+      <td>{{ c.cycle_number }}</td>
+      <td>{{ c.prescription.patient|default:"—" }}</td>
+      <td>{% if c.prescription.patient %}{{ c.prescription.patient.phone_number|default:"—" }}{% else %}—{% endif %}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">Aucun manque email.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<style>
+.grid-alerts{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(160px,1fr));
+  gap:14px;
+}
+.stat-card{
+  padding:18px;
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  background:#f8fafc;
+  text-align:center;
+}
+.stat-card strong{
+  display:block;
+  font-size:28px;
+  color:#0f172a;
+}
+.stat-card.danger strong{color:#b91c1c;}
+.stat-card.warn strong{color:#c2410c;}
+.stat-card.info strong{color:#0369a1;}
+.alert-ok,.alert-warn,.alert-danger{
+  padding:14px;
+  border-radius:12px;
+  font-weight:800;
+}
+.alert-ok{background:#dcfce7;color:#166534;}
+.alert-warn{background:#ffedd5;color:#9a3412;}
+.alert-danger{background:#fee2e2;color:#991b1b;}
+</style>
+
+{% endblock %}
