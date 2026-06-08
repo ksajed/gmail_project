@@ -314,7 +314,10 @@ def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
 
         for rule in rules:
             notification_date = calculate_notification_date(due_date, rule)
-            if notification_date != current_day:
+            # V9 Lot 18 : rattrapage automatique.
+            # Si le serveur était arrêté le jour prévu,
+            # on traite aussi les notifications passées non encore envoyées.
+            if notification_date > current_day:
                 continue
 
             if _rule_already_sent(cycle, rule):
