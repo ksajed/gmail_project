@@ -655,3 +655,134 @@ def renewals_alerts(request):
         "total_critical": total_critical,
         "today": today,
     })
+
+
+@_admin_required
+def renewals_export_excel(request):
+    """
+    Export Excel des renouvellements V9.
+    Lecture seule.
+    """
+    from io import BytesIO
+    from datetime import datetime
+    from django.http import HttpResponse
+    from django.utils import timezone
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    from core_emails.models import (
+        PrescriptionRenewalCycle,
+        PrescriptionStatus,
+    )
+    from core_emails.services_renewal_rules import _get_cycle_due_date
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Renouvellements V9"
+
+    headers = [
+        "Prescription",
+        "Patient",
+        "Téléphone",
+        "Email",
+        "Cycle",
+        "Statut cycle",
+        "Début cycle",
+        "Clôture cycle",
+        "Échéance",
+        "Jours restants",
+        "Jours retard",
+        "Alerte",
+    ]
+
+    ws.append(headers)
+
+    header_fill = PatternFill("solid", fgColor="1E293B")
+    header_font = Font(color="FFFFFF", bold=True)
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center")
+
+    today = timezone.localdate()
+
+    cycles = (
+        PrescriptionRenewalCycle.objects
+        .select_related("prescription", "prescription__patient")
+        .order_by("-started_at")[:5000]
+    )
+
+    for c in cycles:
+        p = c.prescription
+        patient = getattr(p, "patient", None)
+
+        due = _get_cycle_due_date(c)
+
+        days_left = ""
+        days_late = ""
+        alert = ""
+
+        if due:
+            delta = (due - today).days
+            if delta >= 0:
+                days_left = delta
+            else:
+                days_late = abs(delta)
+
+            if delta < 0 and not c.closed_at:
+                alert = "RETARD"
+            elif delta <= 5 and not c.closed_at:
+                alert = "URGENT"
+            elif c.closed_at:
+                alert = "CLÔTURÉ"
+            else:
+                alert = "OK"
+
+        ws.append([
+            f"#{p.id}" if p else "",
+            str(patient) if patient else "",
+            getattr(patient, "phone_number", "") if patient else "",
+            getattr(patient, "email", "") if patient else "",
+            c.cycle_number,
+            c.status,
+            timezone.localtime(c.started_at).strftime("%Y-%m-%d %H:%M") if c.started_at else "",
+            timezone.localtime(c.closed_at).strftime("%Y-%m-%d %H:%M") if c.closed_at else "",
+            due.strftime("%Y-%m-%d") if due else "",
+            days_left,
+            days_late,
+            alert,
+        ])
+
+    # Mise en forme
+    for col in range(1, len(headers) + 1):
+        letter = get_column_letter(col)
+        ws.column_dimensions[letter].width = 20
+
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = ws.dimensions
+
+    for row in ws.iter_rows(min_row=2):
+        alert_cell = row[11]
+        if alert_cell.value == "RETARD":
+            alert_cell.fill = PatternFill("solid", fgColor="FECACA")
+        elif alert_cell.value == "URGENT":
+            alert_cell.fill = PatternFill("solid", fgColor="FED7AA")
+        elif alert_cell.value == "OK":
+            alert_cell.fill = PatternFill("solid", fgColor="BBF7D0")
+        elif alert_cell.value == "CLÔTURÉ":
+            alert_cell.fill = PatternFill("solid", fgColor="E5E7EB")
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"ordo-renouvellements-v9-{today.strftime('%Y%m%d')}.xlsx"
+
+    response = HttpResponse(
+        output.read(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

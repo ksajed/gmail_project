@@ -63,6 +63,7 @@ urlpatterns = [
     path("renewals/holidays/", views_renewals.renewals_holidays, name="renewals_holidays"),
     path("renewals/stats/", views_renewals.renewals_stats, name="renewals_stats"),
     path("renewals/alerts/", views_renewals.renewals_alerts, name="renewals_alerts"),
+    path("renewals/export/", views_renewals.renewals_export_excel, name="renewals_export_excel"),
     path("renewals/logs/", views_renewals.renewals_logs, name="renewals_logs"),
     path("renewals/holidays/<int:pk>/delete/", views_renewals.renewals_holiday_delete, name="renewals_holiday_delete"),
 ]
