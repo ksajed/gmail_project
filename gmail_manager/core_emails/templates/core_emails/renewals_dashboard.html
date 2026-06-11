@@ -199,7 +199,7 @@
       <div class="kpi">
         <div class="kpi__label">Retards</div>
         <div class="kpi__value">
-          {{ renewals_overdue|length }}
+          {{ renewals_overdue_v9|length }}
           <span class="badge badge--danger">À relancer</span>
         </div>
         <div class="kpi__hint">Échéances dépassées — action recommandée.</div>
@@ -548,94 +548,6 @@
       </div>
     </section>
 
-    <!-- Retard -->
-    <section class="card">
-      <div class="card__header">
-        <h3 class="card__title">
-          <span class="ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M12 9v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-            </svg>
-          </span>
-          En retard
-        </h3>
-
-        <div class="chips">
-          <span class="chip chip--danger">Retard: {{ renewals_overdue|length }}</span>
-        </div>
-      </div>
-
-      <div class="card__body">
-        {% if renewals_overdue %}
-          <div class="tablewrap">
-            <table>
-              <thead>
-              <tr>
-                <th>Réf.</th>
-                <th>Patient</th>
-                <th>Date médecin</th>
-                <th>Échéance</th>
-                <th>Statut</th>
-                <th>Action</th>
-              </tr>
-              </thead>
-              <tbody>
-              {% for p in renewals_overdue %}
-                <tr>
-                  <td class="nowrap">#{{ p.id }}</td>
-
-                  <td>
-                    {% if p.patient %}
-                      <div style="font-weight:900;">{{ p.patient.email }}</div>
-                      {% if p.patient.full_name %}
-                        <div class="patient-sub">{{ p.patient.full_name }}</div>
-                      {% endif %}
-                    {% else %}
-                      —
-                    {% endif %}
-                  </td>
-
-                  <td class="nowrap">{{ p.established_at|date:"d/m/Y" }}</td>
-                  <td class="nowrap">{{ p.renewal_end_date|date:"d/m/Y" }}</td>
-
-                  <td class="nowrap">
-                    <span class="badge badge--danger">RETARD</span>
-                  </td>
-
-                  <td>
-                    <div class="actionbar">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
-                      </form>
-
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
-                      </form>
-
-                      <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="hint">Aucun renouvellement en retard.</div>
-        {% endif %}
-      </div>
-    </section>
 
   </div>
 </div>

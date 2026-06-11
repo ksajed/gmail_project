@@ -189,9 +189,6 @@ def dashboard(request):
         renewals_v9_context = compute_renewals_watch_v9()
     except Exception:
         renewals_v9_context = {
-            "renewals_due_5": [],
-            "renewals_due_3": [],
-            "renewals_overdue": [],
             "renewals_notifications_due": [],
             "renewals_overdue_v9": [],
             "renewals_urgent": [],
@@ -239,10 +236,7 @@ def renewals_dashboard(request):
 
     context = compute_renewals_watch_v9()
 
-    # Sécurité : garantir les clés historiques attendues par le template V8.
-    context.setdefault("renewals_due_5", [])
-    context.setdefault("renewals_due_3", [])
-    context.setdefault("renewals_overdue", [])
+    # ORDO V9 : dashboard renouvellements 100 % moteur V9.
 
     # Sécurité : garantir les nouvelles clés V9.
     context.setdefault("renewals_notifications_due", [])

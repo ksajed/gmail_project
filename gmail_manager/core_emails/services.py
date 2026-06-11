@@ -600,13 +600,13 @@ def compute_renewals_watch_v9():
     - ne remplace pas compute_renewals_watch_from_delivered()
     - ne modifie aucune donnée
     - ne change pas le workflow
-    - garde la compatibilité V8 via renewals_due_5 / renewals_due_3 / renewals_overdue
+    - expose uniquement les données V9 du moteur renouvellements
 
     Retour :
     {
-        "renewals_due_5": [...],
-        "renewals_due_3": [...],
-        "renewals_overdue": [...],
+        "renewals_notifications_due": [...],
+        "renewals_urgent": [...],
+        "renewals_overdue_v9": [...],
 
         "renewals_notifications_due": [...],
         "renewals_urgent": [...],
@@ -683,9 +683,6 @@ def compute_renewals_watch_v9():
 
     return {
         # Compatibilité V8
-        "renewals_due_5": due_5,
-        "renewals_due_3": due_3,
-        "renewals_overdue": overdue,
 
         # Données V9 - listes métier
         "renewals_active": active_cycles,
