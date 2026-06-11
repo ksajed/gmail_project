@@ -548,41 +548,6 @@
       </div>
     </section>
 
-    <!-- Legacy V8 -->
-    <section class="card" style="margin-bottom:16px;">
-      <div class="card__header">
-        <h3 class="card__title">Ancien suivi V8 — J-5 / J-3</h3>
-        <div class="chips">
-          <span class="chip">J-5: {{ renewals_due_5|length }}</span>
-          <span class="chip">J-3: {{ renewals_due_3|length }}</span>
-        </div>
-      </div>
-
-      <div class="card__body">
-        <div class="section-title">
-          <div>Échéance dans 5 jours</div>
-          <span class="badge badge--warn">J-5</span>
-        </div>
-        {% if renewals_due_5 %}
-          <div class="hint">{{ renewals_due_5|length }} renouvellement(s) J-5 encore détecté(s) par l’ancien moteur.</div>
-        {% else %}
-          <div class="hint">Aucun renouvellement J-5.</div>
-        {% endif %}
-
-        <div style="height:1px; background:var(--border); margin:16px 0;"></div>
-
-        <div class="section-title">
-          <div>Échéance dans 3 jours</div>
-          <span class="badge badge--warn">J-3</span>
-        </div>
-        {% if renewals_due_3 %}
-          <div class="hint">{{ renewals_due_3|length }} renouvellement(s) J-3 encore détecté(s) par l’ancien moteur.</div>
-        {% else %}
-          <div class="hint">Aucun renouvellement J-3.</div>
-        {% endif %}
-      </div>
-    </section>
-
     <!-- Retard -->
     <section class="card">
       <div class="card__header">
