@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Centre des anomalies</title>
+</head>
+<body>
+
+<h1>Centre des anomalies</h1>
+
+<h2>Statistiques</h2>
+
+<ul>
+    <li>Total : {{ stats.total }}</li>
+    <li>Critiques : {{ stats.critical }}</li>
+    <li>High : {{ stats.high }}</li>
+    <li>Medium : {{ stats.medium }}</li>
+    <li>Low : {{ stats.low }}</li>
+    <li>Résolues : {{ stats.resolved }}</li>
+</ul>
+
+<h2>Anomalies ouvertes</h2>
+
+<table border="1" cellpadding="6">
+<tr>
+    <th>Prescription</th>
+    <th>Règle</th>
+    <th>Gravité</th>
+    <th>Score</th>
+    <th>Message</th>
+</tr>
+
+{% for a in anomalies %}
+<tr>
+    <td>{{ a.prescription_id }}</td>
+    <td>{{ a.rule_code }}</td>
+    <td>{{ a.severity }}</td>
+    <td>{{ a.score }} %</td>
+    <td>{{ a.message }}</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="5">Aucune anomalie.</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>
