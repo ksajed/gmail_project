@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "core_accounts",
     "core_gmail",
     "core_emails",
+    "core_anomalies",
     "core_attachments",
     "core_notifications",
     "core_patients",
