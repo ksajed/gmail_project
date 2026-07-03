@@ -27,6 +27,7 @@
     <th>Gravité</th>
     <th>Score</th>
     <th>Message</th>
+    <th>Action</th>
 </tr>
 
 {% for a in anomalies %}
@@ -36,10 +37,15 @@
     <td>{{ a.severity }}</td>
     <td>{{ a.score }} %</td>
     <td>{{ a.message }}</td>
+    <td>
+        <a href="{% url 'anomaly_detail' a.id %}">
+            Voir
+        </a>
+    </td>
 </tr>
 {% empty %}
 <tr>
-<td colspan="5">Aucune anomalie.</td>
+    <td colspan="6">Aucune anomalie.</td>
 </tr>
 {% endfor %}
 

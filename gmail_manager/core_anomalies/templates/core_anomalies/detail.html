@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Détail anomalie</title>
+</head>
+<body>
+
+<p><a href="/anomalies/">← Retour au centre des anomalies</a></p>
+
+<h1>Anomalie {{ anomaly.rule_code }}</h1>
+
+<h2>Ordonnance</h2>
+<p>
+    Ordonnance #{{ anomaly.prescription_id }}
+    -
+    <a href="{{ prescription_url }}" target="_blank">Ouvrir ordonnance</a>
+</p>
+
+<h2>Gravité</h2>
+<p>{{ anomaly.severity }}</p>
+
+<h2>Score</h2>
+<p>{{ anomaly.score }} %</p>
+
+<h2>Statut</h2>
+<p>{{ anomaly.status }}</p>
+
+<h2>Pourquoi ?</h2>
+<p>{{ anomaly.message }}</p>
+
+<h2>Suggestion</h2>
+<p>{{ anomaly.suggestion }}</p>
+
+<h2>Historique</h2>
+<ul>
+    <li>Créée : {{ anomaly.created_at }}</li>
+    <li>Dernière mise à jour : {{ anomaly.updated_at }}</li>
+    {% if anomaly.resolved_at %}
+        <li>Résolue : {{ anomaly.resolved_at }}</li>
+    {% endif %}
+</ul>
+
+<h2>Commentaire</h2>
+<p>{{ anomaly.comment|default:"Aucun commentaire." }}</p>
+
+</body>
+</html>
