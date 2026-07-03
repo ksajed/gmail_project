@@ -1,0 +1,253 @@
+# ORDO V10 - Cartographie Renouvellements
+
+Date : 20260701_191211
+
+## Fichiers Python
+- `make_ordo_ai_copy.py`
+- `core_attachments/models.py`
+- `core_attachments/admin.py`
+- `core_attachments/views.py`
+- `gmail_manager/settings.py`
+- `gmail_manager/test_runner.py`
+- `gmail_manager/urls.py`
+- `core_people/models.py`
+- `core_people/admin.py`
+- `core_people/views.py`
+- `core_notifications/models.py`
+- `core_notifications/admin.py`
+- `core_notifications/views.py`
+- `core_notifications/pharmacy_identity.py`
+- `core_notifications/services.py`
+- `core_notifications/messages_sms.py`
+- `core_notifications/apps.py`
+- `core_accounts/admin.py`
+- `core_emails/services_notifications.py`
+- `core_emails/states.py`
+- `core_emails/__init__.py`
+- `core_emails/models.py`
+- `core_emails/signals.py`
+- `core_emails/admin.py`
+- `core_emails/services_workflow.py`
+- `core_emails/views.py`
+- `core_emails/email_sender.py`
+- `core_emails/emailing.py`
+- `core_emails/services_renewal_templates.py`
+- `core_emails/urls.py`
+- `core_emails/labels.py`
+- `core_emails/services.py`
+- `core_emails/timeline.py`
+- `core_emails/services_renewal_rules.py`
+- `core_emails/models_assignment.py`
+- `core_emails/apps.py`
+- `core_gmail/models.py`
+- `core_gmail/admin.py`
+- `core_gmail/email_sender.py`
+- `core_gmail/services.py`
+- `scripts/ovh_list_senders.py`
+- `scripts/ovh_list_sms_services.py`
+- `scripts/ovh_send_test_sms.py`
+- `core_adminconsole/views.py`
+- `core_adminconsole/forms_accounts.py`
+- `core_adminconsole/urls.py`
+- `core_adminconsole/services.py`
+- `core_adminconsole/forms.py`
+- `core_adminconsole/views_renewals.py`
+- `core_patients/models.py`
+- `core_patients/admin.py`
+- `core_patients/views.py`
+- `core_patients/services.py`
+- `core_patients/migrations/0001_initial.py`
+- `core_adminconsole/management/commands/adminconsole_bootstrap_roles.py`
+- `scripts/v10/003_cartographie.py`
+- `scripts/patches/patch_services_workflow_v2_on_commit_safe.py`
+- `scripts/patches/patch_services_workflow_v1.py`
+- `scripts/patches/patch_services_workflow_v2_on_commit.py`
+- `scripts/v10/lib/utils.py`
+- `core_gmail/migrations/0001_initial.py`
+- `core_gmail/management/commands/fetch_gmail.py`
+- `core_emails/templatetags/prescription_extras.py`
+- `core_emails/tests/test_renewals_v9_engine.py`
+- `core_emails/tests/test_renewals_rules_regression.py`
+- `core_emails/tests/test_notifications_matrix.py`
+- `core_emails/tests/test_renewals_lot18_catchup.py`
+- `core_emails/tests/test_renewals_cycles_archiving_functional.py`
+- `core_emails/tests/test_renewals_cycles_functional.py`
+- `core_emails/tests/test_renewals_regression.py`
+- `core_emails/tests/test_notifications_general.py`
+- `core_emails/tests/test_renewals_functional.py`
+- `core_emails/migrations/0006_prescription_established_at_prescriptionrenewalinfo.py`
+- `core_emails/migrations/0004_alter_prescription_sender_type.py`
+- `core_emails/migrations/0007_prescriptionrenewalinfo_last_renewal_ordered_at_and_more.py`
+- `core_emails/migrations/0013_prescriptionnotificationsettings_processing_started_at.py`
+- `core_emails/migrations/0010_prescriptionnotificationsettings_free_text_message.py`
+- `core_emails/migrations/0001_initial.py`
+- `core_emails/migrations/0014_remove_prescriptionnotificationsettings_processing_started_at_and_more.py`
+- `core_emails/migrations/0008_prescriptionrenewalevent.py`
+- `core_emails/migrations/0011_prescription_delete_reason_prescription_deleted_at_and_more.py`
+- `core_emails/migrations/0015_renewalsettings_alter_prescription_status_and_more.py`
+- `core_emails/migrations/0016_renewals_v9_default_data.py`
+- `core_emails/migrations/0012_renewal_cycle_v1.py`
+- `core_emails/migrations/0005_alter_prescription_sender_type.py`
+- `core_emails/migrations/0009_prescriptionnotificationsettings_and_more.py`
+- `core_emails/migrations/0002_prescription_sender_type_prescriptionassignment.py`
+- `core_emails/migrations/0003_prescription_type.py`
+- `core_emails/management/commands/run_renewal_notifications.py`
+- `core_notifications/backends/ovh.py`
+- `core_notifications/tests/test_sms_services.py`
+- `core_notifications/migrations/0001_initial.py`
+- `core_notifications/migrations/0002_smstemplate_smsmessage_smsattempt.py`
+- `core_people/migrations/0001_initial.py`
+- `core_attachments/migrations/0001_initial.py`
+
+## Vues
+- `core_attachments/views.py`
+- `core_people/views.py`
+- `core_notifications/views.py`
+- `core_emails/views.py`
+- `core_adminconsole/views.py`
+- `core_adminconsole/views_renewals.py`
+- `core_patients/views.py`
+
+## Services
+- `core_notifications/services.py`
+- `core_emails/services_notifications.py`
+- `core_emails/services_workflow.py`
+- `core_emails/services_renewal_templates.py`
+- `core_emails/services.py`
+- `core_emails/services_renewal_rules.py`
+- `core_gmail/services.py`
+- `scripts/ovh_list_sms_services.py`
+- `core_adminconsole/services.py`
+- `core_adminconsole/views_renewals.py`
+- `core_patients/services.py`
+- `scripts/patches/patch_services_workflow_v2_on_commit_safe.py`
+- `scripts/patches/patch_services_workflow_v1.py`
+- `scripts/patches/patch_services_workflow_v2_on_commit.py`
+- `core_emails/tests/test_renewals_v9_engine.py`
+- `core_emails/tests/test_renewals_rules_regression.py`
+- `core_emails/tests/test_renewals_lot18_catchup.py`
+- `core_emails/tests/test_renewals_cycles_archiving_functional.py`
+- `core_emails/tests/test_renewals_cycles_functional.py`
+- `core_emails/tests/test_renewals_regression.py`
+- `core_emails/tests/test_renewals_functional.py`
+- `core_emails/migrations/0006_prescription_established_at_prescriptionrenewalinfo.py`
+- `core_emails/migrations/0007_prescriptionrenewalinfo_last_renewal_ordered_at_and_more.py`
+- `core_emails/migrations/0008_prescriptionrenewalevent.py`
+- `core_emails/migrations/0015_renewalsettings_alter_prescription_status_and_more.py`
+- `core_emails/migrations/0016_renewals_v9_default_data.py`
+- `core_emails/migrations/0012_renewal_cycle_v1.py`
+- `core_emails/management/commands/run_renewal_notifications.py`
+- `core_notifications/tests/test_sms_services.py`
+
+## Templates
+- `templates/core_emails/modals/create_prescription_modal.html`
+- `core_patients/templates/core_patients/patient_detail.html`
+- `core_adminconsole/templates/core_adminconsole/prescriptions_search.html`
+- `core_adminconsole/templates/core_adminconsole/account_edit.html`
+- `core_adminconsole/templates/core_adminconsole/nurse_confirm_toggle.html`
+- `core_adminconsole/templates/core_adminconsole/renewals_templates.html`
+- `core_adminconsole/templates/core_adminconsole/users_home.html`
+- `core_adminconsole/templates/core_adminconsole/home.html`
+- `core_adminconsole/templates/core_adminconsole/notifications_settings.html`
+- `core_adminconsole/templates/core_adminconsole/nurse_delete_confirm.html`
+- `core_adminconsole/templates/core_adminconsole/renewals_stats.html`
+- `core_adminconsole/templates/core_adminconsole/renewals_settings.html`
+- `core_adminconsole/templates/core_adminconsole/accounts_list.html`
+- `core_adminconsole/templates/core_adminconsole/prescriptions_trash.html`
+- `core_adminconsole/templates/core_adminconsole/patients_list.html`
+- `core_adminconsole/templates/core_adminconsole/audit_log.html`
+- `core_adminconsole/templates/core_adminconsole/prescriptions_list.html`
+- `core_adminconsole/templates/core_adminconsole/account_create.html`
+- `core_adminconsole/templates/core_adminconsole/renewals_logs.html`
+- `core_adminconsole/templates/core_adminconsole/renewals_alerts.html`
+- `core_adminconsole/templates/core_adminconsole/account_form.html`
+- `core_adminconsole/templates/core_adminconsole/renewals_holidays.html`
+- `core_adminconsole/templates/core_adminconsole/base.html`
+- `core_adminconsole/templates/core_adminconsole/nurse_form.html`
+- `core_adminconsole/templates/core_adminconsole/nurses_list.html`
+- `core_adminconsole/templates/core_adminconsole/gmail_tools.html`
+- `core_adminconsole/templates/core_adminconsole/nurse_confirm_delete.html`
+- `core_adminconsole/templates/core_adminconsole/renewals_rules.html`
+- `core_emails/templates/core_emails/dashboard.html`
+- `core_emails/templates/core_emails/renewals_dashboard.html`
+- `core_emails/templates/core_emails/_history_premium.html`
+- `core_emails/templates/core_emails/prescription_create.html`
+- `core_emails/templates/core_emails/prescription_detail.html`
+- `core_emails/templates/core_emails/base_detail.html`
+- `core_emails/templates/core_emails/login.html`
+- `core_emails/templates/core_emails/_status_card.html`
+- `core_emails/templates/core_emails/_prescription_type_card.html`
+- `core_emails/templates/core_emails/_nurse_card.html`
+- `core_emails/templates/core_emails/_patient_card.html`
+- `core_emails/templates/emails/status_archived.html`
+- `core_emails/templates/emails/status_validated.html`
+- `core_emails/templates/emails/status_received.html`
+- `core_emails/templates/emails/status_rejected.html`
+- `core_emails/templates/emails/status_delivered.html`
+- `core_emails/templates/emails/status_in_progress.html`
+
+## URLs
+- `gmail_manager/urls.py` : `path("", include("core_emails.urls")),`
+- `core_emails/urls.py` : `path("dashboard/renewals/", views.renewals_dashboard, name="renewals_dashboard"),`
+- `core_adminconsole/urls.py` : `path("prescriptions/", views.prescriptions_search, name="prescriptions_list"),`
+- `core_adminconsole/urls.py` : `path("prescriptions/", views.prescriptions_search, name="prescriptions_search"),`
+- `core_adminconsole/urls.py` : `path("prescriptions/trash/", views.prescriptions_trash, name="prescriptions_trash"),`
+- `core_adminconsole/urls.py` : `path("prescriptions/bulk-action/", views.prescriptions_bulk_action, name="prescriptions_bulk_action"),`
+- `core_adminconsole/urls.py` : `path("prescriptions/<int:pk>/trash/", views.prescription_soft_delete, name="prescription_soft_delete"),`
+- `core_adminconsole/urls.py` : `path("prescriptions/<int:pk>/restore/", views.prescription_restore, name="prescription_restore"),`
+- `core_adminconsole/urls.py` : `path("prescriptions/<int:pk>/purge/", views.prescription_purge, name="prescription_purge"),`
+- `core_adminconsole/urls.py` : `path("notifications/", views.notifications_settings, name="notifications_settings"),`
+- `core_adminconsole/urls.py` : `path("renewals/settings/", views_renewals.renewals_settings, name="renewals_settings"),`
+- `core_adminconsole/urls.py` : `path("renewals/rules/", views_renewals.renewals_rules, name="renewals_rules"),`
+- `core_adminconsole/urls.py` : `path("renewals/rules/<int:pk>/delete/", views_renewals.renewals_rule_delete, name="renewals_rule_delete"),`
+- `core_adminconsole/urls.py` : `path("renewals/templates/", views_renewals.renewals_templates, name="renewals_templates"),`
+- `core_adminconsole/urls.py` : `path("renewals/holidays/", views_renewals.renewals_holidays, name="renewals_holidays"),`
+- `core_adminconsole/urls.py` : `path("renewals/stats/", views_renewals.renewals_stats, name="renewals_stats"),`
+- `core_adminconsole/urls.py` : `path("renewals/alerts/", views_renewals.renewals_alerts, name="renewals_alerts"),`
+- `core_adminconsole/urls.py` : `path("renewals/export/", views_renewals.renewals_export_excel, name="renewals_export_excel"),`
+- `core_adminconsole/urls.py` : `path("renewals/logs/", views_renewals.renewals_logs, name="renewals_logs"),`
+- `core_adminconsole/urls.py` : `path("renewals/holidays/<int:pk>/delete/", views_renewals.renewals_holiday_delete, name="renewals_holiday_delete"),`
+
+## Render détectés
+- `core_attachments/views.py` : `render(request, 'core_attachments/viewer.html', context)`
+- `core_emails/views.py` : `render(request, 'core_emails/dashboard.html', context)`
+- `core_emails/views.py` : `render(request, 'core_emails/renewals_dashboard.html', context)`
+- `core_emails/views.py` : `render(request, 'core_emails/prescription_detail.html', context)`
+- `core_emails/views.py` : `render(request, 'core_emails/prescription_create.html')`
+- `core_emails/services_renewal_templates.py` : `_safe_render(getattr(template, 'subject', '') or '', context)`
+- `core_emails/services_renewal_templates.py` : `_safe_render(getattr(template, 'body', '') or '', context)`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/patient_edit.html', {'patient': patient, 'form': form})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/prescriptions_list.html', {'q': q, 'page_obj': page_obj, 'per_page': per_page_i, 'total_count': paginator.count})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/prescriptions_trash.html', {'q': q, 'page_obj': page_obj, 'per_page': per_page_i, 'purge_min_days': PURGE_MIN_DAYS})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/audit_log.html', {'page_obj': page_obj, 'events': page_obj.object_list, 'paginator': paginator, 'q': q, 'page_size': page_size})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/account_create.html', {'form': form})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/account_edit.html', {'edit_user': user_obj, 'groups': groups})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/accounts_list.html', {'q': q, 'users': users})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/group_form.html', {'form': form, 'mode': 'create', 'target': None})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/group_delete_confirm.html', {'target': group, 'group': group})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/group_form.html', {'form': form, 'mode': 'edit', 'target': group})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/groups_list.html', {'q': q, 'groups': groups})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/iam_matrix.html', {'q': q, 'groups': groups, 'rows': rows})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/notifications_settings.html', {'section': 'notifications'})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/nurse_form.html', {'form': form, 'mode': 'create'})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/nurse_confirm_toggle.html', {'nurse': nurse, 'action': action})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/nurses_list.html', {'nurses': qs, 'q': q, 'state': state, 'state_items': state_items})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/patients_list.html', {'patients': page_obj.object_list, 'page_obj': page_obj, 'q': q, 'per_page': per_page, 'filter': flt, 'filter_items': filter_items, 'total_count': paginator.count})`
+- `core_adminconsole/views.py` : `render(request, 'core_adminconsole/account_soft_delete_confirm.html', {'user_obj': user_obj, 'soft_delete_explanation': "Le soft delete correspond à une suppression logique : le compte est retiré de l'usage normal sans suppression physique des données.", 'deactivate_explanation': "La désactivation b`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_settings.html', context)`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_rules.html', {'rules': rules, 'form': form, 'edit_obj': instance})`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_templates.html', {'templates': templates, 'form': form, 'edit_obj': instance})`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_holidays.html', {'holidays': holidays, 'form': form, 'edit_obj': instance, 'holiday_model_missing': False})`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_logs.html', {'sms_messages': sms_messages, 'sms_attempts': sms_attempts, 'renewal_events': renewal_events, 'status_history': status_history, 'file_logs': file_logs, 'counts': counts, 'log_type': log_type, 'date_from': date_from_raw, 'date_to': date_to_raw}`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_stats.html', {'stats': stats, 'period': period, 'date_from': date_from, 'date_to': date_to, 'custom_from': custom_from, 'custom_to': custom_to})`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_alerts.html', {'alerts': alerts, 'sms_failed': sms_failed, 'overdue_items': overdue_items, 'urgent_items': urgent_items, 'blocked_cycles': blocked_cycles, 'missing_phone_items': missing_phone_items, 'missing_email_items': missing_email_items, 'due_notifica`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_rules.html', {'rules': []})`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_templates.html', {'templates': []})`
+- `core_adminconsole/views_renewals.py` : `render(request, 'core_adminconsole/renewals_holidays.html', {'holidays': [], 'form': None, 'holiday_model_missing': True})`
+- `core_patients/views.py` : `render(request, 'core_patients/patient_detail.html', context)`
+- `core_patients/views.py` : `render(request, 'core_patients/complete_patient.html', {'patient': patient})`
+
+## Commandes management
+- `core_adminconsole/management/commands/adminconsole_bootstrap_roles.py`
+- `core_gmail/management/commands/fetch_gmail.py`
+- `core_emails/management/commands/run_renewal_notifications.py`

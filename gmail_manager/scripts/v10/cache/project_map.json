@@ -1,0 +1,2640 @@
+{
+  "generated_at": "20260701_191211",
+  "renewals": {
+    "python_files": [
+      "make_ordo_ai_copy.py",
+      "core_attachments/models.py",
+      "core_attachments/admin.py",
+      "core_attachments/views.py",
+      "gmail_manager/settings.py",
+      "gmail_manager/test_runner.py",
+      "gmail_manager/urls.py",
+      "core_people/models.py",
+      "core_people/admin.py",
+      "core_people/views.py",
+      "core_notifications/models.py",
+      "core_notifications/admin.py",
+      "core_notifications/views.py",
+      "core_notifications/pharmacy_identity.py",
+      "core_notifications/services.py",
+      "core_notifications/messages_sms.py",
+      "core_notifications/apps.py",
+      "core_accounts/admin.py",
+      "core_emails/services_notifications.py",
+      "core_emails/states.py",
+      "core_emails/__init__.py",
+      "core_emails/models.py",
+      "core_emails/signals.py",
+      "core_emails/admin.py",
+      "core_emails/services_workflow.py",
+      "core_emails/views.py",
+      "core_emails/email_sender.py",
+      "core_emails/emailing.py",
+      "core_emails/services_renewal_templates.py",
+      "core_emails/urls.py",
+      "core_emails/labels.py",
+      "core_emails/services.py",
+      "core_emails/timeline.py",
+      "core_emails/services_renewal_rules.py",
+      "core_emails/models_assignment.py",
+      "core_emails/apps.py",
+      "core_gmail/models.py",
+      "core_gmail/admin.py",
+      "core_gmail/email_sender.py",
+      "core_gmail/services.py",
+      "scripts/ovh_list_senders.py",
+      "scripts/ovh_list_sms_services.py",
+      "scripts/ovh_send_test_sms.py",
+      "core_adminconsole/views.py",
+      "core_adminconsole/forms_accounts.py",
+      "core_adminconsole/urls.py",
+      "core_adminconsole/services.py",
+      "core_adminconsole/forms.py",
+      "core_adminconsole/views_renewals.py",
+      "core_patients/models.py",
+      "core_patients/admin.py",
+      "core_patients/views.py",
+      "core_patients/services.py",
+      "core_patients/migrations/0001_initial.py",
+      "core_adminconsole/management/commands/adminconsole_bootstrap_roles.py",
+      "scripts/v10/003_cartographie.py",
+      "scripts/patches/patch_services_workflow_v2_on_commit_safe.py",
+      "scripts/patches/patch_services_workflow_v1.py",
+      "scripts/patches/patch_services_workflow_v2_on_commit.py",
+      "scripts/v10/lib/utils.py",
+      "core_gmail/migrations/0001_initial.py",
+      "core_gmail/management/commands/fetch_gmail.py",
+      "core_emails/templatetags/prescription_extras.py",
+      "core_emails/tests/test_renewals_v9_engine.py",
+      "core_emails/tests/test_renewals_rules_regression.py",
+      "core_emails/tests/test_notifications_matrix.py",
+      "core_emails/tests/test_renewals_lot18_catchup.py",
+      "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+      "core_emails/tests/test_renewals_cycles_functional.py",
+      "core_emails/tests/test_renewals_regression.py",
+      "core_emails/tests/test_notifications_general.py",
+      "core_emails/tests/test_renewals_functional.py",
+      "core_emails/migrations/0006_prescription_established_at_prescriptionrenewalinfo.py",
+      "core_emails/migrations/0004_alter_prescription_sender_type.py",
+      "core_emails/migrations/0007_prescriptionrenewalinfo_last_renewal_ordered_at_and_more.py",
+      "core_emails/migrations/0013_prescriptionnotificationsettings_processing_started_at.py",
+      "core_emails/migrations/0010_prescriptionnotificationsettings_free_text_message.py",
+      "core_emails/migrations/0001_initial.py",
+      "core_emails/migrations/0014_remove_prescriptionnotificationsettings_processing_started_at_and_more.py",
+      "core_emails/migrations/0008_prescriptionrenewalevent.py",
+      "core_emails/migrations/0011_prescription_delete_reason_prescription_deleted_at_and_more.py",
+      "core_emails/migrations/0015_renewalsettings_alter_prescription_status_and_more.py",
+      "core_emails/migrations/0016_renewals_v9_default_data.py",
+      "core_emails/migrations/0012_renewal_cycle_v1.py",
+      "core_emails/migrations/0005_alter_prescription_sender_type.py",
+      "core_emails/migrations/0009_prescriptionnotificationsettings_and_more.py",
+      "core_emails/migrations/0002_prescription_sender_type_prescriptionassignment.py",
+      "core_emails/migrations/0003_prescription_type.py",
+      "core_emails/management/commands/run_renewal_notifications.py",
+      "core_notifications/backends/ovh.py",
+      "core_notifications/tests/test_sms_services.py",
+      "core_notifications/migrations/0001_initial.py",
+      "core_notifications/migrations/0002_smstemplate_smsmessage_smsattempt.py",
+      "core_people/migrations/0001_initial.py",
+      "core_attachments/migrations/0001_initial.py"
+    ],
+    "templates": [
+      "templates/core_emails/modals/create_prescription_modal.html",
+      "core_patients/templates/core_patients/patient_detail.html",
+      "core_adminconsole/templates/core_adminconsole/prescriptions_search.html",
+      "core_adminconsole/templates/core_adminconsole/account_edit.html",
+      "core_adminconsole/templates/core_adminconsole/nurse_confirm_toggle.html",
+      "core_adminconsole/templates/core_adminconsole/renewals_templates.html",
+      "core_adminconsole/templates/core_adminconsole/users_home.html",
+      "core_adminconsole/templates/core_adminconsole/home.html",
+      "core_adminconsole/templates/core_adminconsole/notifications_settings.html",
+      "core_adminconsole/templates/core_adminconsole/nurse_delete_confirm.html",
+      "core_adminconsole/templates/core_adminconsole/renewals_stats.html",
+      "core_adminconsole/templates/core_adminconsole/renewals_settings.html",
+      "core_adminconsole/templates/core_adminconsole/accounts_list.html",
+      "core_adminconsole/templates/core_adminconsole/prescriptions_trash.html",
+      "core_adminconsole/templates/core_adminconsole/patients_list.html",
+      "core_adminconsole/templates/core_adminconsole/audit_log.html",
+      "core_adminconsole/templates/core_adminconsole/prescriptions_list.html",
+      "core_adminconsole/templates/core_adminconsole/account_create.html",
+      "core_adminconsole/templates/core_adminconsole/renewals_logs.html",
+      "core_adminconsole/templates/core_adminconsole/renewals_alerts.html",
+      "core_adminconsole/templates/core_adminconsole/account_form.html",
+      "core_adminconsole/templates/core_adminconsole/renewals_holidays.html",
+      "core_adminconsole/templates/core_adminconsole/base.html",
+      "core_adminconsole/templates/core_adminconsole/nurse_form.html",
+      "core_adminconsole/templates/core_adminconsole/nurses_list.html",
+      "core_adminconsole/templates/core_adminconsole/gmail_tools.html",
+      "core_adminconsole/templates/core_adminconsole/nurse_confirm_delete.html",
+      "core_adminconsole/templates/core_adminconsole/renewals_rules.html",
+      "core_emails/templates/core_emails/dashboard.html",
+      "core_emails/templates/core_emails/renewals_dashboard.html",
+      "core_emails/templates/core_emails/_history_premium.html",
+      "core_emails/templates/core_emails/prescription_create.html",
+      "core_emails/templates/core_emails/prescription_detail.html",
+      "core_emails/templates/core_emails/base_detail.html",
+      "core_emails/templates/core_emails/login.html",
+      "core_emails/templates/core_emails/_status_card.html",
+      "core_emails/templates/core_emails/_prescription_type_card.html",
+      "core_emails/templates/core_emails/_nurse_card.html",
+      "core_emails/templates/core_emails/_patient_card.html",
+      "core_emails/templates/emails/status_archived.html",
+      "core_emails/templates/emails/status_validated.html",
+      "core_emails/templates/emails/status_received.html",
+      "core_emails/templates/emails/status_rejected.html",
+      "core_emails/templates/emails/status_delivered.html",
+      "core_emails/templates/emails/status_in_progress.html"
+    ],
+    "urls": [
+      {
+        "file": "gmail_manager/urls.py",
+        "line": "path(\"\", include(\"core_emails.urls\")),"
+      },
+      {
+        "file": "core_emails/urls.py",
+        "line": "path(\"dashboard/renewals/\", views.renewals_dashboard, name=\"renewals_dashboard\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"prescriptions/\", views.prescriptions_search, name=\"prescriptions_list\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"prescriptions/\", views.prescriptions_search, name=\"prescriptions_search\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"prescriptions/trash/\", views.prescriptions_trash, name=\"prescriptions_trash\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"prescriptions/bulk-action/\", views.prescriptions_bulk_action, name=\"prescriptions_bulk_action\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"prescriptions/<int:pk>/trash/\", views.prescription_soft_delete, name=\"prescription_soft_delete\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"prescriptions/<int:pk>/restore/\", views.prescription_restore, name=\"prescription_restore\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"prescriptions/<int:pk>/purge/\", views.prescription_purge, name=\"prescription_purge\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"notifications/\", views.notifications_settings, name=\"notifications_settings\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/settings/\", views_renewals.renewals_settings, name=\"renewals_settings\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/rules/\", views_renewals.renewals_rules, name=\"renewals_rules\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/rules/<int:pk>/delete/\", views_renewals.renewals_rule_delete, name=\"renewals_rule_delete\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/templates/\", views_renewals.renewals_templates, name=\"renewals_templates\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/holidays/\", views_renewals.renewals_holidays, name=\"renewals_holidays\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/stats/\", views_renewals.renewals_stats, name=\"renewals_stats\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/alerts/\", views_renewals.renewals_alerts, name=\"renewals_alerts\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/export/\", views_renewals.renewals_export_excel, name=\"renewals_export_excel\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/logs/\", views_renewals.renewals_logs, name=\"renewals_logs\"),"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "line": "path(\"renewals/holidays/<int:pk>/delete/\", views_renewals.renewals_holiday_delete, name=\"renewals_holiday_delete\"),"
+      }
+    ],
+    "views": [
+      "core_attachments/views.py",
+      "core_people/views.py",
+      "core_notifications/views.py",
+      "core_emails/views.py",
+      "core_adminconsole/views.py",
+      "core_adminconsole/views_renewals.py",
+      "core_patients/views.py"
+    ],
+    "services": [
+      "core_notifications/services.py",
+      "core_emails/services_notifications.py",
+      "core_emails/services_workflow.py",
+      "core_emails/services_renewal_templates.py",
+      "core_emails/services.py",
+      "core_emails/services_renewal_rules.py",
+      "core_gmail/services.py",
+      "scripts/ovh_list_sms_services.py",
+      "core_adminconsole/services.py",
+      "core_adminconsole/views_renewals.py",
+      "core_patients/services.py",
+      "scripts/patches/patch_services_workflow_v2_on_commit_safe.py",
+      "scripts/patches/patch_services_workflow_v1.py",
+      "scripts/patches/patch_services_workflow_v2_on_commit.py",
+      "core_emails/tests/test_renewals_v9_engine.py",
+      "core_emails/tests/test_renewals_rules_regression.py",
+      "core_emails/tests/test_renewals_lot18_catchup.py",
+      "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+      "core_emails/tests/test_renewals_cycles_functional.py",
+      "core_emails/tests/test_renewals_regression.py",
+      "core_emails/tests/test_renewals_functional.py",
+      "core_emails/migrations/0006_prescription_established_at_prescriptionrenewalinfo.py",
+      "core_emails/migrations/0007_prescriptionrenewalinfo_last_renewal_ordered_at_and_more.py",
+      "core_emails/migrations/0008_prescriptionrenewalevent.py",
+      "core_emails/migrations/0015_renewalsettings_alter_prescription_status_and_more.py",
+      "core_emails/migrations/0016_renewals_v9_default_data.py",
+      "core_emails/migrations/0012_renewal_cycle_v1.py",
+      "core_emails/management/commands/run_renewal_notifications.py",
+      "core_notifications/tests/test_sms_services.py"
+    ],
+    "models": [
+      "core_attachments/models.py",
+      "core_people/models.py",
+      "core_notifications/models.py",
+      "core_emails/models.py",
+      "core_gmail/models.py",
+      "core_patients/models.py"
+    ],
+    "management_commands": [
+      "core_adminconsole/management/commands/adminconsole_bootstrap_roles.py",
+      "core_gmail/management/commands/fetch_gmail.py",
+      "core_emails/management/commands/run_renewal_notifications.py"
+    ],
+    "renders": [
+      {
+        "file": "core_attachments/views.py",
+        "call": "render(request, 'core_attachments/viewer.html', context)"
+      },
+      {
+        "file": "core_emails/views.py",
+        "call": "render(request, 'core_emails/dashboard.html', context)"
+      },
+      {
+        "file": "core_emails/views.py",
+        "call": "render(request, 'core_emails/renewals_dashboard.html', context)"
+      },
+      {
+        "file": "core_emails/views.py",
+        "call": "render(request, 'core_emails/prescription_detail.html', context)"
+      },
+      {
+        "file": "core_emails/views.py",
+        "call": "render(request, 'core_emails/prescription_create.html')"
+      },
+      {
+        "file": "core_emails/services_renewal_templates.py",
+        "call": "_safe_render(getattr(template, 'subject', '') or '', context)"
+      },
+      {
+        "file": "core_emails/services_renewal_templates.py",
+        "call": "_safe_render(getattr(template, 'body', '') or '', context)"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/patient_edit.html', {'patient': patient, 'form': form})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/prescriptions_list.html', {'q': q, 'page_obj': page_obj, 'per_page': per_page_i, 'total_count': paginator.count})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/prescriptions_trash.html', {'q': q, 'page_obj': page_obj, 'per_page': per_page_i, 'purge_min_days': PURGE_MIN_DAYS})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/audit_log.html', {'page_obj': page_obj, 'events': page_obj.object_list, 'paginator': paginator, 'q': q, 'page_size': page_size})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/account_create.html', {'form': form})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/account_edit.html', {'edit_user': user_obj, 'groups': groups})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/accounts_list.html', {'q': q, 'users': users})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/group_form.html', {'form': form, 'mode': 'create', 'target': None})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/group_delete_confirm.html', {'target': group, 'group': group})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/group_form.html', {'form': form, 'mode': 'edit', 'target': group})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/groups_list.html', {'q': q, 'groups': groups})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/iam_matrix.html', {'q': q, 'groups': groups, 'rows': rows})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/notifications_settings.html', {'section': 'notifications'})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/nurse_form.html', {'form': form, 'mode': 'create'})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/nurse_confirm_toggle.html', {'nurse': nurse, 'action': action})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/nurses_list.html', {'nurses': qs, 'q': q, 'state': state, 'state_items': state_items})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/patients_list.html', {'patients': page_obj.object_list, 'page_obj': page_obj, 'q': q, 'per_page': per_page, 'filter': flt, 'filter_items': filter_items, 'total_count': paginator.count})"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "call": "render(request, 'core_adminconsole/account_soft_delete_confirm.html', {'user_obj': user_obj, 'soft_delete_explanation': \"Le soft delete correspond à une suppression logique : le compte est retiré de l'usage normal sans suppression physique des données.\", 'deactivate_explanation': \"La désactivation b"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_settings.html', context)"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_rules.html', {'rules': rules, 'form': form, 'edit_obj': instance})"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_templates.html', {'templates': templates, 'form': form, 'edit_obj': instance})"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_holidays.html', {'holidays': holidays, 'form': form, 'edit_obj': instance, 'holiday_model_missing': False})"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_logs.html', {'sms_messages': sms_messages, 'sms_attempts': sms_attempts, 'renewal_events': renewal_events, 'status_history': status_history, 'file_logs': file_logs, 'counts': counts, 'log_type': log_type, 'date_from': date_from_raw, 'date_to': date_to_raw}"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_stats.html', {'stats': stats, 'period': period, 'date_from': date_from, 'date_to': date_to, 'custom_from': custom_from, 'custom_to': custom_to})"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_alerts.html', {'alerts': alerts, 'sms_failed': sms_failed, 'overdue_items': overdue_items, 'urgent_items': urgent_items, 'blocked_cycles': blocked_cycles, 'missing_phone_items': missing_phone_items, 'missing_email_items': missing_email_items, 'due_notifica"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_rules.html', {'rules': []})"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_templates.html', {'templates': []})"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "call": "render(request, 'core_adminconsole/renewals_holidays.html', {'holidays': [], 'form': None, 'holiday_model_missing': True})"
+      },
+      {
+        "file": "core_patients/views.py",
+        "call": "render(request, 'core_patients/patient_detail.html', context)"
+      },
+      {
+        "file": "core_patients/views.py",
+        "call": "render(request, 'core_patients/complete_patient.html', {'patient': patient})"
+      }
+    ],
+    "imports": [
+      {
+        "file": "make_ordo_ai_copy.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "make_ordo_ai_copy.py",
+        "import": "from datetime import datetime"
+      },
+      {
+        "file": "make_ordo_ai_copy.py",
+        "import": "import shutil"
+      },
+      {
+        "file": "make_ordo_ai_copy.py",
+        "import": "import zipfile"
+      },
+      {
+        "file": "make_ordo_ai_copy.py",
+        "import": "import subprocess"
+      },
+      {
+        "file": "core_attachments/models.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_attachments/models.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_attachments/models.py",
+        "import": "from core_emails.models import Prescription"
+      },
+      {
+        "file": "core_attachments/admin.py",
+        "import": "from django.contrib import admin"
+      },
+      {
+        "file": "core_attachments/admin.py",
+        "import": "from django.urls import reverse"
+      },
+      {
+        "file": "core_attachments/admin.py",
+        "import": "from django.utils.html import format_html"
+      },
+      {
+        "file": "core_attachments/admin.py",
+        "import": "from .models import PrescriptionAttachment, PrescriptionAttachmentAccess"
+      },
+      {
+        "file": "core_attachments/views.py",
+        "import": "import mimetypes"
+      },
+      {
+        "file": "core_attachments/views.py",
+        "import": "from django.contrib.auth.decorators import login_required"
+      },
+      {
+        "file": "core_attachments/views.py",
+        "import": "from django.http import FileResponse"
+      },
+      {
+        "file": "core_attachments/views.py",
+        "import": "from django.shortcuts import get_object_or_404, render"
+      },
+      {
+        "file": "core_attachments/views.py",
+        "import": "from django.urls import reverse"
+      },
+      {
+        "file": "core_attachments/views.py",
+        "import": "from django.views.decorators.clickjacking import xframe_options_sameorigin"
+      },
+      {
+        "file": "core_attachments/views.py",
+        "import": "from .models import PrescriptionAttachment, PrescriptionAttachmentAccess"
+      },
+      {
+        "file": "gmail_manager/settings.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "gmail_manager/settings.py",
+        "import": "import os"
+      },
+      {
+        "file": "gmail_manager/settings.py",
+        "import": "from dotenv import load_dotenv"
+      },
+      {
+        "file": "gmail_manager/settings.py",
+        "import": "import os"
+      },
+      {
+        "file": "gmail_manager/test_runner.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "gmail_manager/test_runner.py",
+        "import": "from django.test.runner import DiscoverRunner"
+      },
+      {
+        "file": "gmail_manager/urls.py",
+        "import": "from django.contrib import admin"
+      },
+      {
+        "file": "gmail_manager/urls.py",
+        "import": "from django.urls import path, include"
+      },
+      {
+        "file": "core_people/models.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_people/admin.py",
+        "import": "from django.contrib import admin"
+      },
+      {
+        "file": "core_people/admin.py",
+        "import": "from .models import Person"
+      },
+      {
+        "file": "core_people/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_people/views.py",
+        "import": "from django.shortcuts import redirect"
+      },
+      {
+        "file": "core_people/views.py",
+        "import": "from django.views.decorators.http import require_POST"
+      },
+      {
+        "file": "core_people/views.py",
+        "import": "from django.contrib.auth.decorators import login_required"
+      },
+      {
+        "file": "core_people/views.py",
+        "import": "from .models import Person"
+      },
+      {
+        "file": "core_people/views.py",
+        "import": "from core_notifications.utils_phone import to_e164_fr"
+      },
+      {
+        "file": "core_notifications/models.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_notifications/models.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_notifications/models.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_notifications/models.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_notifications/models.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_notifications/admin.py",
+        "import": "from django.contrib import admin, messages"
+      },
+      {
+        "file": "core_notifications/admin.py",
+        "import": "from .models import Notification"
+      },
+      {
+        "file": "core_notifications/views.py",
+        "import": "from django.shortcuts import render"
+      },
+      {
+        "file": "core_notifications/pharmacy_identity.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "from .models import Notification"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "import re"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "from datetime import timedelta"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "from core_notifications.backends.ovh import OvhSmsBackend"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "from core_notifications.utils_phone import to_e164_fr"
+      },
+      {
+        "file": "core_notifications/services.py",
+        "import": "from core_notifications.models import SmsMessage, SmsAttempt, SmsStatus, SmsPurpose"
+      },
+      {
+        "file": "core_notifications/messages_sms.py",
+        "import": "from core_notifications.pharmacy_identity import PHARMACY_SIGNATURE_FR_SMS_COMPACT, PHARMACY_SIGNATURE_EN_SMS_COMPACT"
+      },
+      {
+        "file": "core_notifications/messages_sms.py",
+        "import": "from typing import Tuple"
+      },
+      {
+        "file": "core_notifications/messages_sms.py",
+        "import": "from core_notifications.pharmacy_identity import PHARMACY_NAME, PHARMACY_PHONE"
+      },
+      {
+        "file": "core_notifications/apps.py",
+        "import": "from django.apps import AppConfig"
+      },
+      {
+        "file": "core_accounts/admin.py",
+        "import": "from django.contrib import admin"
+      },
+      {
+        "file": "core_accounts/admin.py",
+        "import": "from .models import UserProfile"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from dataclasses import dataclass"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from typing import Literal, Optional"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from django.core.mail import send_mail"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from core_notifications.models import SmsPurpose"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from core_notifications.services import send_sms_logged"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from core_emails.models import PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from core_emails.models import PrescriptionNotificationEvent"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from core_emails.models import PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from core_notifications.services import send_sms_logged, SmsPurpose"
+      },
+      {
+        "file": "core_emails/services_notifications.py",
+        "import": "from core_notifications.services import send_sms_logged, SmsPurpose"
+      },
+      {
+        "file": "core_emails/states.py",
+        "import": "from enum import Enum"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "import logging"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from .states import PrescriptionStatusEnum"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from django.db.models.signals import post_save"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from django.dispatch import receiver"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from django.db.models.signals import pre_save"
+      },
+      {
+        "file": "core_emails/models.py",
+        "import": "from .models_assignment import PrescriptionAssignment"
+      },
+      {
+        "file": "core_emails/signals.py",
+        "import": "from django.db.models.signals import post_save"
+      },
+      {
+        "file": "core_emails/signals.py",
+        "import": "from django.dispatch import receiver"
+      },
+      {
+        "file": "core_emails/signals.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/signals.py",
+        "import": "from .models import Prescription"
+      },
+      {
+        "file": "core_emails/signals.py",
+        "import": "from core_notifications.services import notify_users"
+      },
+      {
+        "file": "core_emails/admin.py",
+        "import": "from django.contrib import admin"
+      },
+      {
+        "file": "core_emails/admin.py",
+        "import": "from .models import Prescription, PrescriptionStatusHistory, PrescriptionRenewalInfo, RenewalSettings, RenewalNotificationRule, RenewalNotificationTemplate, Holiday"
+      },
+      {
+        "file": "core_emails/admin.py",
+        "import": "from .models_assignment import PrescriptionAssignment"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from django.core.exceptions import ValidationError"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from django.db import transaction"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from .models import PrescriptionStatusHistory, PrescriptionType, PrescriptionStatus, PrescriptionRenewalInfo, PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from core_notifications.services import notify_users"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from core_emails.emailing import send_status_email"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from core_emails.models import PrescriptionNotificationSettings"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from core_emails.models import PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from .services import send_prescription_notifications"
+      },
+      {
+        "file": "core_emails/services_workflow.py",
+        "import": "from .services_notifications import build_notification_audit_summary"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.contrib.auth.decorators import login_required"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.contrib.auth.views import LoginView, LogoutView"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.core.exceptions import ValidationError"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.core.validators import validate_email"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.core.paginator import Paginator"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.db.models import Count, Q"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.shortcuts import render, get_object_or_404, redirect"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.urls import reverse, reverse_lazy"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.http import JsonResponse"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.views.decorators.http import require_POST"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .models import PrescriptionRenewalInfo"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "import datetime"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.utils.http import url_has_allowed_host_and_scheme"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.utils.dateparse import parse_date"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.core.mail import send_mail"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "import logging"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.core.validators import validate_email"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.db import transaction"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .models import Prescription, PrescriptionStatus, PrescriptionStatusHistory, PrescriptionType, SenderType"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .models_assignment import PrescriptionAssignment"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_emails.models import PrescriptionRenewalEvent, PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .services_workflow import change_prescription_status"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .services import send_prescription_notifications"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .services_renewal_templates import render_renewal_message"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_emails.services import compute_renewals_watch, compute_renewals_watch_v9"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_emails.timeline import build_prescription_timeline_events"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_attachments.models import PrescriptionAttachment"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_gmail.services import fetch_new_gmail_messages"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_notifications.models import SmsPurpose"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_notifications.messages_sms import render_status_sms_rgpd_bilingual_compact"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_notifications.utils_phone import to_e164_fr"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from core_emails.services import compute_renewals_watch_v9"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from django.db import transaction"
+      },
+      {
+        "file": "core_emails/views.py",
+        "import": "from .models import PrescriptionNotificationSettings, Prescription"
+      },
+      {
+        "file": "core_emails/email_sender.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/email_sender.py",
+        "import": "from django.core.mail import send_mail"
+      },
+      {
+        "file": "core_emails/emailing.py",
+        "import": "from django.core.mail import EmailMultiAlternatives"
+      },
+      {
+        "file": "core_emails/emailing.py",
+        "import": "from django.template.loader import render_to_string"
+      },
+      {
+        "file": "core_emails/emailing.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/emailing.py",
+        "import": "from core_emails.models import PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/services_renewal_templates.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/services_renewal_templates.py",
+        "import": "from typing import Any, Dict, Optional, Tuple"
+      },
+      {
+        "file": "core_emails/services_renewal_templates.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services_renewal_templates.py",
+        "import": "from .models import RenewalNotificationTemplate, RenewalSettings"
+      },
+      {
+        "file": "core_emails/urls.py",
+        "import": "from django.urls import path"
+      },
+      {
+        "file": "core_emails/urls.py",
+        "import": "from django.views.generic import RedirectView"
+      },
+      {
+        "file": "core_emails/urls.py",
+        "import": "from . import views"
+      },
+      {
+        "file": "core_emails/urls.py",
+        "import": "from .views import PharmacyLoginView, PharmacyLogoutView"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "import re"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "import logging"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from django.db import transaction"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from django.core.exceptions import ValidationError"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from .models import PrescriptionStatusHistory"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_notifications.services import notify_users"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from .services_notifications import send_prescription_notifications as send_prescription_notifications_impl"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.emailing import send_status_email"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "import datetime"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from .models import Prescription, PrescriptionType, PrescriptionRenewalInfo"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import PrescriptionRenewalInfo, PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "import datetime"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionRenewalInfo"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "import datetime"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import Prescription, PrescriptionRenewalInfo, PrescriptionStatus, PrescriptionType"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import PrescriptionNotificationEvent"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import PrescriptionStatusHistory"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import PrescriptionStatusHistory"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import PrescriptionNotificationEvent"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.services import send_prescription_notifications"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.services_renewal_rules import get_due_notifications, get_overdue_renewals, get_final_renewals, get_urgent_renewals, get_activity_metrics"
+      },
+      {
+        "file": "core_emails/services.py",
+        "import": "from core_emails.models import PrescriptionRenewalCycle, PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/timeline.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/timeline.py",
+        "import": "import re"
+      },
+      {
+        "file": "core_emails/timeline.py",
+        "import": "from dataclasses import dataclass"
+      },
+      {
+        "file": "core_emails/timeline.py",
+        "import": "from typing import Any, Dict, List, Optional"
+      },
+      {
+        "file": "core_emails/timeline.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/timeline.py",
+        "import": "from core_emails.labels import status_fr, origin_fr, prescription_type_fr"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from datetime import date, datetime, timedelta"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from typing import Any, Dict, Iterable, List, Optional"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from django.db.models import QuerySet"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from .models import Holiday, Prescription, PrescriptionRenewalCycle, RenewalNotificationRule"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from core_emails.models import PrescriptionStatusHistory, PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from django.db.models import Q"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from core_emails.models import PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from core_emails.models import PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from core_emails.models import PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/services_renewal_rules.py",
+        "import": "from core_notifications.models import SmsAttempt"
+      },
+      {
+        "file": "core_emails/models_assignment.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_emails/models_assignment.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/models_assignment.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_emails/models_assignment.py",
+        "import": "from .models import Prescription"
+      },
+      {
+        "file": "core_emails/apps.py",
+        "import": "from django.apps import AppConfig"
+      },
+      {
+        "file": "core_emails/apps.py",
+        "import": "import core_emails.signals"
+      },
+      {
+        "file": "core_gmail/models.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_gmail/admin.py",
+        "import": "from django.contrib import admin"
+      },
+      {
+        "file": "core_gmail/admin.py",
+        "import": "from .models import GmailMessage"
+      },
+      {
+        "file": "core_gmail/email_sender.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_gmail/email_sender.py",
+        "import": "from django.core.mail import send_mail"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "import imaplib"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "import email"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from email.header import decode_header"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from datetime import datetime"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "import time"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "import re"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from django.core.files.base import ContentFile"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from core_gmail.models import GmailMessage"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from core_emails.models import Prescription, PrescriptionStatus, PrescriptionType"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from core_attachments.models import PrescriptionAttachment"
+      },
+      {
+        "file": "core_gmail/services.py",
+        "import": "from core_patients.services import get_or_create_patient_from_email"
+      },
+      {
+        "file": "scripts/ovh_list_senders.py",
+        "import": "import os, hashlib, json, requests"
+      },
+      {
+        "file": "scripts/ovh_list_senders.py",
+        "import": "from dotenv import load_dotenv"
+      },
+      {
+        "file": "scripts/ovh_list_sms_services.py",
+        "import": "import os"
+      },
+      {
+        "file": "scripts/ovh_list_sms_services.py",
+        "import": "import hashlib"
+      },
+      {
+        "file": "scripts/ovh_list_sms_services.py",
+        "import": "import json"
+      },
+      {
+        "file": "scripts/ovh_list_sms_services.py",
+        "import": "import requests"
+      },
+      {
+        "file": "scripts/ovh_list_sms_services.py",
+        "import": "from dotenv import load_dotenv"
+      },
+      {
+        "file": "scripts/ovh_send_test_sms.py",
+        "import": "import os"
+      },
+      {
+        "file": "scripts/ovh_send_test_sms.py",
+        "import": "import hashlib"
+      },
+      {
+        "file": "scripts/ovh_send_test_sms.py",
+        "import": "import json"
+      },
+      {
+        "file": "scripts/ovh_send_test_sms.py",
+        "import": "import requests"
+      },
+      {
+        "file": "scripts/ovh_send_test_sms.py",
+        "import": "from dotenv import load_dotenv"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django import forms"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .permissions import require_perm"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_emails.models import Prescription, PrescriptionStatus"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "import datetime as dt"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "import datetime"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.db.models.deletion import ProtectedError"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.decorators import login_required"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import get_object_or_404, redirect"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.db.models import Q"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.core.paginator import Paginator"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.http import HttpRequest, HttpResponse"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import render, redirect"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.views.decorators.http import require_POST"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .permissions import superuser_required, require_perm"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .forms_accounts import UserAdminCreateForm"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .permissions import require_console_perm"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .services import audit"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .services import guard_not_last_superuser_change, guard_not_last_superuser_deactivate, guard_self_lockout"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .services import soft_delete_user, reactivate_user"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .models import AdminAuditEvent"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_emails.models import Prescription"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "import csv"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.http import HttpResponse"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.views.decorators.http import require_http_methods"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.http import HttpResponse"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import redirect"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import User, Group"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.decorators import login_required, user_passes_test"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import get_object_or_404, redirect, render"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import User"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import get_object_or_404, redirect"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import User"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import get_object_or_404, redirect"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import Group, Permission"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import Group"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import Group"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import Group, Permission"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import Group"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib.auth.models import Group, Permission"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import render"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import redirect, render"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django import forms"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.http import Http404"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import get_object_or_404, redirect, render"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import render"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.db.models import Q, Count"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.shortcuts import render"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.core.paginator import Paginator"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from django.db.models import Q, Count"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_emails.models import Prescription"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from .services import audit as audit_log"
+      },
+      {
+        "file": "core_adminconsole/views.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_adminconsole/forms_accounts.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_adminconsole/forms_accounts.py",
+        "import": "from django import forms"
+      },
+      {
+        "file": "core_adminconsole/forms_accounts.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_adminconsole/forms_accounts.py",
+        "import": "from django.contrib.auth.models import Group, Permission"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "import": "from django.urls import path"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "import": "from . import views"
+      },
+      {
+        "file": "core_adminconsole/urls.py",
+        "import": "from . import views_renewals"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from typing import Any"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from django.http import HttpRequest"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from .models import AdminAuditEvent"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from typing import Any, Dict, Optional"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from .models import AdminAuditEvent"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from django.contrib.auth.models import User"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from django.db import transaction"
+      },
+      {
+        "file": "core_adminconsole/services.py",
+        "import": "from django.contrib.auth.models import Group, Permission, User"
+      },
+      {
+        "file": "core_adminconsole/forms.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_adminconsole/forms.py",
+        "import": "from django import forms"
+      },
+      {
+        "file": "core_adminconsole/forms.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_adminconsole/forms.py",
+        "import": "from django.contrib.auth.forms import UserCreationForm"
+      },
+      {
+        "file": "core_adminconsole/forms.py",
+        "import": "from django.contrib.auth.models import Group, Permission, User"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django import forms"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.contrib import messages"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.contrib.auth.decorators import login_required"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.shortcuts import redirect, render, get_object_or_404"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.views.decorators.http import require_POST"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from .permissions import superuser_required"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails import models as em"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.utils.dateparse import parse_date"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from datetime import datetime, time"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from datetime import timedelta"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.utils.dateparse import parse_date"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from datetime import timedelta"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.db.models import Q"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from io import BytesIO"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from datetime import datetime"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.http import HttpResponse"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from openpyxl import Workbook"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from openpyxl.styles import Font, PatternFill, Alignment"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from openpyxl.utils import get_column_letter"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.models import PrescriptionRenewalCycle, PrescriptionStatus"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.services_renewal_rules import _get_cycle_due_date"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from datetime import datetime, time"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from django.db.models import Q"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.models import PrescriptionRenewalCycle, PrescriptionStatus"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.services_renewal_rules import get_due_notifications, get_overdue_renewals, get_urgent_renewals, get_final_renewals"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_notifications.models import SmsMessage, SmsStatus"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.services_renewal_rules import get_overdue_renewals, get_urgent_renewals, get_due_notifications"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.models import PrescriptionRenewalCycle, PrescriptionStatus, PrescriptionType"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_notifications.models import SmsAttempt"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.models import PrescriptionRenewalEvent"
+      },
+      {
+        "file": "core_adminconsole/views_renewals.py",
+        "import": "from core_emails.models import PrescriptionStatusHistory"
+      },
+      {
+        "file": "core_patients/models.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_patients/admin.py",
+        "import": "from django.contrib import admin"
+      },
+      {
+        "file": "core_patients/admin.py",
+        "import": "from .models import Patient"
+      },
+      {
+        "file": "core_patients/views.py",
+        "import": "from django.shortcuts import render, get_object_or_404, redirect"
+      },
+      {
+        "file": "core_patients/views.py",
+        "import": "from django.views.decorators.http import require_http_methods"
+      },
+      {
+        "file": "core_patients/views.py",
+        "import": "from django.contrib.auth.decorators import login_required"
+      },
+      {
+        "file": "core_patients/views.py",
+        "import": "from .models import Patient"
+      },
+      {
+        "file": "core_patients/views.py",
+        "import": "from core_emails.models import Prescription"
+      },
+      {
+        "file": "core_patients/services.py",
+        "import": "from .models import Patient"
+      },
+      {
+        "file": "core_patients/migrations/0001_initial.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_adminconsole/management/commands/adminconsole_bootstrap_roles.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_adminconsole/management/commands/adminconsole_bootstrap_roles.py",
+        "import": "from django.core.management.base import BaseCommand"
+      },
+      {
+        "file": "core_adminconsole/management/commands/adminconsole_bootstrap_roles.py",
+        "import": "from django.contrib.auth.models import Group, Permission"
+      },
+      {
+        "file": "core_adminconsole/management/commands/adminconsole_bootstrap_roles.py",
+        "import": "from django.contrib.contenttypes.models import ContentType"
+      },
+      {
+        "file": "scripts/v10/003_cartographie.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "scripts/v10/003_cartographie.py",
+        "import": "from datetime import datetime"
+      },
+      {
+        "file": "scripts/v10/003_cartographie.py",
+        "import": "import ast"
+      },
+      {
+        "file": "scripts/v10/003_cartographie.py",
+        "import": "import json"
+      },
+      {
+        "file": "scripts/v10/003_cartographie.py",
+        "import": "import sys"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit_safe.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit_safe.py",
+        "import": "import datetime as dt"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit_safe.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit_safe.py",
+        "import": "import sys"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v1.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v1.py",
+        "import": "import datetime as dt"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v1.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v1.py",
+        "import": "import sys"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit.py",
+        "import": "import datetime as dt"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit.py",
+        "import": "import re"
+      },
+      {
+        "file": "scripts/patches/patch_services_workflow_v2_on_commit.py",
+        "import": "import sys"
+      },
+      {
+        "file": "scripts/v10/lib/utils.py",
+        "import": "from pathlib import Path"
+      },
+      {
+        "file": "scripts/v10/lib/utils.py",
+        "import": "import sys"
+      },
+      {
+        "file": "core_gmail/migrations/0001_initial.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_gmail/management/commands/fetch_gmail.py",
+        "import": "from django.core.management.base import BaseCommand"
+      },
+      {
+        "file": "core_gmail/management/commands/fetch_gmail.py",
+        "import": "from core_gmail.services import fetch_new_gmail_messages"
+      },
+      {
+        "file": "core_emails/templatetags/prescription_extras.py",
+        "import": "from django import template"
+      },
+      {
+        "file": "core_emails/templatetags/prescription_extras.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_v9_engine.py",
+        "import": "from datetime import date, timedelta"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_v9_engine.py",
+        "import": "from django.core.management import call_command"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_v9_engine.py",
+        "import": "from django.test import TestCase"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_v9_engine.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_v9_engine.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_v9_engine.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionStatus, PrescriptionRenewalInfo, PrescriptionRenewalCycle, PrescriptionStatusHistory, RenewalNotificationRule"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_v9_engine.py",
+        "import": "from core_emails.services_renewal_rules import _get_cycle_due_date, get_due_notifications, get_final_renewals, get_activity_metrics"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from datetime import date, timedelta"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from io import StringIO"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from django.core.management import call_command"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from django.test import TestCase"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionStatus, PrescriptionRenewalInfo, PrescriptionRenewalCycle, PrescriptionStatusHistory, RenewalNotificationRule"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_rules_regression.py",
+        "import": "from core_emails.services_renewal_rules import _get_cycle_due_date, get_due_notifications, calculate_notification_date"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from unittest.mock import patch"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from django.test import TestCase, override_settings"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from core_emails.models import Prescription, PrescriptionStatus, PrescriptionType, PrescriptionNotificationSettings"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from core_people.models import Person"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from core_emails.services import change_prescription_status"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_matrix.py",
+        "import": "from core_emails.models_assignment import PrescriptionAssignment"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from datetime import date, timedelta"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from django.core.management import call_command"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from django.test import TestCase"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionStatus, PrescriptionRenewalInfo, PrescriptionRenewalCycle, PrescriptionStatusHistory, RenewalNotificationRule"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from core_emails.services_renewal_rules import _get_cycle_due_date, calculate_notification_date, get_due_notifications"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_lot18_catchup.py",
+        "import": "from io import StringIO"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from django.test import TestCase, override_settings"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from django.contrib.messages.storage.fallback import FallbackStorage"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from django.test.client import RequestFactory"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionStatus, PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from core_emails.views import mark_renewal_done"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_archiving_functional.py",
+        "import": "from core_emails.models import PrescriptionStatusHistory"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_functional.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_functional.py",
+        "import": "from django.test import TestCase"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_functional.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_functional.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_functional.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_cycles_functional.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionStatus, PrescriptionRenewalInfo, PrescriptionRenewalCycle"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from datetime import date"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from django.test import TestCase"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionStatus, PrescriptionRenewalInfo, PrescriptionRenewalCycle, PrescriptionStatusHistory"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from core_emails.services_renewal_rules import get_final_renewals"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from core_emails.services_workflow import change_prescription_status"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_regression.py",
+        "import": "from core_emails.services import change_prescription_status"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from unittest.mock import patch"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from django.test import TestCase, override_settings"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from core_patients.models import Patient"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from core_emails.models import Prescription, PrescriptionStatus, PrescriptionType, PrescriptionNotificationSettings"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from core_emails.services import change_prescription_status"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "import inspect"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_emails/tests/test_notifications_general.py",
+        "import": "from core_notifications.models import SmsMessage"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "import logging"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "import datetime"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "import uuid"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.urls import reverse"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.apps import apps"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.test import Client, TestCase, override_settings"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionStatus, PrescriptionStatusHistory, PrescriptionRenewalEvent, PrescriptionRenewalInfo"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.db import models"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.contrib.auth import get_user_model"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.urls import reverse"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "import uuid"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from core_emails.models import Prescription, PrescriptionRenewalInfo, PrescriptionType, PrescriptionStatus"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from core_emails.models import Prescription, PrescriptionType, PrescriptionRenewalInfo"
+      },
+      {
+        "file": "core_emails/tests/test_renewals_functional.py",
+        "import": "from django.urls import reverse"
+      },
+      {
+        "file": "core_emails/migrations/0006_prescription_established_at_prescriptionrenewalinfo.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0006_prescription_established_at_prescriptionrenewalinfo.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_emails/migrations/0004_alter_prescription_sender_type.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0007_prescriptionrenewalinfo_last_renewal_ordered_at_and_more.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0013_prescriptionnotificationsettings_processing_started_at.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0010_prescriptionnotificationsettings_free_text_message.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0001_initial.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/migrations/0001_initial.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0001_initial.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_emails/migrations/0014_remove_prescriptionnotificationsettings_processing_started_at_and_more.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0008_prescriptionrenewalevent.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/migrations/0008_prescriptionrenewalevent.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0008_prescriptionrenewalevent.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_emails/migrations/0011_prescription_delete_reason_prescription_deleted_at_and_more.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/migrations/0011_prescription_delete_reason_prescription_deleted_at_and_more.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0011_prescription_delete_reason_prescription_deleted_at_and_more.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_emails/migrations/0015_renewalsettings_alter_prescription_status_and_more.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0016_renewals_v9_default_data.py",
+        "import": "from datetime import time"
+      },
+      {
+        "file": "core_emails/migrations/0016_renewals_v9_default_data.py",
+        "import": "from django.db import migrations"
+      },
+      {
+        "file": "core_emails/migrations/0012_renewal_cycle_v1.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0012_renewal_cycle_v1.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_emails/migrations/0005_alter_prescription_sender_type.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0009_prescriptionnotificationsettings_and_more.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_emails/migrations/0009_prescriptionnotificationsettings_and_more.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0009_prescriptionnotificationsettings_and_more.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_emails/migrations/0002_prescription_sender_type_prescriptionassignment.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/migrations/0002_prescription_sender_type_prescriptionassignment.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_emails/migrations/0003_prescription_type.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from datetime import datetime"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from django.core.management.base import BaseCommand"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from django.utils.dateparse import parse_date"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from django.utils import timezone"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from core_emails.services_renewal_rules import get_due_notifications"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from core_emails.services_renewal_templates import render_renewal_message"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from core_notifications.services import send_sms_logged"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from core_notifications.models import SmsPurpose"
+      },
+      {
+        "file": "core_emails/management/commands/run_renewal_notifications.py",
+        "import": "from core_emails.services_notifications import _send_email_strict"
+      },
+      {
+        "file": "core_notifications/backends/ovh.py",
+        "import": "import hashlib"
+      },
+      {
+        "file": "core_notifications/backends/ovh.py",
+        "import": "import json"
+      },
+      {
+        "file": "core_notifications/backends/ovh.py",
+        "import": "import requests"
+      },
+      {
+        "file": "core_notifications/backends/ovh.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_notifications/tests/test_sms_services.py",
+        "import": "from __future__ import annotations"
+      },
+      {
+        "file": "core_notifications/tests/test_sms_services.py",
+        "import": "from unittest.mock import patch"
+      },
+      {
+        "file": "core_notifications/tests/test_sms_services.py",
+        "import": "from django.test import TestCase"
+      },
+      {
+        "file": "core_notifications/tests/test_sms_services.py",
+        "import": "from core_notifications.models import SmsMessage, SmsStatus"
+      },
+      {
+        "file": "core_notifications/tests/test_sms_services.py",
+        "import": "from core_notifications.services import send_sms_logged"
+      },
+      {
+        "file": "core_notifications/tests/test_sms_services.py",
+        "import": "from core_notifications.models import SmsPurpose"
+      },
+      {
+        "file": "core_notifications/migrations/0001_initial.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_notifications/migrations/0001_initial.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_notifications/migrations/0001_initial.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_notifications/migrations/0002_smstemplate_smsmessage_smsattempt.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_notifications/migrations/0002_smstemplate_smsmessage_smsattempt.py",
+        "import": "import django.db.models.deletion"
+      },
+      {
+        "file": "core_notifications/migrations/0002_smstemplate_smsmessage_smsattempt.py",
+        "import": "import django.utils.timezone"
+      },
+      {
+        "file": "core_people/migrations/0001_initial.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_attachments/migrations/0001_initial.py",
+        "import": "from django.conf import settings"
+      },
+      {
+        "file": "core_attachments/migrations/0001_initial.py",
+        "import": "from django.db import migrations, models"
+      },
+      {
+        "file": "core_attachments/migrations/0001_initial.py",
+        "import": "import django.db.models.deletion"
+      }
+    ]
+  }
+}

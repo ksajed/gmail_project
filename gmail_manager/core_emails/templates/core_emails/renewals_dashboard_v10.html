@@ -1,0 +1,130 @@
+<div style="padding: 24px;">
+
+  <h1>Renouvellements</h1>
+  <p style="font-size: 18px;">ORDO travaille pour vous.</p>
+
+  <hr>
+
+  <h2>Travail automatique</h2>
+
+  <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-width: 160px;">
+      <div style="font-size: 32px; font-weight: bold;">{{ today_activity.sms_sent }}</div>
+      <div>SMS envoyés</div>
+    </div>
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-width: 160px;">
+      <div style="font-size: 32px; font-weight: bold;">{{ today_activity.emails_sent }}</div>
+      <div>Emails envoyés</div>
+    </div>
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-width: 160px;">
+      <div style="font-size: 32px; font-weight: bold;">{{ today_activity.notifications_created }}</div>
+      <div>Notifications créées</div>
+    </div>
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-width: 160px;">
+      <div style="font-size: 32px; font-weight: bold;">{{ today_activity.cycles_created }}</div>
+      <div>Cycles créés</div>
+    </div>
+
+  </div>
+
+  <h2>Votre travail</h2>
+
+  <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-width: 200px;">
+      <div style="font-size: 32px; font-weight: bold;">{{ pharmacist_work.patients_to_call }}</div>
+      <div>Patients à appeler</div>
+    </div>
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-width: 200px;">
+      <div style="font-size: 32px; font-weight: bold;">{{ pharmacist_work.renewals_to_check }}</div>
+      <div>Renouvellements à contrôler</div>
+    </div>
+
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-width: 200px;">
+      <div style="font-size: 32px; font-weight: bold;">{{ pharmacist_work.urgent_files }}</div>
+      <div>Dossiers urgents</div>
+    </div>
+
+    <div style="border: 1px solid #b00020; border-radius: 8px; padding: 16px; min-width: 200px; background:#fff5f5;">
+      <div style="font-size: 32px; font-weight: bold;">{{ pharmacist_work.anomalies_count }}</div>
+      <div>Dossiers incohérents</div>
+    </div>
+
+  </div>
+
+  
+<h2>Dossiers incohérents</h2>
+
+{% for item in sections.anomalies %}
+  <div style="border-left: 4px solid #b00020; padding: 12px; margin-bottom: 8px; background: #fff5f5;">
+    <strong><a href="{{ item.url }}" target="_blank" rel="noopener" style="color:#0a8f3c;text-decoration:none;">{{ item.title }}</a></strong>
+    <p>Score intégrité : {{ item.integrity_score }} %</p>
+
+    {% for r in item.integrity_results %}
+      <p><strong>{{ r.code }}</strong> — {{ r.message }}</p>
+      <p>Suggestion : {{ r.suggestion }}</p>
+    {% endfor %}
+
+    <p><a href="{{ item.url }}" target="_blank" rel="noopener" style="display:inline-block;background:#0a8f3c;color:white;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:bold;">📄 Ouvrir ordonnance</a></p>
+  </div>
+{% empty %}
+  <p>Aucune incohérence détectée.</p>
+{% endfor %}
+
+<h2>Urgences normales</h2>
+
+
+  {% for item in sections.urgent %}
+    <div style="border-left: 4px solid #900; padding: 12px; margin-bottom: 8px; background: #fff5f5;">
+      <strong><a href="{{ item.url }}" target="_blank" rel="noopener" style="color: #0a8f3c; text-decoration: none;">{{ item.title }}</a></strong>
+      <p>Raison : {{ item.reason }}</p>
+      <p>Date prévue : {{ item.due_date }}</p>
+      <p>Retard : {{ item.overdue_days }} jours</p>
+      <p>Action recommandée : {{ item.action }}</p>
+      <p><a href="{{ item.url }}" target="_blank" rel="noopener" style="display:inline-block;background:#0a8f3c;color:white;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:bold;">📄 Ouvrir ordonnance</a></p>
+    </div>
+  {% empty %}
+    <p>Aucune urgence.</p>
+  {% endfor %}
+
+  <h2>Patients à appeler</h2>
+
+  {% for item in sections.overdue %}
+    <div style="border-left: 4px solid #c60; padding: 12px; margin-bottom: 8px; background: #fffaf0;">
+      <strong><a href="{{ item.url }}" target="_blank" rel="noopener" style="color: #0a8f3c; text-decoration: none;">{{ item.title }}</a></strong>
+      <p>Date prévue : {{ item.due_date }}</p>
+      <p>Retard : {{ item.overdue_days }} jours</p>
+      <p>Action recommandée : {{ item.action }}</p>
+      <p><a href="{{ item.url }}" target="_blank" rel="noopener" style="display:inline-block;background:#0a8f3c;color:white;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:bold;">📄 Ouvrir ordonnance</a></p>
+    </div>
+  {% empty %}
+    <p>Aucun patient à appeler.</p>
+  {% endfor %}
+
+  <h2>À contrôler</h2>
+
+  {% for item in sections.to_check %}
+    <div style="border-left: 4px solid #06c; padding: 12px; margin-bottom: 8px; background: #f5f9ff;">
+      <strong><a href="{{ item.url }}" target="_blank" rel="noopener" style="color: #0a8f3c; text-decoration: none;">{{ item.title }}</a></strong>
+      <p>Raison : {{ item.reason }}</p>
+      <p>Date prévue : {{ item.due_date }}</p>
+      <p>Action recommandée : {{ item.action }}</p>
+      <p><a href="{{ item.url }}" target="_blank" rel="noopener" style="display:inline-block;background:#0a8f3c;color:white;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:bold;">📄 Ouvrir ordonnance</a></p>
+    </div>
+  {% empty %}
+    <p>Aucun renouvellement à contrôler.</p>
+  {% endfor %}
+
+  <hr>
+
+  <p style="font-size: 12px; color: #777;">
+    ORDO V10 - Dashboard lecture seule.
+    Source moteur : {{ engine_status.source|default:"non détectée" }}
+  </p>
+
+</div>

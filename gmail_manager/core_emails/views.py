@@ -1,3 +1,4 @@
+from core_emails.services_renewal_v10 import compute_renewals_dashboard_v10
 # =====================================================
 # DJANGO
 # =====================================================
@@ -225,26 +226,12 @@ def dashboard(request):
 @login_required
 def renewals_dashboard(request):
     """
-    Dashboard Renouvellements — backend V9 compatible.
+    ORDO V10 - Dashboard Renouvellements lecture seule.
 
-    Objectif :
-    - conserver l'ancien affichage V8 ;
-    - ajouter les données V9 au contexte ;
-    - ne pas modifier le template dans ce lot.
+    Cette vue utilise le service V10 sans modifier le moteur V9.
     """
-    from core_emails.services import compute_renewals_watch_v9
-
-    context = compute_renewals_watch_v9()
-
-    # ORDO V9 : dashboard renouvellements 100 % moteur V9.
-
-    # Sécurité : garantir les nouvelles clés V9.
-    context.setdefault("renewals_notifications_due", [])
-    context.setdefault("renewals_urgent", [])
-    context.setdefault("renewals_final", [])
-    context.setdefault("activity_metrics", {})
-
-    return render(request, "core_emails/renewals_dashboard.html", context)
+    context = compute_renewals_dashboard_v10()
+    return render(request, "core_emails/renewals_dashboard_v10.html", context)
 
 @login_required
 def prescription_detail(request, pk):

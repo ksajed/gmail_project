@@ -1,0 +1,285 @@
+{
+  "generated_at": "20260701_211703",
+  "prescription_id": 17,
+  "prescription": {
+    "id": "17",
+    "status": "ARCHIVED",
+    "type": "RENOUVELLEMENT",
+    "sender_type": "doctor",
+    "patient": "Khalid Sajed",
+    "established_at": "2026-01-27",
+    "received_at": "2026-01-27 17:25:11.237094+00:00",
+    "updated_at": "2026-01-30 00:23:58.444620+00:00",
+    "processing_started_at": "None",
+    "created_by": "None",
+    "is_deleted": "False",
+    "deleted_at": "None",
+    "deleted_by": "None",
+    "delete_reason": ""
+  },
+  "related": [
+    {
+      "accessor": "status_history",
+      "model": "PrescriptionStatusHistory",
+      "count": 21,
+      "items": [
+        {
+          "id": "7",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:37:17.550350+00:00",
+          "comment": "Type d’ordonnance modifié : INCOMPLETE → RENOUVELLEMENT"
+        },
+        {
+          "id": "8",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:37:26.131371+00:00",
+          "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=0, period_days=30, doctor_email=—."
+        },
+        {
+          "id": "9",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:48:16.974233+00:00",
+          "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=1, period_days=30, doctor_email=—."
+        },
+        {
+          "id": "10",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:48:35.217192+00:00",
+          "comment": "Origine de l’ordonnance modifiée : unknown → patient"
+        },
+        {
+          "id": "11",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "IN_PROGRESS",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:48:42.915370+00:00",
+          "comment": "Changement de statut : Received → In Progress"
+        },
+        {
+          "id": "12",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "IN_PROGRESS",
+          "new_status": "READY",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:48:50.545488+00:00",
+          "comment": "Changement de statut : In Progress → Ready"
+        },
+        {
+          "id": "13",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "READY",
+          "new_status": "DELIVERED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:49:02.923745+00:00",
+          "comment": "Changement de statut : Ready → Delivered"
+        },
+        {
+          "id": "14",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "DELIVERED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 17:49:03.865753+00:00",
+          "comment": "Renouvellement: délivrance enregistrée (n°1/2). Statut réinitialisé pour le prochain cycle."
+        },
+        {
+          "id": "15",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 19:00:42.548094+00:00",
+          "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=1, period_days=30, doctor_email=khalidsajed1975@gmail.com."
+        },
+        {
+          "id": "16",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 19:00:49.278446+00:00",
+          "comment": "Demande renouvellement envoyée au médecin (EMAIL)."
+        },
+        {
+          "id": "21",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "RECEIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 20:11:59.462189+00:00",
+          "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+        },
+        {
+          "id": "22",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "RECEIVED",
+          "new_status": "IN_PROGRESS",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 20:12:16.316771+00:00",
+          "comment": "Changement de statut : Received → In Progress"
+        },
+        {
+          "id": "23",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "IN_PROGRESS",
+          "new_status": "READY",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 20:26:33.830138+00:00",
+          "comment": "Changement de statut : In Progress → Ready"
+        },
+        {
+          "id": "24",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "READY",
+          "new_status": "DELIVERED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 20:29:40.181714+00:00",
+          "comment": "Changement de statut : Ready → Delivered"
+        },
+        {
+          "id": "25",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "DELIVERED",
+          "new_status": "ARCHIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-27 20:59:01.264366+00:00",
+          "comment": "Changement de statut : Delivered → Archived"
+        },
+        {
+          "id": "37",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "ARCHIVED",
+          "new_status": "ARCHIVED",
+          "changed_by": "ksajed",
+          "changed_at": "2026-01-28 11:49:47.863836+00:00",
+          "comment": "Infos renouvellement mises à jour : date médecin=2026-01-27, renewal_times=2, period_days=30, doctor_email=khalidsajeggd1975@gmail.com."
+        },
+        {
+          "id": "71",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "ARCHIVED",
+          "new_status": "ARCHIVED",
+          "changed_by": "bfellah",
+          "changed_at": "2026-01-29 23:31:15.653971+00:00",
+          "comment": "Infirmier retiré de l’ordonnance : Khalid Sajed"
+        },
+        {
+          "id": "75",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "ARCHIVED",
+          "new_status": "ARCHIVED",
+          "changed_by": "bfellah",
+          "changed_at": "2026-01-30 00:21:57.021267+00:00",
+          "comment": "Type d’ordonnance modifié : RENOUVELLEMENT → ALD"
+        },
+        {
+          "id": "76",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "ARCHIVED",
+          "new_status": "ARCHIVED",
+          "changed_by": "bfellah",
+          "changed_at": "2026-01-30 00:23:14.731799+00:00",
+          "comment": "Origine de l’ordonnance modifiée : patient → doctor"
+        },
+        {
+          "id": "77",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "ARCHIVED",
+          "new_status": "ARCHIVED",
+          "changed_by": "bfellah",
+          "changed_at": "2026-01-30 00:23:20.632136+00:00",
+          "comment": "Infirmier affecté à l’ordonnance : Khalid Sajed"
+        },
+        {
+          "id": "78",
+          "prescription": "Ordonnance #17 – Archivée",
+          "old_status": "ARCHIVED",
+          "new_status": "ARCHIVED",
+          "changed_by": "bfellah",
+          "changed_at": "2026-01-30 00:23:58.463701+00:00",
+          "comment": "Type d’ordonnance modifié : ALD → SOINS_INFIRMIERS"
+        }
+      ]
+    },
+    {
+      "accessor": "renewal_events",
+      "model": "PrescriptionRenewalEvent",
+      "count": 0,
+      "items": []
+    },
+    {
+      "accessor": "renewal_cycles",
+      "model": "PrescriptionRenewalCycle",
+      "count": 1,
+      "items": [
+        {
+          "id": "99",
+          "prescription": "Ordonnance #17 – Archivée",
+          "cycle_number": "1",
+          "status": "RECEIVED",
+          "started_at": "2026-03-31 14:24:24.854010+00:00",
+          "closed_at": "None",
+          "reminder_5_patient_email_sent_at": "None",
+          "reminder_5_patient_sms_sent_at": "None",
+          "reminder_3_patient_email_sent_at": "None",
+          "reminder_3_patient_sms_sent_at": "None",
+          "doctor_email_sent_at": "None"
+        }
+      ]
+    },
+    {
+      "accessor": "notification_events",
+      "model": "PrescriptionNotificationEvent",
+      "count": 0,
+      "items": []
+    },
+    {
+      "accessor": "attachments",
+      "model": "PrescriptionAttachment",
+      "count": 0,
+      "items": []
+    },
+    {
+      "accessor": "sms_messages",
+      "model": "SmsMessage",
+      "count": 0,
+      "items": []
+    }
+  ],
+  "integrity": {
+    "score": 50,
+    "results": [
+      {
+        "code": "P001",
+        "severity": "ERROR",
+        "message": "Ordonnance archivée avec un cycle encore actif.",
+        "object": "RenewalCycle(p=17, n=1, status=RECEIVED)",
+        "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+      },
+      {
+        "code": "P002",
+        "severity": "ERROR",
+        "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+        "object": "Ordonnance #17 – Archivée",
+        "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+      }
+    ]
+  },
+  "anomalies": [
+    "Ordonnance archivée avec un cycle encore actif.",
+    "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale."
+  ]
+}

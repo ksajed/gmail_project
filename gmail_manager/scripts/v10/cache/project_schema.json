@@ -1,0 +1,1539 @@
+{
+  "generated_at": "20260701_202942",
+  "models": [
+    {
+      "app": "core_adminconsole",
+      "model": "AdminAuditEvent",
+      "db_table": "core_adminconsole_adminauditevent",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "action",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "target_type",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "target_id",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "summary",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "ip_address",
+          "type": "GenericIPAddressField",
+          "is_relation": false
+        },
+        {
+          "name": "user_agent",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "metadata",
+          "type": "JSONField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "actor",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "admin",
+      "model": "LogEntry",
+      "db_table": "django_admin_log",
+      "fields": [
+        {
+          "name": "id",
+          "type": "AutoField",
+          "is_relation": false
+        },
+        {
+          "name": "action_time",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "object_id",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "object_repr",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "action_flag",
+          "type": "PositiveSmallIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "change_message",
+          "type": "TextField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "user",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        },
+        {
+          "name": "content_type",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "contenttypes.ContentType"
+        }
+      ]
+    },
+    {
+      "app": "auth",
+      "model": "Permission",
+      "db_table": "auth_permission",
+      "fields": [
+        {
+          "name": "id",
+          "type": "AutoField",
+          "is_relation": false
+        },
+        {
+          "name": "name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "codename",
+          "type": "CharField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "group",
+          "type": "ManyToManyRel",
+          "is_relation": true,
+          "related_model": "auth.Group"
+        },
+        {
+          "name": "user",
+          "type": "ManyToManyRel",
+          "is_relation": true,
+          "related_model": "auth.User"
+        },
+        {
+          "name": "content_type",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "contenttypes.ContentType"
+        }
+      ]
+    },
+    {
+      "app": "auth",
+      "model": "Group",
+      "db_table": "auth_group",
+      "fields": [
+        {
+          "name": "id",
+          "type": "AutoField",
+          "is_relation": false
+        },
+        {
+          "name": "name",
+          "type": "CharField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "user",
+          "type": "ManyToManyRel",
+          "is_relation": true,
+          "related_model": "auth.User"
+        },
+        {
+          "name": "permissions",
+          "type": "ManyToManyField",
+          "is_relation": true,
+          "related_model": "auth.Permission"
+        }
+      ]
+    },
+    {
+      "app": "auth",
+      "model": "User",
+      "db_table": "auth_user",
+      "fields": [
+        {
+          "name": "id",
+          "type": "AutoField",
+          "is_relation": false
+        },
+        {
+          "name": "password",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "last_login",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "is_superuser",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "username",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "first_name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "last_name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "email",
+          "type": "EmailField",
+          "is_relation": false
+        },
+        {
+          "name": "is_staff",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "is_active",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "date_joined",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "admin_audit_events",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_adminconsole.AdminAuditEvent"
+        },
+        {
+          "name": "logentry",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "admin.LogEntry"
+        },
+        {
+          "name": "profile",
+          "type": "OneToOneRel",
+          "is_relation": true,
+          "related_model": "core_accounts.UserProfile"
+        },
+        {
+          "name": "prescription",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "deleted_prescriptions",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "prescriptionstatushistory",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionStatusHistory"
+        },
+        {
+          "name": "created_renewal_events",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionRenewalEvent"
+        },
+        {
+          "name": "created_notification_events",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionNotificationEvent"
+        },
+        {
+          "name": "prescriptionattachment",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_attachments.PrescriptionAttachment"
+        },
+        {
+          "name": "prescriptionattachmentaccess",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_attachments.PrescriptionAttachmentAccess"
+        },
+        {
+          "name": "notifications",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_notifications.Notification"
+        },
+        {
+          "name": "groups",
+          "type": "ManyToManyField",
+          "is_relation": true,
+          "related_model": "auth.Group"
+        },
+        {
+          "name": "user_permissions",
+          "type": "ManyToManyField",
+          "is_relation": true,
+          "related_model": "auth.Permission"
+        }
+      ]
+    },
+    {
+      "app": "contenttypes",
+      "model": "ContentType",
+      "db_table": "django_content_type",
+      "fields": [
+        {
+          "name": "id",
+          "type": "AutoField",
+          "is_relation": false
+        },
+        {
+          "name": "app_label",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "model",
+          "type": "CharField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "logentry",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "admin.LogEntry"
+        },
+        {
+          "name": "permission",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "auth.Permission"
+        }
+      ]
+    },
+    {
+      "app": "sessions",
+      "model": "Session",
+      "db_table": "django_session",
+      "fields": [
+        {
+          "name": "session_key",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "session_data",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "expire_date",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": []
+    },
+    {
+      "app": "core_accounts",
+      "model": "UserProfile",
+      "db_table": "core_accounts_userprofile",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "role",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "per_page",
+          "type": "PositiveSmallIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "user",
+          "type": "OneToOneField",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_gmail",
+      "model": "GmailMessage",
+      "db_table": "core_gmail_gmailmessage",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "message_id",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "subject",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "from_email",
+          "type": "EmailField",
+          "is_relation": false
+        },
+        {
+          "name": "received_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "processed_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": []
+    },
+    {
+      "app": "core_emails",
+      "model": "Prescription",
+      "db_table": "core_emails_prescription",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "status",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "type",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "sender_type",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "established_at",
+          "type": "DateField",
+          "is_relation": false
+        },
+        {
+          "name": "received_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "processing_started_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "is_deleted",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "deleted_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "delete_reason",
+          "type": "CharField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "status_history",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionStatusHistory"
+        },
+        {
+          "name": "assignment",
+          "type": "OneToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionAssignment"
+        },
+        {
+          "name": "renewal_info",
+          "type": "OneToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionRenewalInfo"
+        },
+        {
+          "name": "renewal_events",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionRenewalEvent"
+        },
+        {
+          "name": "renewal_cycles",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionRenewalCycle"
+        },
+        {
+          "name": "notification_settings",
+          "type": "OneToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionNotificationSettings"
+        },
+        {
+          "name": "notification_events",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionNotificationEvent"
+        },
+        {
+          "name": "attachments",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_attachments.PrescriptionAttachment"
+        },
+        {
+          "name": "sms_messages",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_notifications.SmsMessage"
+        },
+        {
+          "name": "patient",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_patients.Patient"
+        },
+        {
+          "name": "created_by",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        },
+        {
+          "name": "deleted_by",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionStatusHistory",
+      "db_table": "core_emails_prescriptionstatushistory",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "old_status",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "new_status",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "changed_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "comment",
+          "type": "TextField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescription",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "changed_by",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionAssignment",
+      "db_table": "core_emails_prescriptionassignment",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "assigned_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescription",
+          "type": "OneToOneField",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "nurse",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_people.Person"
+        },
+        {
+          "name": "patient",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_patients.Patient"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionRenewalInfo",
+      "db_table": "core_emails_prescriptionrenewalinfo",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "renewal_times",
+          "type": "PositiveSmallIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "period_days",
+          "type": "PositiveSmallIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "renewal_done_count",
+          "type": "PositiveSmallIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "last_renewal_ordered_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "doctor_email",
+          "type": "EmailField",
+          "is_relation": false
+        },
+        {
+          "name": "doctor_name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_5_patient_email_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_5_patient_sms_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_3_patient_email_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_3_patient_sms_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "doctor_email_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescription",
+          "type": "OneToOneField",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionRenewalEvent",
+      "db_table": "core_emails_prescriptionrenewalevent",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "number",
+          "type": "PositiveSmallIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "ordered_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "note",
+          "type": "CharField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescription",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "created_by",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionRenewalCycle",
+      "db_table": "core_emails_prescriptionrenewalcycle",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "cycle_number",
+          "type": "PositiveSmallIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "status",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "started_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "closed_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_5_patient_email_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_5_patient_sms_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_3_patient_email_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "reminder_3_patient_sms_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "doctor_email_sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescription",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionNotificationSettings",
+      "db_table": "core_emails_prescriptionnotificationsettings",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "patient_channel",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "nurse_channel",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "free_text_message",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescription",
+          "type": "OneToOneField",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionNotificationEvent",
+      "db_table": "core_emails_prescriptionnotificationevent",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "recipient_type",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "channel",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "destination",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "result",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "error_message",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescription",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "created_by",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_emails",
+      "model": "RenewalSettings",
+      "db_table": "core_emails_renewalsettings",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "pharmacy_name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "phone",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "email",
+          "type": "EmailField",
+          "is_relation": false
+        },
+        {
+          "name": "opening_time",
+          "type": "TimeField",
+          "is_relation": false
+        },
+        {
+          "name": "closing_time",
+          "type": "TimeField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": []
+    },
+    {
+      "app": "core_emails",
+      "model": "RenewalNotificationRule",
+      "db_table": "core_emails_renewalnotificationrule",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "days_before",
+          "type": "PositiveIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "send_sms",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "send_email",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "active",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "sort_order",
+          "type": "PositiveIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": []
+    },
+    {
+      "app": "core_emails",
+      "model": "RenewalNotificationTemplate",
+      "db_table": "core_emails_renewalnotificationtemplate",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "channel",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "subject",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "body",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "active",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": []
+    },
+    {
+      "app": "core_emails",
+      "model": "Holiday",
+      "db_table": "core_emails_holiday",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "date",
+          "type": "DateField",
+          "is_relation": false
+        },
+        {
+          "name": "active",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": []
+    },
+    {
+      "app": "core_attachments",
+      "model": "PrescriptionAttachment",
+      "db_table": "core_attachments_prescriptionattachment",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "file",
+          "type": "FileField",
+          "is_relation": false
+        },
+        {
+          "name": "original_filename",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "mime_type",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "uploaded_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "access_logs",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_attachments.PrescriptionAttachmentAccess"
+        },
+        {
+          "name": "prescription",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "uploaded_by",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_attachments",
+      "model": "PrescriptionAttachmentAccess",
+      "db_table": "core_attachments_prescriptionattachmentaccess",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "accessed_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "action",
+          "type": "CharField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "attachment",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_attachments.PrescriptionAttachment"
+        },
+        {
+          "name": "accessed_by",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_notifications",
+      "model": "Notification",
+      "db_table": "core_notifications_notification",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "title",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "message",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "is_read",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "object_type",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "object_id",
+          "type": "PositiveIntegerField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "recipient",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "auth.User"
+        }
+      ]
+    },
+    {
+      "app": "core_notifications",
+      "model": "SmsTemplate",
+      "db_table": "core_notifications_smstemplate",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "key",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "language",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "content",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "is_active",
+          "type": "BooleanField",
+          "is_relation": false
+        }
+      ],
+      "relations": []
+    },
+    {
+      "app": "core_notifications",
+      "model": "SmsMessage",
+      "db_table": "core_notifications_smsmessage",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "recipient_phone",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "purpose",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "template_key",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "rendered_text",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "provider",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "provider_message_id",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "status",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "last_error_message",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "sent_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "attempts",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_notifications.SmsAttempt"
+        },
+        {
+          "name": "related_prescription",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        }
+      ]
+    },
+    {
+      "app": "core_notifications",
+      "model": "SmsAttempt",
+      "db_table": "core_notifications_smsattempt",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "attempt_no",
+          "type": "PositiveIntegerField",
+          "is_relation": false
+        },
+        {
+          "name": "requested_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "success",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "error_message",
+          "type": "TextField",
+          "is_relation": false
+        },
+        {
+          "name": "response_payload",
+          "type": "JSONField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "sms_message",
+          "type": "ForeignKey",
+          "is_relation": true,
+          "related_model": "core_notifications.SmsMessage"
+        }
+      ]
+    },
+    {
+      "app": "core_patients",
+      "model": "Patient",
+      "db_table": "core_patients_patient",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "full_name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "email",
+          "type": "EmailField",
+          "is_relation": false
+        },
+        {
+          "name": "phone_number",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "prescriptions",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.Prescription"
+        },
+        {
+          "name": "assigned_prescriptions",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionAssignment"
+        }
+      ]
+    },
+    {
+      "app": "core_people",
+      "model": "Person",
+      "db_table": "core_people_person",
+      "fields": [
+        {
+          "name": "id",
+          "type": "BigAutoField",
+          "is_relation": false
+        },
+        {
+          "name": "first_name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "last_name",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "role",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "email",
+          "type": "EmailField",
+          "is_relation": false
+        },
+        {
+          "name": "phone",
+          "type": "CharField",
+          "is_relation": false
+        },
+        {
+          "name": "is_active",
+          "type": "BooleanField",
+          "is_relation": false
+        },
+        {
+          "name": "created_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        },
+        {
+          "name": "updated_at",
+          "type": "DateTimeField",
+          "is_relation": false
+        }
+      ],
+      "relations": [
+        {
+          "name": "assigned_prescriptions",
+          "type": "ManyToOneRel",
+          "is_relation": true,
+          "related_model": "core_emails.PrescriptionAssignment"
+        }
+      ]
+    }
+  ]
+}
