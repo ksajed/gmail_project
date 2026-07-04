@@ -12,13 +12,13 @@ class AnomalyService:
     @staticmethod
     def get_open():
         return Anomaly.objects.exclude(
-            status__in=["RESOLVED", "IGNORED"]
+            status__in=["RESOLUE", "IGNOREE"]
         )
 
     @staticmethod
     def get_critical():
         return Anomaly.objects.filter(
-            severity="CRITICAL"
+            severity="CRITIQUE"
         )
 
     @staticmethod
@@ -31,11 +31,11 @@ class AnomalyService:
     def get_statistics():
         return {
             "total": Anomaly.objects.count(),
-            "critical": Anomaly.objects.filter(severity="CRITICAL").count(),
-            "high": Anomaly.objects.filter(severity="HIGH").count(),
-            "medium": Anomaly.objects.filter(severity="MEDIUM").count(),
-            "low": Anomaly.objects.filter(severity="LOW").count(),
-            "resolved": Anomaly.objects.filter(status="RESOLVED").count(),
+            "critical": Anomaly.objects.filter(severity="CRITIQUE").count(),
+            "high": Anomaly.objects.filter(severity="ELEVEE").count(),
+            "medium": Anomaly.objects.filter(severity="MOYENNE").count(),
+            "low": Anomaly.objects.filter(severity="FAIBLE").count(),
+            "resolved": Anomaly.objects.filter(status="RESOLUE").count(),
             "by_rule": list(
                 Anomaly.objects.values("rule_code")
                 .annotate(total=Count("id"))

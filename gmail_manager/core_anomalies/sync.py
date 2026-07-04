@@ -8,10 +8,10 @@ def map_severity(result):
     severity = result.get("severity", "INFO")
 
     if severity == "ERROR":
-        return "CRITICAL"
+        return "CRITIQUE"
 
     if severity == "WARNING":
-        return "HIGH"
+        return "ELEVEE"
 
     return "INFO"
 
@@ -39,7 +39,7 @@ def sync_anomalies(limit=None):
                     "score": score,
                     "message": result.get("message") or "",
                     "suggestion": result.get("suggestion") or "",
-                    "status": "NEW",
+                    "status": "NOUVELLE",
                 },
             )
 

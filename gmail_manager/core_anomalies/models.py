@@ -3,24 +3,24 @@ from django.db import models
 
 class Anomaly(models.Model):
     SEVERITY_CHOICES = [
-        ("CRITICAL", "Critical"),
-        ("HIGH", "High"),
-        ("MEDIUM", "Medium"),
-        ("LOW", "Low"),
-        ("INFO", "Info"),
+        ("CRITIQUE", "Critique"),
+        ("ELEVEE", "Élevée"),
+        ("MOYENNE", "Moyenne"),
+        ("FAIBLE", "Faible"),
+        ("INFO", "Information"),
     ]
 
     STATUS_CHOICES = [
-        ("NEW", "New"),
-        ("IN_PROGRESS", "In Progress"),
-        ("WAITING", "Waiting"),
-        ("RESOLVED", "Resolved"),
-        ("IGNORED", "Ignored"),
+        ("NOUVELLE", "Nouvelle"),
+        ("EN_COURS", "En cours"),
+        ("EN_ATTENTE", "En attente"),
+        ("RESOLUE", "Résolue"),
+        ("IGNOREE", "Ignorée"),
     ]
 
     rule_code = models.CharField(max_length=20)
-    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default="LOW")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="NEW")
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default="FAIBLE")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="NOUVELLE")
     prescription_id = models.IntegerField()
     score = models.PositiveSmallIntegerField(default=100)
     message = models.TextField()

@@ -1,26 +1,44 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Centre des anomalies</title>
-</head>
-<body>
+{% extends "core_adminconsole/base.html" %}
 
+{% block title %}Centre des anomalies{% endblock %}
+
+{% block content %}
 <h1>Centre des anomalies</h1>
 
-<h2>Statistiques</h2>
+<div class="cards">
+    <div class="card"><div class="num">{{ stats.total }}</div><div>Total</div></div>
+    <div class="card"><div class="num">{{ stats.critical }}</div><div>Critiques</div></div>
+    <div class="card"><div class="num">{{ stats.high }}</div><div>Élevées</div></div>
+    <div class="card"><div class="num">{{ stats.medium }}</div><div>Moyennes</div></div>
+    <div class="card"><div class="num">{{ stats.low }}</div><div>Faibles</div></div>
+    <div class="card"><div class="num">{{ stats.resolved }}</div><div>Résolues</div></div>
+</div>
 
-<ul>
-    <li>Total : {{ stats.total }}</li>
-    <li>Critiques : {{ stats.critical }}</li>
-    <li>High : {{ stats.high }}</li>
-    <li>Medium : {{ stats.medium }}</li>
-    <li>Low : {{ stats.low }}</li>
-    <li>Résolues : {{ stats.resolved }}</li>
-</ul>
+
+<div class="panel" style="margin-bottom:16px;">
+    <h2>Filtrer les anomalies</h2>
+
+    <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input type="text" name="q" value="{{ q }}" placeholder="Ordonnance..." style="padding:8px; border:1px solid #ddd; border-radius:6px;">
+
+        <select name="severity" style="padding:8px; border:1px solid #ddd; border-radius:6px;">
+            <option value="">Toutes gravités</option>
+            <option value="CRITIQUE" {% if severity == "CRITIQUE" %}selected{% endif %}>Critiques</option>
+            <option value="ELEVEE" {% if severity == "ELEVEE" %}selected{% endif %}>Élevées</option>
+            <option value="MOYENNE" {% if severity == "MOYENNE" %}selected{% endif %}>Moyennes</option>
+            <option value="FAIBLE" {% if severity == "FAIBLE" %}selected{% endif %}>Faibles</option>
+            <option value="INFO" {% if severity == "INFO" %}selected{% endif %}>Info</option>
+        </select>
+
+        <button type="submit" class="btn">Filtrer</button>
+        <a href="/anomalies/" class="btn" style="background:#64748b;">Reset</a>
+    </form>
+</div>
 
 <h2>Anomalies ouvertes</h2>
 
-<table border="1" cellpadding="6">
+
+<table>
 <tr>
     <th>Prescription</th>
     <th>Règle</th>
@@ -32,15 +50,13 @@
 
 {% for a in anomalies %}
 <tr>
-    <td>{{ a.prescription_id }}</td>
+    <td>#{{ a.prescription_id }}</td>
     <td>{{ a.rule_code }}</td>
-    <td>{{ a.severity }}</td>
+    <td><span class="badge {{ a.severity }}">{{ a.severity }}</span></td>
     <td>{{ a.score }} %</td>
     <td>{{ a.message }}</td>
     <td>
-        <a href="{% url 'anomaly_detail' a.id %}">
-            Voir
-        </a>
+        <a class="btn" href="{% url 'anomaly_detail' a.id %}">Voir</a>
     </td>
 </tr>
 {% empty %}
@@ -50,6 +66,4 @@
 {% endfor %}
 
 </table>
-
-</body>
-</html>
+{% endblock %}

@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    path("anomalies/", include("core_anomalies.urls")),
     path('admin-console/', include('core_adminconsole.urls')),
     path("admin/", admin.site.urls),
 

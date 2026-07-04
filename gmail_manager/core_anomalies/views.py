@@ -5,10 +5,24 @@ from core_anomalies.services import AnomalyService
 
 
 def dashboard(request):
+    severity = request.GET.get("severity", "")
+    q = request.GET.get("q", "")
+
+    anomalies = AnomalyService.get_open()
+
+    if severity:
+        anomalies = anomalies.filter(severity=severity)
+
+    if q:
+        anomalies = anomalies.filter(prescription_id__icontains=q)
+
     context = {
         "stats": AnomalyService.get_statistics(),
-        "anomalies": AnomalyService.get_open()[:100],
+        "anomalies": anomalies[:100],
+        "severity": severity,
+        "q": q,
     }
+
     return render(request, "core_anomalies/dashboard.html", context)
 
 

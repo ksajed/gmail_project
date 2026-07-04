@@ -1,47 +1,43 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Détail anomalie</title>
-</head>
-<body>
+{% extends "core_adminconsole/base.html" %}
 
-<p><a href="/anomalies/">← Retour au centre des anomalies</a></p>
+{% block title %}Détail anomalie{% endblock %}
+
+{% block content %}
+<p><a class="back" href="/anomalies/">← Retour au centre des anomalies</a></p>
 
 <h1>Anomalie {{ anomaly.rule_code }}</h1>
 
-<h2>Ordonnance</h2>
-<p>
-    Ordonnance #{{ anomaly.prescription_id }}
-    -
-    <a href="{{ prescription_url }}" target="_blank">Ouvrir ordonnance</a>
-</p>
+<div class="panel">
+    <h2>Ordonnance</h2>
+    <p>Ordonnance #{{ anomaly.prescription_id }}</p>
+    <a class="btn" href="{{ prescription_url }}" target="_blank">Ouvrir ordonnance</a>
+</div>
 
-<h2>Gravité</h2>
-<p>{{ anomaly.severity }}</p>
+<div class="panel">
+    <h2>Priorité</h2>
+    <p><span class="badge {{ anomaly.severity }}">{{ anomaly.severity }}</span></p>
+    <p>Score : <strong>{{ anomaly.score }} %</strong></p>
+    <p>Statut : <strong>{{ anomaly.status }}</strong></p>
+</div>
 
-<h2>Score</h2>
-<p>{{ anomaly.score }} %</p>
+<div class="panel">
+    <h2>Pourquoi ?</h2>
+    <p>{{ anomaly.message }}</p>
+</div>
 
-<h2>Statut</h2>
-<p>{{ anomaly.status }}</p>
+<div class="panel">
+    <h2>Suggestion</h2>
+    <p>{{ anomaly.suggestion }}</p>
+</div>
 
-<h2>Pourquoi ?</h2>
-<p>{{ anomaly.message }}</p>
-
-<h2>Suggestion</h2>
-<p>{{ anomaly.suggestion }}</p>
-
-<h2>Historique</h2>
-<ul>
-    <li>Créée : {{ anomaly.created_at }}</li>
-    <li>Dernière mise à jour : {{ anomaly.updated_at }}</li>
-    {% if anomaly.resolved_at %}
-        <li>Résolue : {{ anomaly.resolved_at }}</li>
-    {% endif %}
-</ul>
-
-<h2>Commentaire</h2>
-<p>{{ anomaly.comment|default:"Aucun commentaire." }}</p>
-
-</body>
-</html>
+<div class="panel">
+    <h2>Historique</h2>
+    <ul>
+        <li>Créée : {{ anomaly.created_at }}</li>
+        <li>Dernière mise à jour : {{ anomaly.updated_at }}</li>
+        {% if anomaly.resolved_at %}
+            <li>Résolue : {{ anomaly.resolved_at }}</li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %}
