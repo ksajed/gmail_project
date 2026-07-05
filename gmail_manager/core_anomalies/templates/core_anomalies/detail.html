@@ -1,6 +1,35 @@
 {% extends "core_adminconsole/base.html" %}
 
-{% block title %}Détail anomalie{% endblock %}
+{% block title %}Détail anomalie
+<div class="panel">
+    <h2>Actions rapides</h2>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="EN_COURS">
+        <button class="btn" type="submit">Mettre en cours</button>
+    </form>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="EN_ATTENTE">
+        <button class="btn" type="submit" style="background:#64748b;">Mettre en attente</button>
+    </form>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="RESOLUE">
+        <button class="btn" type="submit" style="background:#0a8f3c;">Résoudre</button>
+    </form>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="IGNOREE">
+        <button class="btn" type="submit" style="background:#991b1b;">Ignorer</button>
+    </form>
+</div>
+
+{% endblock %}
 
 {% block content %}
 <p><a class="back" href="/anomalies/">← Retour au centre des anomalies</a></p>
@@ -8,6 +37,9 @@
 <h1>Anomalie {{ anomaly.rule_code }}</h1>
 
 <div class="panel">
+    <h2>Patient concerné</h2>
+    <p>{{ anomaly.patient_label }}</p>
+
     <h2>Ordonnance</h2>
     <p>Ordonnance #{{ anomaly.prescription_id }}</p>
     <a class="btn" href="{{ prescription_url }}" target="_blank">Ouvrir ordonnance</a>
@@ -40,4 +72,33 @@
         {% endif %}
     </ul>
 </div>
+
+<div class="panel">
+    <h2>Actions rapides</h2>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="EN_COURS">
+        <button class="btn" type="submit">Mettre en cours</button>
+    </form>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="EN_ATTENTE">
+        <button class="btn" type="submit" style="background:#64748b;">Mettre en attente</button>
+    </form>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="RESOLUE">
+        <button class="btn" type="submit" style="background:#0a8f3c;">Résoudre</button>
+    </form>
+
+    <form method="post" action="{% url 'anomaly_change_status' anomaly.id %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="status" value="IGNOREE">
+        <button class="btn" type="submit" style="background:#991b1b;">Ignorer</button>
+    </form>
+</div>
+
 {% endblock %}

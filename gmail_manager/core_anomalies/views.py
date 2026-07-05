@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 
 from core_anomalies.models import Anomaly
-from core_anomalies.services import AnomalyService
+from core_anomalies.services import AnomalyService, enrich_anomaly, enrich_list
 
 
 def dashboard(request):
@@ -18,7 +18,7 @@ def dashboard(request):
 
     context = {
         "stats": AnomalyService.get_statistics(),
-        "anomalies": anomalies[:100],
+        "anomalies": enrich_list(anomalies[:100]),
         "severity": severity,
         "q": q,
     }
@@ -27,7 +27,7 @@ def dashboard(request):
 
 
 def detail(request, pk):
-    anomaly = get_object_or_404(Anomaly, pk=pk)
+    anomaly = enrich_anomaly(get_object_or_404(Anomaly, pk=pk))
 
     context = {
         "anomaly": anomaly,
