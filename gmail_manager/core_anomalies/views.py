@@ -9,6 +9,7 @@ from core_anomalies.services import AnomalyService, enrich_anomaly, enrich_list
 def dashboard(request):
     severity = request.GET.get("severity", "")
     q = request.GET.get("q", "")
+    rule_code = request.GET.get("rule_code", "")
 
     anomalies = AnomalyService.get_open()
 
@@ -18,11 +19,16 @@ def dashboard(request):
     if q:
         anomalies = anomalies.filter(prescription_id__icontains=q)
 
+    if rule_code:
+        anomalies = anomalies.filter(rule_code=rule_code)
+
     context = {
         "stats": AnomalyService.get_statistics(),
         "anomalies": enrich_list(anomalies[:100]),
         "severity": severity,
         "q": q,
+        "rule_code": rule_code,
+        "rule_choices": AnomalyService.get_rule_choices(),
     }
 
     return render(request, "core_anomalies/dashboard.html", context)

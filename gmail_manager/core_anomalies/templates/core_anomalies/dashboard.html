@@ -21,6 +21,15 @@
     <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
         <input type="text" name="q" value="{{ q }}" placeholder="Ordonnance..." style="padding:8px; border:1px solid #ddd; border-radius:6px;">
 
+        <select name="rule_code" style="padding:8px; border:1px solid #ddd; border-radius:6px;">
+            <option value="">Tous types d'anomalies</option>
+            {% for r in rule_choices %}
+                <option value="{{ r.rule_code }}" {% if rule_code == r.rule_code %}selected{% endif %}>
+                    {{ r.title }}
+                </option>
+            {% endfor %}
+        </select>
+
         <select name="severity" style="padding:8px; border:1px solid #ddd; border-radius:6px;">
             <option value="">Toutes gravités</option>
             <option value="CRITIQUE" {% if severity == "CRITIQUE" %}selected{% endif %}>Critiques</option>

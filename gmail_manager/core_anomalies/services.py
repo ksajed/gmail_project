@@ -68,6 +68,16 @@ class AnomalyService:
         )
 
     @staticmethod
+    def get_rule_choices():
+        return (
+            Anomaly.objects
+            .exclude(title="")
+            .values("rule_code", "title")
+            .distinct()
+            .order_by("title")
+        )
+
+    @staticmethod
     def get_statistics():
         return {
             "total": Anomaly.objects.count(),
