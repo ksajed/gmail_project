@@ -1,4 +1,6 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from core_anomalies.models import Anomaly
 from core_anomalies.services import AnomalyService, enrich_anomaly, enrich_list
@@ -32,6 +34,30 @@ def detail(request, pk):
     context = {
         "anomaly": anomaly,
         "prescription_url": f"/prescription/{anomaly.prescription_id}/",
+        "patient_url": f"/admin-console/patients/{anomaly.patient_id}/edit/" if anomaly.patient_id else None,
+        "statuses": Anomaly.STATUS_CHOICES,
     }
 
     return render(request, "core_anomalies/detail.html", context)
+
+
+@require_POST
+def change_status(request, pk):
+    anomaly = get_object_or_404(Anomaly, pk=pk)
+    new_status = request.POST.get("status")
+
+    allowed = [x[0] for x in Anomaly.STATUS_CHOICES]
+
+    if new_status in allowed:
+        anomaly.status = new_status
+
+        if new_status == "RESOLUE":
+            anomaly.resolved_at = timezone.now()
+
+        comment = request.POST.get("comment")
+        if comment is not None:
+            anomaly.comment = comment
+
+        anomaly.save()
+
+    return redirect("anomaly_detail", pk=anomaly.pk)

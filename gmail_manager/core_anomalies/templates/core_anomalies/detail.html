@@ -39,6 +39,9 @@
 <div class="panel">
     <h2>Patient concerné</h2>
     <p>{{ anomaly.patient_label }}</p>
+    {% if patient_url %}
+        <a class="btn" href="{{ patient_url }}">Ouvrir patient</a>
+    {% endif %}
 
     <h2>Ordonnance</h2>
     <p>Ordonnance #{{ anomaly.prescription_id }}</p>

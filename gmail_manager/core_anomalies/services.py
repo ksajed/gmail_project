@@ -14,6 +14,7 @@ def find_prescription_model():
 def enrich_anomaly(anomaly):
     anomaly.prescription_obj = None
     anomaly.patient_label = "Patient inconnu"
+    anomaly.patient_id = None
 
     Prescription = find_prescription_model()
 
@@ -28,6 +29,7 @@ def enrich_anomaly(anomaly):
 
         if patient:
             anomaly.patient_label = str(patient)
+            anomaly.patient_id = getattr(patient, "pk", None)
         else:
             anomaly.patient_label = "Patient non renseigné"
 
