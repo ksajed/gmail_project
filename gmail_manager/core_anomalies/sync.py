@@ -21,6 +21,7 @@ def sync_anomalies(limit=None):
     active_keys = set()
     created = 0
     updated = 0
+    resolved = 0
 
     for item in report.get("items", []):
         prescription_id = item["prescription_id"]
@@ -31,14 +32,19 @@ def sync_anomalies(limit=None):
             key = (prescription_id, rule_code)
             active_keys.add(key)
 
-            anomaly, was_created = Anomaly.objects.update_or_create(
+            _, was_created = Anomaly.objects.update_or_create(
                 prescription_id=prescription_id,
                 rule_code=rule_code,
                 defaults={
                     "severity": map_severity(result),
                     "score": score,
+                    "title": result.get("title") or "",
+                    "category": result.get("category") or "",
                     "message": result.get("message") or "",
-                    "suggestion": result.get("suggestion") or "",
+                    "description": result.get("description") or "",
+                    "solution": result.get("solution") or "",
+                    "suggestion": result.get("suggestion") or result.get("solution") or "",
+                    "autofix": bool(result.get("autofix")),
                     "status": "NOUVELLE",
                 },
             )
@@ -48,15 +54,13 @@ def sync_anomalies(limit=None):
             else:
                 updated += 1
 
-    resolved = 0
-
-    for anomaly in Anomaly.objects.exclude(status__in=["RESOLVED", "IGNORED"]):
+    for anomaly in Anomaly.objects.exclude(status__in=["RESOLUE", "IGNOREE"]):
         key = (anomaly.prescription_id, anomaly.rule_code)
 
         if key not in active_keys:
-            anomaly.status = "RESOLVED"
+            anomaly.status = "RESOLUE"
             anomaly.resolved_at = timezone.now()
-            anomaly.comment = "Résolue automatiquement : anomalie absente du dernier audit."
+            anomaly.comment = "Résolue automatiquement : absente du dernier audit."
             anomaly.save(update_fields=["status", "resolved_at", "comment", "updated_at"])
             resolved += 1
 

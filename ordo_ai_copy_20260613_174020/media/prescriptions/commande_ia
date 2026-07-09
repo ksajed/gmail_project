@@ -1,0 +1,65 @@
+on suit exactement la méthode ✅
+(chemin →tu donne les commandes pour repérer et moi je te colle le resultat des commandes → tu envoies la commande pour le code : le code  et moi j execute la commande →  tu donne le la commandedu code de verification et moi je retourne le resultat
+Et chaque étape doit être validée avant de passer à la suivante.
+faire attention au identation
+des backup avant chaque modification
+toujours des script patch python executable dans le terminal,script Python à copier/coller dans le terminal
+python - <<'PY'
+# script patch python ici (backup + modif)
+PY
+
+Notifications = popup uniquement (pas d’affichage inline
+verifier avant est ce que la logique existe quelque part dans l application avent d ajouter ou modifier  afin  d eviter les duplication
+pour chaque phase explique ce que tu va faire au debut et pour chaque sous phase explique ce qui tu va faire pour cette sous phase. et ne demande  que ce que concerne cetyte phase
+
+faire un snapshot du dossier de travail en excluant tout ce qui est lourd / inutile / sensible, puis zipper.
+
+
+Basculer sur une branche de grosses modifs (sans toucher au stable)
+
+
+Tu dois suivre EXACTEMENT cette méthode de travail ✅
+
+Workflow obligatoire (pas de saut d’étape) :
+1) Tu me donnes le CHEMIN précis des fichiers concernés.
+2) Tu me donnes des COMMANDES de repérage (grep/rg/find/etc.) à exécuter.
+3) Je colle ici le RÉSULTAT de ces commandes.
+4) Tu fournis un SCRIPT PATCH Python (et uniquement ça) qui :
+   - crée un backup horodaté AVANT toute modification,
+   - applique les modifications avec une indentation parfaite,
+   - ne duplique pas la logique existante.
+5) J’exécute le script patch.
+6) Tu me donnes des COMMANDES de vérification (tests, grep, runserver, diff, etc.).
+7) Je colle ici les résultats de vérification.
+8) Chaque étape doit être VALIDÉE avant de passer à la suivante.
+
+Règles strictes :
+- Attention maximale à l’indentation (Python/HTML/CSS/JS).
+- Backup obligatoire avant chaque modification.
+- Toujours utiliser des scripts patch Python pour modifier le code (pas de patch manuel).
+- Notifications : POPUP uniquement (aucun affichage inline).
+- Avant d’ajouter ou modifier : vérifier si la logique existe déjà quelque part dans l’application
+  (éviter les duplications, réutiliser l’existant, refactor si nécessaire).
+
+Gestion par phases :
+- Pour chaque PHASE : commence par expliquer ce que tu vas faire (objectif + plan court).
+- Pour chaque SOUS-PHASE : explique ce que tu vas faire dans cette sous-phase.
+- Ne demande que les informations et résultats STRICTEMENT nécessaires à la phase en cours
+  (pas de questions hors-scope).
+
+la meme Charte graphique (obligatoire, à appliquer partout dans le projet) :
+
+
+OVH_API_BASE_URL=https://eu.api.ovh.com/1.0
+OVH_APP_KEY=d4096e248f9d7a8a
+OVH_APP_SECRET=54d524f75fce4573934c536f99e4b983
+OVH_CONSUMER_KEY=fe794bb379aba296c445f41ea7017098
+OVH_SMS_SERVICE_NAME=sms-sk252125-1
+
+SMS_BACKEND=core_notifications.backends.ovh.OvhSmsBackend
+PHARMACY_PHONE=+33XXXXXXXXX
+
+
+
+Services SMS trouvés:
+ - sms-sk252125-1

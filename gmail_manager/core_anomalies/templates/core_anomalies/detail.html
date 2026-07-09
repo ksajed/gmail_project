@@ -34,7 +34,8 @@
 {% block content %}
 <p><a class="back" href="/anomalies/">← Retour au centre des anomalies</a></p>
 
-<h1>Anomalie {{ anomaly.rule_code }}</h1>
+<h1>{{ anomaly.message }}</h1>
+<p style='color:#64748b;'>Référence technique : {{ anomaly.rule_code }}</p>
 
 <div class="panel">
     <h2>Patient concerné</h2>
@@ -49,19 +50,19 @@
 </div>
 
 <div class="panel">
-    <h2>Priorité</h2>
+    <h2>Catégorie</h2><p>{{ anomaly.category|default:'Non classée' }}</p><h2>Priorité</h2>
     <p><span class="badge {{ anomaly.severity }}">{{ anomaly.severity }}</span></p>
     <p>Score : <strong>{{ anomaly.score }} %</strong></p>
     <p>Statut : <strong>{{ anomaly.status }}</strong></p>
 </div>
 
 <div class="panel">
-    <h2>Pourquoi ?</h2>
+    <h2>Description métier</h2><p>{{ anomaly.description|default:'Non renseignée' }}</p><h2>Pourquoi ?</h2>
     <p>{{ anomaly.message }}</p>
 </div>
 
 <div class="panel">
-    <h2>Suggestion</h2>
+    <h2>Solution recommandée</h2><p>{{ anomaly.solution|default:anomaly.suggestion }}</p><h2>Suggestion technique</h2>
     <p>{{ anomaly.suggestion }}</p>
 </div>
 

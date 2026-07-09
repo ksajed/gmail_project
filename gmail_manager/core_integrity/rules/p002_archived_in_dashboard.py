@@ -3,7 +3,11 @@ from core_integrity.rule import IntegrityRule, IntegrityResult
 class P002ArchivedInDashboardRule(IntegrityRule):
     code = "P002"
     severity = "ERROR"
-    description = "Prescription archivée présente dans les urgences"
+    title = "Ordonnance archivée visible dans les urgences"
+    category = "Ordonnances"
+    description = "Une ordonnance archivée apparaît encore dans les urgences du tableau de bord."
+    solution = "Retirer cette ordonnance des urgences ou clôturer les cycles actifs liés."
+    autofix = False
 
     def check(self, context):
         prescription = context.prescription
@@ -12,11 +16,9 @@ class P002ArchivedInDashboardRule(IntegrityRule):
             return []
 
         return [
-            IntegrityResult(
-                code=self.code,
-                severity=self.severity,
+            self.result(
                 message="Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
                 obj=prescription,
-                suggestion="Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs.",
+                suggestion="Retirer cette ordonnance des urgences ou clôturer les cycles actifs liés.",
             )
         ]

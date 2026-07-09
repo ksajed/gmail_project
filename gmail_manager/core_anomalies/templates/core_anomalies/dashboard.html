@@ -42,7 +42,7 @@
 <tr>
     <th>Patient</th>
     <th>Prescription</th>
-    <th>Règle</th>
+    <th>Type anomalie</th>
     <th>Gravité</th>
     <th>Score</th>
     <th>Statut</th>
@@ -53,7 +53,6 @@
 <tr>
     <td>{{ a.patient_label }}</td>
     <td>#{{ a.prescription_id }}</td>
-    <td>{{ a.rule_code }}</td>
     <td><span class="badge {{ a.severity }}">{{ a.severity }}</span></td>
     <td>{{ a.score }} %</td>
     <td>{{ a.status }}</td>

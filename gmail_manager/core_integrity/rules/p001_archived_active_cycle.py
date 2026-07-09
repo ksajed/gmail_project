@@ -3,7 +3,11 @@ from core_integrity.rule import IntegrityRule, IntegrityResult
 class P001ArchivedActiveCycleRule(IntegrityRule):
     code = "P001"
     severity = "ERROR"
-    description = "Prescription archivée avec cycle actif"
+    title = "Cycle actif sur ordonnance archivée"
+    category = "Ordonnances"
+    description = "Une ordonnance archivée possède encore un cycle actif."
+    solution = "Clôturer le cycle actif ou réactiver l'ordonnance si elle est encore valide."
+    autofix = True
 
     ACTIVE_STATUSES = {"RECEIVED", "ACTIVE", "PENDING", "OPEN", "EN_COURS"}
 
@@ -35,12 +39,10 @@ class P001ArchivedActiveCycleRule(IntegrityRule):
 
                 if cycle_status in self.ACTIVE_STATUSES:
                     results.append(
-                        IntegrityResult(
-                            code=self.code,
-                            severity=self.severity,
+                        self.result(
                             message="Ordonnance archivée avec un cycle encore actif.",
                             obj=cycle,
-                            suggestion="Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée.",
+                            suggestion="Clôturer le cycle actif ou réactiver l'ordonnance si elle est encore valide.",
                         )
                     )
 

@@ -1,0 +1,1225 @@
+{
+  "generated_at": "20260703_185137",
+  "model_counts": [
+    {
+      "app": "core_adminconsole",
+      "model": "AdminAuditEvent",
+      "table": "core_adminconsole_adminauditevent",
+      "count": 100
+    },
+    {
+      "app": "admin",
+      "model": "LogEntry",
+      "table": "django_admin_log",
+      "count": 12
+    },
+    {
+      "app": "auth",
+      "model": "Permission",
+      "table": "auth_permission",
+      "count": 129
+    },
+    {
+      "app": "auth",
+      "model": "Group",
+      "table": "auth_group",
+      "count": 7
+    },
+    {
+      "app": "auth",
+      "model": "User",
+      "table": "auth_user",
+      "count": 8
+    },
+    {
+      "app": "contenttypes",
+      "model": "ContentType",
+      "table": "django_content_type",
+      "count": 31
+    },
+    {
+      "app": "sessions",
+      "model": "Session",
+      "table": "django_session",
+      "count": 17
+    },
+    {
+      "app": "core_accounts",
+      "model": "UserProfile",
+      "table": "core_accounts_userprofile",
+      "count": 8
+    },
+    {
+      "app": "core_gmail",
+      "model": "GmailMessage",
+      "table": "core_gmail_gmailmessage",
+      "count": 501
+    },
+    {
+      "app": "core_emails",
+      "model": "Prescription",
+      "table": "core_emails_prescription",
+      "count": 569
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionStatusHistory",
+      "table": "core_emails_prescriptionstatushistory",
+      "count": 794
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionAssignment",
+      "table": "core_emails_prescriptionassignment",
+      "count": 55
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionRenewalInfo",
+      "table": "core_emails_prescriptionrenewalinfo",
+      "count": 113
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionRenewalEvent",
+      "table": "core_emails_prescriptionrenewalevent",
+      "count": 36
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionRenewalCycle",
+      "table": "core_emails_prescriptionrenewalcycle",
+      "count": 109
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionNotificationSettings",
+      "table": "core_emails_prescriptionnotificationsettings",
+      "count": 123
+    },
+    {
+      "app": "core_emails",
+      "model": "PrescriptionNotificationEvent",
+      "table": "core_emails_prescriptionnotificationevent",
+      "count": 180
+    },
+    {
+      "app": "core_emails",
+      "model": "RenewalSettings",
+      "table": "core_emails_renewalsettings",
+      "count": 1
+    },
+    {
+      "app": "core_emails",
+      "model": "RenewalNotificationRule",
+      "table": "core_emails_renewalnotificationrule",
+      "count": 5
+    },
+    {
+      "app": "core_emails",
+      "model": "RenewalNotificationTemplate",
+      "table": "core_emails_renewalnotificationtemplate",
+      "count": 2
+    },
+    {
+      "app": "core_emails",
+      "model": "Holiday",
+      "table": "core_emails_holiday",
+      "count": 1
+    },
+    {
+      "app": "core_anomalies",
+      "model": "Anomaly",
+      "table": "core_anomalies_anomaly",
+      "count": 0
+    },
+    {
+      "app": "core_attachments",
+      "model": "PrescriptionAttachment",
+      "table": "core_attachments_prescriptionattachment",
+      "count": 53
+    },
+    {
+      "app": "core_attachments",
+      "model": "PrescriptionAttachmentAccess",
+      "table": "core_attachments_prescriptionattachmentaccess",
+      "count": 16
+    },
+    {
+      "app": "core_notifications",
+      "model": "Notification",
+      "table": "core_notifications_notification",
+      "count": 3721
+    },
+    {
+      "app": "core_notifications",
+      "model": "SmsTemplate",
+      "table": "core_notifications_smstemplate",
+      "count": 0
+    },
+    {
+      "app": "core_notifications",
+      "model": "SmsMessage",
+      "table": "core_notifications_smsmessage",
+      "count": 134
+    },
+    {
+      "app": "core_notifications",
+      "model": "SmsAttempt",
+      "table": "core_notifications_smsattempt",
+      "count": 134
+    },
+    {
+      "app": "core_patients",
+      "model": "Patient",
+      "table": "core_patients_patient",
+      "count": 72
+    },
+    {
+      "app": "core_people",
+      "model": "Person",
+      "table": "core_people_person",
+      "count": 16
+    }
+  ],
+  "integrity": {
+    "total": 569,
+    "anomalies_count": 46,
+    "items": [
+      {
+        "prescription_id": 17,
+        "prescription": "Ordonnance #17 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=17, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #17 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 19,
+        "prescription": "Ordonnance #19 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #19 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 31,
+        "prescription": "Ordonnance #31 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #31 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 42,
+        "prescription": "Ordonnance #42 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #42 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 43,
+        "prescription": "Ordonnance #43 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #43 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 44,
+        "prescription": "Ordonnance #44 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #44 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 46,
+        "prescription": "Ordonnance #46 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #46 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 47,
+        "prescription": "Ordonnance #47 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #47 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 49,
+        "prescription": "Ordonnance #49 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #49 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 50,
+        "prescription": "Ordonnance #50 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #50 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 51,
+        "prescription": "Ordonnance #51 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #51 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 52,
+        "prescription": "Ordonnance #52 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #52 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 53,
+        "prescription": "Ordonnance #53 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #53 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 188,
+        "prescription": "Ordonnance #188 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #188 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 214,
+        "prescription": "Ordonnance #214 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #214 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 233,
+        "prescription": "Ordonnance #233 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #233 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 269,
+        "prescription": "Ordonnance #269 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #269 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 276,
+        "prescription": "Ordonnance #276 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #276 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 287,
+        "prescription": "Ordonnance #287 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #287 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 297,
+        "prescription": "Ordonnance #297 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #297 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 304,
+        "prescription": "Ordonnance #304 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #304 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 314,
+        "prescription": "Ordonnance #314 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #314 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 316,
+        "prescription": "Ordonnance #316 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #316 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 318,
+        "prescription": "Ordonnance #318 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #318 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 331,
+        "prescription": "Ordonnance #331 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #331 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 353,
+        "prescription": "Ordonnance #353 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #353 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 364,
+        "prescription": "Ordonnance #364 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=364, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #364 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 376,
+        "prescription": "Ordonnance #376 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=376, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #376 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 380,
+        "prescription": "Ordonnance #380 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=380, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #380 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 384,
+        "prescription": "Ordonnance #384 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=384, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #384 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 394,
+        "prescription": "Ordonnance #394 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=394, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #394 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 409,
+        "prescription": "Ordonnance #409 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=409, n=3, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #409 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 411,
+        "prescription": "Ordonnance #411 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #411 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 421,
+        "prescription": "Ordonnance #421 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #421 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 427,
+        "prescription": "Ordonnance #427 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #427 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 432,
+        "prescription": "Ordonnance #432 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #432 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 440,
+        "prescription": "Ordonnance #440 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #440 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 452,
+        "prescription": "Ordonnance #452 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #452 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 457,
+        "prescription": "Ordonnance #457 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #457 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 458,
+        "prescription": "Ordonnance #458 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #458 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 459,
+        "prescription": "Ordonnance #459 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #459 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 460,
+        "prescription": "Ordonnance #460 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #460 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 469,
+        "prescription": "Ordonnance #469 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #469 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 470,
+        "prescription": "Ordonnance #470 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #470 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 474,
+        "prescription": "Ordonnance #474 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #474 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 477,
+        "prescription": "Ordonnance #477 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #477 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "average_score": 71.2,
+    "rules": {
+      "P001": 7,
+      "P002": 46
+    },
+    "severities": {
+      "ERROR": 53
+    },
+    "top_prescriptions": [
+      {
+        "prescription_id": 17,
+        "prescription": "Ordonnance #17 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=17, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #17 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 364,
+        "prescription": "Ordonnance #364 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=364, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #364 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 376,
+        "prescription": "Ordonnance #376 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=376, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #376 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 380,
+        "prescription": "Ordonnance #380 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=380, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #380 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 384,
+        "prescription": "Ordonnance #384 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=384, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #384 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 394,
+        "prescription": "Ordonnance #394 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=394, n=1, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #394 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 409,
+        "prescription": "Ordonnance #409 – Archivée",
+        "score": 50,
+        "results": [
+          {
+            "code": "P001",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée avec un cycle encore actif.",
+            "object": "RenewalCycle(p=409, n=3, status=RECEIVED)",
+            "suggestion": "Vérifier si le cycle doit être clôturé ou si l'ordonnance ne doit plus être archivée."
+          },
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #409 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 19,
+        "prescription": "Ordonnance #19 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #19 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 31,
+        "prescription": "Ordonnance #31 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #31 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 42,
+        "prescription": "Ordonnance #42 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #42 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 43,
+        "prescription": "Ordonnance #43 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #43 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 44,
+        "prescription": "Ordonnance #44 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #44 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 46,
+        "prescription": "Ordonnance #46 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #46 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 47,
+        "prescription": "Ordonnance #47 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #47 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 49,
+        "prescription": "Ordonnance #49 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #49 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 50,
+        "prescription": "Ordonnance #50 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #50 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 51,
+        "prescription": "Ordonnance #51 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #51 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 52,
+        "prescription": "Ordonnance #52 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #52 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 53,
+        "prescription": "Ordonnance #53 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #53 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      },
+      {
+        "prescription_id": 188,
+        "prescription": "Ordonnance #188 – Archivée",
+        "score": 75,
+        "results": [
+          {
+            "code": "P002",
+            "severity": "ERROR",
+            "message": "Ordonnance archivée : elle ne doit pas apparaître comme urgence normale.",
+            "object": "Ordonnance #188 – Archivée",
+            "suggestion": "Déplacer ce dossier vers le Centre des anomalies ou clôturer les cycles actifs."
+          }
+        ]
+      }
+    ]
+  }
+}
