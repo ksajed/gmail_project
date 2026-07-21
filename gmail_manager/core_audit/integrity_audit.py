@@ -1,5 +1,5 @@
 from django.apps import apps
-from core_integrity.runner import run_integrity_for_prescription, integrity_score
+from core_integrity.services import run_integrity_for_prescription, integrity_score
 
 def find_prescription_model():
     for model in apps.get_models():

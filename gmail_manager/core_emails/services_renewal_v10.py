@@ -144,7 +144,7 @@ def _format_list(items, limit=10):
 
 def _integrity_results_for_item(item):
     try:
-        from core_integrity.runner import run_integrity_for_prescription, integrity_score
+        from core_integrity.services import run_integrity_for_prescription, integrity_score
     except Exception:
         return [], 100
 
