@@ -391,8 +391,8 @@ def prescription_detail(request, pk):
             renewal_patient_days_left = (renewal_patient_end_date - today).days
             if renewal_patient_days_left == 5:
                 renewal_patient_bucket = 'J-5'
-            elif renewal_patient_days_left == 3:
-                renewal_patient_bucket = 'J-3'
+            elif renewal_patient_days_left == 1:
+                renewal_patient_bucket = 'J-1'
             elif renewal_patient_days_left < 0:
                 renewal_patient_bucket = 'RETARD'
             else:
@@ -1008,6 +1008,7 @@ def send_renewal_patient_email(request, pk, days):
         cycle=cycle,
         extra_context={
             "date_echeance": end_date.strftime("%d/%m/%Y"),
+            "jours_avant": days,
         },
     )
 
@@ -1162,6 +1163,7 @@ def send_renewal_patient_sms(request, pk, days):
         cycle=cycle,
         extra_context={
             "date_echeance": end_date.strftime("%d/%m/%Y"),
+            "jours_avant": days,
         },
     )
     if not msg:

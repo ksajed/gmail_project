@@ -9,26 +9,12 @@ def apply_j5_j1_policy(apps, schema_editor):
     Rule.objects.filter(name="J-21", days_before=21, sort_order=10).update(active=False)
     Rule.objects.filter(name="J-10", days_before=10, sort_order=20).update(active=False)
 
-    existing_j1 = Rule.objects.filter(days_before=1).first()
     default_j2 = Rule.objects.filter(name="J-2", days_before=2, sort_order=40).first()
-    if existing_j1:
-        Rule.objects.filter(pk=existing_j1.pk).update(active=True)
-        if default_j2:
-            Rule.objects.filter(pk=default_j2.pk).update(active=False)
-    elif default_j2:
+    if default_j2:
         Rule.objects.filter(pk=default_j2.pk).update(
             name="J-1",
             days_before=1,
             active=True,
-        )
-    else:
-        Rule.objects.create(
-            name="J-1",
-            days_before=1,
-            send_sms=True,
-            send_email=False,
-            active=True,
-            sort_order=40,
         )
 
 

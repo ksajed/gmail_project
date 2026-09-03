@@ -244,6 +244,39 @@ def _get_active_cycles() -> QuerySet:
     return qs
 
 
+def _legacy_channel_field(rule: RenewalNotificationRule, channel: str) -> Optional[str]:
+    """Retourne le marqueur legacy correspondant à un délai et un canal."""
+    try:
+        days = int(rule.days_before)
+    except (TypeError, ValueError):
+        return None
+
+    fields_by_day = {
+        5: {
+            "email": "reminder_5_patient_email_sent_at",
+            "sms": "reminder_5_patient_sms_sent_at",
+        },
+        3: {
+            "email": "reminder_3_patient_email_sent_at",
+            "sms": "reminder_3_patient_sms_sent_at",
+        },
+        1: {
+            "email": "reminder_1_patient_email_sent_at",
+            "sms": "reminder_1_patient_sms_sent_at",
+        },
+    }
+    return fields_by_day.get(days, {}).get(channel.lower())
+
+
+def _rule_channel_already_sent(
+    cycle: Any,
+    rule: RenewalNotificationRule,
+    channel: str,
+) -> bool:
+    field = _legacy_channel_field(rule, channel)
+    return bool(field and getattr(cycle, field, None))
+
+
 def _rule_already_sent(cycle: Any, rule: RenewalNotificationRule) -> bool:
     """
     Essaie d'éviter les doublons avec les champs existants V8.
@@ -255,34 +288,19 @@ def _rule_already_sent(cycle: Any, rule: RenewalNotificationRule) -> bool:
     aucun délai n'est codé comme logique cible.
     Ces tests servent uniquement de compatibilité legacy.
     """
-    try:
-        days = int(rule.days_before)
-    except (TypeError, ValueError):
-        return False
+    enabled_channels = []
+    if bool(getattr(rule, "send_sms", False)):
+        enabled_channels.append("sms")
+    if bool(getattr(rule, "send_email", False)):
+        enabled_channels.append("email")
 
-    # Compatibilité V8 existante.
-    legacy_fields = []
-    if days == 5:
-        legacy_fields = [
-            "reminder_5_patient_email_sent_at",
-            "reminder_5_patient_sms_sent_at",
-        ]
-    elif days == 3:
-        legacy_fields = [
-            "reminder_3_patient_email_sent_at",
-            "reminder_3_patient_sms_sent_at",
-        ]
-    elif days == 1:
-        legacy_fields = [
-            "reminder_1_patient_email_sent_at",
-            "reminder_1_patient_sms_sent_at",
-        ]
+    if not enabled_channels:
+        return True
 
-    for field in legacy_fields:
-        if getattr(cycle, field, None):
-            return True
-
-    return False
+    return all(
+        _rule_channel_already_sent(cycle, rule, channel)
+        for channel in enabled_channels
+    )
 
 
 def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
@@ -328,14 +346,26 @@ def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
             if _rule_already_sent(cycle, rule):
                 continue
 
+            send_sms = (
+                bool(getattr(rule, "send_sms", False))
+                and not _rule_channel_already_sent(cycle, rule, "sms")
+            )
+            send_email = (
+                bool(getattr(rule, "send_email", False))
+                and not _rule_channel_already_sent(cycle, rule, "email")
+            )
+
+            if not send_sms and not send_email:
+                continue
+
             results.append({
                 "cycle": cycle,
                 "prescription": getattr(cycle, "prescription", None),
                 "rule": rule,
                 "due_date": due_date,
                 "notification_date": notification_date,
-                "send_sms": bool(getattr(rule, "send_sms", False)),
-                "send_email": bool(getattr(rule, "send_email", False)),
+                "send_sms": send_sms,
+                "send_email": send_email,
             })
 
     return results

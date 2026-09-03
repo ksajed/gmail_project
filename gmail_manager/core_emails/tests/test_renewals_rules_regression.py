@@ -1,8 +1,14 @@
 from datetime import date, timedelta
+from importlib import import_module
 from io import StringIO
+from types import SimpleNamespace
+from unittest.mock import patch
 
+from django.apps import apps as django_apps
 from django.core.management import call_command
+from django.template.loader import render_to_string
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from core_patients.models import Patient
@@ -20,6 +26,8 @@ from core_emails.services_renewal_rules import (
     get_due_notifications,
     calculate_notification_date,
 )
+from core_emails.management.commands.run_renewal_notifications import Command
+from core_notifications.models import SmsStatus
 
 
 class RenewalDefaultPolicyTests(TestCase):
@@ -30,6 +38,37 @@ class RenewalDefaultPolicyTests(TestCase):
         )
 
         self.assertEqual(active_days, {5, 1})
+
+    def test_migration_preserves_an_inactive_custom_j1_rule(self):
+        RenewalNotificationRule.objects.all().delete()
+        custom_j1 = RenewalNotificationRule.objects.create(
+            name="Rappel J-1 personnalisé",
+            days_before=1,
+            send_sms=False,
+            send_email=True,
+            active=False,
+            sort_order=99,
+        )
+        default_j2 = RenewalNotificationRule.objects.create(
+            name="J-2",
+            days_before=2,
+            send_sms=True,
+            send_email=False,
+            active=True,
+            sort_order=40,
+        )
+
+        migration = import_module(
+            "core_emails.migrations.0017_renewal_policy_j5_j1"
+        )
+        migration.apply_j5_j1_policy(django_apps, None)
+
+        custom_j1.refresh_from_db()
+        default_j2.refresh_from_db()
+        self.assertFalse(custom_j1.active)
+        self.assertEqual(default_j2.name, "J-1")
+        self.assertEqual(default_j2.days_before, 1)
+        self.assertTrue(default_j2.active)
 
 
 class RenewalsRulesRegressionTests(TestCase):
@@ -345,6 +384,81 @@ class RenewalsRulesRegressionTests(TestCase):
         )
 
         self.assertEqual(self._items_for_prescription(1), [])
+
+    def test_j1_keeps_only_the_unsent_channel_due(self):
+        self._create_rule(
+            name="J-1",
+            active=True,
+            days_before=1,
+            send_sms=True,
+            send_email=True,
+        )
+
+        self.cycle.reminder_1_patient_sms_sent_at = timezone.now()
+        self.cycle.save(update_fields=["reminder_1_patient_sms_sent_at"])
+
+        matched = self._items_for_prescription(1)
+
+        self.assertEqual(len(matched), 1)
+        self.assertFalse(matched[0]["send_sms"])
+        self.assertTrue(matched[0]["send_email"])
+
+    def test_failed_j1_sms_does_not_set_the_sent_marker(self):
+        command = Command()
+
+        with patch(
+            "core_notifications.services.send_sms_logged",
+            return_value=SimpleNamespace(status=SmsStatus.FAILED),
+        ):
+            result = command._handle_sms(
+                prescription=self.prescription,
+                cycle=self.cycle,
+                due_date=self._due_date(),
+                days_before=1,
+                send_real=True,
+            )
+
+        self.cycle.refresh_from_db()
+        self.assertEqual(result, SmsStatus.FAILED)
+        self.assertIsNone(self.cycle.reminder_1_patient_sms_sent_at)
+
+    def test_notification_forms_submit_the_rule_day(self):
+        rule = self._create_rule(
+            name="J-1",
+            active=True,
+            days_before=1,
+            send_sms=True,
+            send_email=True,
+        )
+        item = {
+            "prescription": self.prescription,
+            "cycle": self.cycle,
+            "rule": rule,
+            "due_date": self._due_date(),
+            "send_sms": True,
+            "send_email": True,
+        }
+
+        html = render_to_string(
+            "core_emails/renewals_dashboard.html",
+            {"renewals_notifications_due": [item]},
+        )
+
+        self.assertIn(
+            reverse(
+                "core_emails:send_renewal_patient_email",
+                args=[self.prescription.pk, 1],
+            ),
+            html,
+        )
+        self.assertIn(
+            reverse(
+                "core_emails:send_renewal_patient_sms",
+                args=[self.prescription.pk, 1],
+            ),
+            html,
+        )
+        self.assertIn('data-days="1"', html)
 
     def test_management_command_dry_run_uses_dynamic_j30_rule(self):
         self._create_rule(

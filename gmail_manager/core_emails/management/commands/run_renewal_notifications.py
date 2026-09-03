@@ -165,7 +165,7 @@ class Command(BaseCommand):
             return "DRY-RUN"
 
         from core_notifications.services import send_sms_logged
-        from core_notifications.models import SmsPurpose
+        from core_notifications.models import SmsPurpose, SmsStatus
 
         purpose = getattr(SmsPurpose, "RENEWAL", SmsPurpose.INFO)
 
@@ -176,6 +176,10 @@ class Command(BaseCommand):
             template_key=getattr(template, "name", "") if template else "renewal_auto",
             prescription=prescription,
         )
+
+        sms_status = getattr(sms, "status", None)
+        if sms_status != SmsStatus.SENT:
+            return str(sms_status or "FAILED")
 
         now = timezone.now()
         if int(days_before or 0) == 5 and hasattr(cycle, "reminder_5_patient_sms_sent_at"):
@@ -188,7 +192,7 @@ class Command(BaseCommand):
             cycle.reminder_1_patient_sms_sent_at = now
             cycle.save(update_fields=["reminder_1_patient_sms_sent_at"])
 
-        return "SENT" if sms else "FAILED"
+        return "SENT"
 
     def _handle_email(self, *, prescription, cycle, due_date, days_before, send_real: bool):
         patient = getattr(prescription, "patient", None)
