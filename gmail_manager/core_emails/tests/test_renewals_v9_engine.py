@@ -48,14 +48,19 @@ class RenewalsV9EngineTests(TestCase):
             timezone.datetime(2026, 6, 4, 10, 0, 0)
         )
 
-        PrescriptionStatusHistory.objects.create(
+        delivered_history = PrescriptionStatusHistory.objects.create(
             prescription=self.prescription,
             old_status=PrescriptionStatus.READY,
             new_status=PrescriptionStatus.DELIVERED,
-            changed_at=self.first_delivered,
             comment="Première délivrance test V9",
         )
+        PrescriptionStatusHistory.objects.filter(pk=delivered_history.pk).update(
+            changed_at=self.first_delivered,
+        )
 
+        # Le signal initialise le cycle 1. Ce scénario teste explicitement le
+        # cycle 3, donc aucun ancien cycle ne doit rester actif.
+        self.prescription.renewal_cycles.all().delete()
         self.cycle = PrescriptionRenewalCycle.objects.create(
             prescription=self.prescription,
             cycle_number=3,
@@ -74,7 +79,7 @@ class RenewalsV9EngineTests(TestCase):
 
     def test_due_date_uses_first_delivered_plus_cycle_period(self):
         due = _get_cycle_due_date(self.cycle)
-        self.assertEqual(due, date(2026, 9, 6))
+        self.assertEqual(due, date(2026, 9, 2))
 
     def test_due_notifications_detects_j5(self):
         due = _get_cycle_due_date(self.cycle)

@@ -338,9 +338,11 @@ def change_prescription_status(*, prescription, new_status, user=None, comment="
         send_prescription_notifications(
             prescription=prescription,
             user=user,
+            old_status=old_status,
+            new_status=new_status,
             patient_channel=settings.patient_channel,
             nurse_channel=settings.nurse_channel,
-            notification_message=notification_message,
+            notification_message=getattr(settings, "free_text_message", ""),
         )
 
     return prescription
@@ -697,4 +699,3 @@ def compute_renewals_watch_v9():
         "renewals_final": final_renewals,
         "activity_metrics": activity_metrics,
     }
-
