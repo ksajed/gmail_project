@@ -260,8 +260,13 @@ class PrescriptionRenewalInfo(models.Model):
     # états après envoi
     reminder_5_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
     reminder_5_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    # Conservés pour l'historique des anciens rappels J-3.
     reminder_3_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
     reminder_3_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_1_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_1_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    overdue_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    overdue_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
     doctor_email_sent_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):

@@ -75,7 +75,7 @@
 
         <div class="chips">
           <span class="chip">J-5: {{ renewals_due_5|length }}</span>
-          <span class="chip">J-3: {{ renewals_due_3|length }}</span>
+          <span class="chip">J-1: {{ renewals_due_1|length }}</span>
         </div>
       </div>
 
@@ -139,8 +139,8 @@
           <div class="hint">Aucun renouvellement J-5.</div>
         {% endif %}
 
-        <div style="font-weight:900; margin:18px 0 10px;">Échéance dans 3 jours (J-3)</div>
-        {% if renewals_due_3 %}
+        <div style="font-weight:900; margin:18px 0 10px;">Échéance dans 1 jour (J-1)</div>
+        {% if renewals_due_1 %}
           <div class="tablewrap">
             <table>
               <thead>
@@ -154,7 +154,7 @@
               </tr>
               </thead>
               <tbody>
-              {% for p in renewals_due_3 %}
+              {% for p in renewals_due_1 %}
                 <tr>
                   <td class="nowrap">#{{ p.id }}</td>
                   <td>
@@ -174,13 +174,13 @@
                   <td class="nowrap">{{ p.renewal_days_left }}</td>
                   <td>
                     <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 3 %}" style="margin:0;">
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 1 %}" style="margin:0;">
                         {% csrf_token %}
-                        <button class="btn btn--sm btn--soft-info" type="submit">Email J-3</button>
+                        <button class="btn btn--sm btn--soft-info" type="submit">Email J-1</button>
                       </form>
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 3 %}" style="margin:0;">
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 1 %}" style="margin:0;">
                         {% csrf_token %}
-                        <button class="btn btn--sm btn--soft-info" type="submit">SMS J-3</button>
+                        <button class="btn btn--sm btn--soft-info" type="submit">SMS J-1</button>
                       </form>
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
@@ -191,7 +191,7 @@
             </table>
           </div>
         {% else %}
-          <div class="hint">Aucun renouvellement J-3.</div>
+          <div class="hint">Aucun renouvellement J-1.</div>
         {% endif %}
       </div>
     </section>

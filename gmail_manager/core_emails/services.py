@@ -227,12 +227,12 @@ def compute_renewals_watch():
 
 def compute_renewals_watch_from_delivered():
     """
-    Renvoie (due_5, due_3, overdue) en se basant sur la première délivrance.
+    Renvoie (due_5, due_1, overdue) en se basant sur la première délivrance.
 
     Logique:
       - date de départ = 1er statut DELIVERED
       - prochaine échéance = delivered_at + (renewal_done_count + 1) * period_days
-      - due_5/due_3 seulement si rappel J-5/J-3 pas encore envoyé
+      - due_5/due_1 seulement si rappel J-5/J-1 pas encore envoyé
       - overdue si échéance dépassée alors qu'il reste des renouvellements
     """
     import datetime
@@ -246,7 +246,7 @@ def compute_renewals_watch_from_delivered():
 
     today = timezone.localtime(timezone.now()).date()
     due_5 = []
-    due_3 = []
+    due_1 = []
     overdue = []
 
     qs = (
@@ -293,14 +293,14 @@ def compute_renewals_watch_from_delivered():
         ):
             due_5.append(p)
 
-        if days_left == 3 and (
-            info.reminder_3_patient_email_sent_at is None
-            or info.reminder_3_patient_sms_sent_at is None
+        if days_left == 1 and (
+            info.reminder_1_patient_email_sent_at is None
+            or info.reminder_1_patient_sms_sent_at is None
         ):
-            due_3.append(p)
+            due_1.append(p)
 
     due_5.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
-    due_3.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
+    due_1.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
     overdue.sort(key=lambda x: (getattr(x, "renewal_end_date", today), x.id))
 
-    return due_5, due_3, overdue
+    return due_5, due_1, overdue

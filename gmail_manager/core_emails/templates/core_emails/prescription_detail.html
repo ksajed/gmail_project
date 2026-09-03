@@ -507,7 +507,7 @@
         name="established_at"
         value="{% if prescription.established_at %}{{ prescription.established_at|date:'Y-m-d' }}{% endif %}"
       />
-      <div class="hint">Base du calcul J-5 / J-3.</div>
+      <div class="hint">Base du calcul J-5 / J-1.</div>
     </div>
 
     <div class="field">
@@ -586,8 +586,8 @@
 
           <div><strong>Rappel J-5 Email :</strong> {{ renewal_info.reminder_5_patient_email_sent_at|default:"—" }}</div>
           <div><strong>Rappel J-5 SMS :</strong> {{ renewal_info.reminder_5_patient_sms_sent_at|default:"—" }}</div>
-          <div><strong>Rappel J-3 Email :</strong> {{ renewal_info.reminder_3_patient_email_sent_at|default:"—" }}</div>
-          <div><strong>Rappel J-3 SMS :</strong> {{ renewal_info.reminder_3_patient_sms_sent_at|default:"—" }}</div>
+          <div><strong>Rappel J-1 Email :</strong> {{ renewal_info.reminder_1_patient_email_sent_at|default:"—" }}</div>
+          <div><strong>Rappel J-1 SMS :</strong> {{ renewal_info.reminder_1_patient_sms_sent_at|default:"—" }}</div>
         </div>
 
         <div class="divider" style="margin:12px 0;"></div>
@@ -1005,4 +1005,3 @@
 
 </body>
 </html>
-

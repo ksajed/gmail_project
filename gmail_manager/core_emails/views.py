@@ -138,9 +138,9 @@ def dashboard(request):
         if row["status"] in counters:
             counters[row["status"]] = row["total"]
     # ==========================
-    # V7 — Renouvellement J-5/J-3 (basé sur 1er retrait / DELIVERED)
+    # V7 — Renouvellement J-5/J-1 (basé sur 1er retrait / DELIVERED)
     # ==========================
-    due_5, due_3, overdue = compute_renewals_watch_from_delivered()
+    due_5, due_1, overdue = compute_renewals_watch_from_delivered()
     
     context = {
         "prescriptions": prescriptions,
@@ -157,7 +157,7 @@ def dashboard(request):
         "count_archived": counters[PrescriptionStatus.ARCHIVED],
         "context_sender_types": SenderType.choices,
         "renewals_due_5": due_5,
-        "renewals_due_3": due_3,
+        "renewals_due_1": due_1,
         "renewals_overdue": overdue,
     }
 
@@ -167,13 +167,13 @@ def dashboard(request):
 @login_required
 def renewals_dashboard(request):
     """
-    Page dédiée au suivi des renouvellements (J-5/J-3/retard).
+    Page dédiée au suivi des renouvellements (J-5/J-1/retard).
     """
-    due_5, due_3, overdue = compute_renewals_watch_from_delivered()
+    due_5, due_1, overdue = compute_renewals_watch_from_delivered()
 
     context = {
         "renewals_due_5": due_5,
-        "renewals_due_3": due_3,
+        "renewals_due_1": due_1,
         "renewals_overdue": overdue,
     }
 
@@ -679,15 +679,34 @@ def mark_renewal_done(request, pk):
 
     info.renewal_done_count += 1
     info.last_renewal_ordered_at = timezone.now()
-    info.save(update_fields=["renewal_done_count", "last_renewal_ordered_at"])
+    # Les marqueurs concernent le cycle qui vient de se terminer. Le nouveau
+    # cycle doit pouvoir produire ses propres rappels.
+    info.reminder_5_patient_email_sent_at = None
+    info.reminder_5_patient_sms_sent_at = None
+    info.reminder_1_patient_email_sent_at = None
+    info.reminder_1_patient_sms_sent_at = None
+    info.overdue_patient_email_sent_at = None
+    info.overdue_patient_sms_sent_at = None
+    info.save(update_fields=[
+        "renewal_done_count",
+        "last_renewal_ordered_at",
+        "reminder_5_patient_email_sent_at",
+        "reminder_5_patient_sms_sent_at",
+        "reminder_1_patient_email_sent_at",
+        "reminder_1_patient_sms_sent_at",
+        "overdue_patient_email_sent_at",
+        "overdue_patient_sms_sent_at",
+    ])
 
-
-    PrescriptionRenewalEvent.objects.create(
+    event_note = request.POST.get("note", "").strip()
+    event, _ = PrescriptionRenewalEvent.objects.get_or_create(
         prescription=prescription,
         number=info.renewal_done_count,
-        created_by=request.user,
-        note=request.POST.get("note", "").strip(),
+        defaults={"created_by": request.user, "note": event_note},
     )
+    if event_note and event_note not in (event.note or ""):
+        event.note = "\n".join(filter(None, [(event.note or "").strip(), event_note]))
+        event.save(update_fields=["note"])
 
     messages.success(
         request,
@@ -706,8 +725,8 @@ def send_renewal_patient_email(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect("core_emails:dashboard")
 
-    # 5 / 3 / 0 (RETARD)
-    if days not in (5, 3, 0):
+    # 5 / 1 / 0 (RETARD)
+    if days not in (5, 1, 0):
         messages.error(request, "Jour de rappel invalide.")
         return redirect("core_emails:dashboard")
 
@@ -717,12 +736,15 @@ def send_renewal_patient_email(request, pk, days):
         return redirect("core_emails:dashboard")
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
-    # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
+    # Anti-doublon: ne pas renvoyer un rappel déjà envoyé pour ce cycle
     if days == 5 and info.reminder_5_patient_email_sent_at is not None:
         messages.info(request, "Email J-5 déjà envoyé.")
         return redirect("core_emails:dashboard")
-    if days == 3 and info.reminder_3_patient_email_sent_at is not None:
-        messages.info(request, "Email J-3 déjà envoyé.")
+    if days == 1 and info.reminder_1_patient_email_sent_at is not None:
+        messages.info(request, "Email J-1 déjà envoyé.")
+        return redirect("core_emails:dashboard")
+    if days == 0 and info.overdue_patient_email_sent_at is not None:
+        messages.info(request, "Email de retard déjà envoyé.")
         return redirect("core_emails:dashboard")
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
@@ -747,6 +769,10 @@ def send_renewal_patient_email(request, pk, days):
     end_date = start_date + datetime.timedelta(
         days=(int(info.renewal_done_count) + 1) * int(info.period_days)
     )
+    actual_days_left = (end_date - timezone.localdate()).days
+    if (days in (5, 1) and actual_days_left != days) or (days == 0 and actual_days_left >= 0):
+        messages.error(request, "Ce rappel ne correspond pas à l’échéance actuelle.")
+        return redirect("core_emails:renewals_dashboard")
 
     subject = (
         "Renouvellement en retard — échéance dépassée"
@@ -807,10 +833,12 @@ def send_renewal_patient_email(request, pk, days):
     if days == 5:
         info.reminder_5_patient_email_sent_at = now
         info.save(update_fields=["reminder_5_patient_email_sent_at"])
-    elif days == 3:
-        info.reminder_3_patient_email_sent_at = now
-        info.save(update_fields=["reminder_3_patient_email_sent_at"])
-    # days == 0 => RETARD : on ne touche pas les champs J-5/J-3
+    elif days == 1:
+        info.reminder_1_patient_email_sent_at = now
+        info.save(update_fields=["reminder_1_patient_email_sent_at"])
+    else:
+        info.overdue_patient_email_sent_at = now
+        info.save(update_fields=["overdue_patient_email_sent_at"])
 
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
@@ -840,7 +868,7 @@ def send_renewal_patient_sms(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect("core_emails:dashboard")
 
-    if days not in (5, 3, 0):
+    if days not in (5, 1, 0):
         messages.error(request, "Jour de rappel invalide.")
         return redirect("core_emails:dashboard")
 
@@ -850,12 +878,15 @@ def send_renewal_patient_sms(request, pk, days):
         return redirect("core_emails:dashboard")
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
-    # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
+    # Anti-doublon: ne pas renvoyer un rappel déjà envoyé pour ce cycle
     if days == 5 and info.reminder_5_patient_sms_sent_at is not None:
         messages.info(request, "SMS J-5 déjà envoyé.")
         return redirect("core_emails:dashboard")
-    if days == 3 and info.reminder_3_patient_sms_sent_at is not None:
-        messages.info(request, "SMS J-3 déjà envoyé.")
+    if days == 1 and info.reminder_1_patient_sms_sent_at is not None:
+        messages.info(request, "SMS J-1 déjà envoyé.")
+        return redirect("core_emails:dashboard")
+    if days == 0 and info.overdue_patient_sms_sent_at is not None:
+        messages.info(request, "SMS de retard déjà envoyé.")
         return redirect("core_emails:dashboard")
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
@@ -880,6 +911,10 @@ def send_renewal_patient_sms(request, pk, days):
     end_date = start_date + datetime.timedelta(
         days=(int(info.renewal_done_count) + 1) * int(info.period_days)
     )
+    actual_days_left = (end_date - timezone.localdate()).days
+    if (days in (5, 1) and actual_days_left != days) or (days == 0 and actual_days_left >= 0):
+        messages.error(request, "Ce rappel ne correspond pas à l’échéance actuelle.")
+        return redirect("core_emails:renewals_dashboard")
     msg = (f"Pharmacie: renouvellement en retard. Échéance dépassée ({end_date:%d/%m/%Y}). Merci de nous contacter." if days == 0 else f"Pharmacie: rappel renouvellement. Échéance le {end_date:%d/%m/%Y}. Merci de nous contacter.")
 
     try:
@@ -919,12 +954,12 @@ def send_renewal_patient_sms(request, pk, days):
     if days == 5:
         info.reminder_5_patient_sms_sent_at = now
         info.save(update_fields=["reminder_5_patient_sms_sent_at"])
-    elif days == 3:
-        info.reminder_3_patient_sms_sent_at = now
-        info.save(update_fields=["reminder_3_patient_sms_sent_at"])
+    elif days == 1:
+        info.reminder_1_patient_sms_sent_at = now
+        info.save(update_fields=["reminder_1_patient_sms_sent_at"])
     else:
-        # Retard: on ne renseigne pas les champs J-5/J-3
-        pass
+        info.overdue_patient_sms_sent_at = now
+        info.save(update_fields=["overdue_patient_sms_sent_at"])
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
         old_status=prescription.status,
