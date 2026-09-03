@@ -956,8 +956,8 @@ def send_renewal_patient_email(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect(next_url)
 
-    # 5 / 3 / 0 (RETARD)
-    if days not in (5, 3, 0):
+    # 5 / 1 / 0 (RETARD)
+    if days not in (5, 1, 0):
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
 
@@ -969,12 +969,12 @@ def send_renewal_patient_email(request, pk, days):
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
 
-    # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
+    # Anti-doublon: ne pas renvoyer J-5/J-1 si déjà envoyé
     if days == 5 and cycle.reminder_5_patient_email_sent_at is not None:
         messages.info(request, "Email J-5 déjà envoyé.")
         return redirect(next_url)
-    if days == 3 and cycle.reminder_3_patient_email_sent_at is not None:
-        messages.info(request, "Email J-3 déjà envoyé.")
+    if days == 1 and cycle.reminder_1_patient_email_sent_at is not None:
+        messages.info(request, "Email J-1 déjà envoyé.")
         return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
@@ -1072,10 +1072,10 @@ def send_renewal_patient_email(request, pk, days):
     if days == 5:
         cycle.reminder_5_patient_email_sent_at = now
         cycle.save(update_fields=["reminder_5_patient_email_sent_at"])
-    elif days == 3:
-        cycle.reminder_3_patient_email_sent_at = now
-        cycle.save(update_fields=["reminder_3_patient_email_sent_at"])
-    # days == 0 => RETARD : on ne touche pas les champs J-5/J-3
+    elif days == 1:
+        cycle.reminder_1_patient_email_sent_at = now
+        cycle.save(update_fields=["reminder_1_patient_email_sent_at"])
+    # days == 0 => RETARD : on ne touche pas les champs J-5/J-1
 
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
@@ -1112,7 +1112,7 @@ def send_renewal_patient_sms(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect(next_url)
 
-    if days not in (5, 3, 0):
+    if days not in (5, 1, 0):
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
 
@@ -1124,12 +1124,12 @@ def send_renewal_patient_sms(request, pk, days):
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
 
-    # Anti-doublon: ne pas renvoyer J-5/J-3 si déjà envoyé
+    # Anti-doublon: ne pas renvoyer J-5/J-1 si déjà envoyé
     if days == 5 and cycle.reminder_5_patient_sms_sent_at is not None:
         messages.info(request, "SMS J-5 déjà envoyé.")
         return redirect(next_url)
-    if days == 3 and cycle.reminder_3_patient_sms_sent_at is not None:
-        messages.info(request, "SMS J-3 déjà envoyé.")
+    if days == 1 and cycle.reminder_1_patient_sms_sent_at is not None:
+        messages.info(request, "SMS J-1 déjà envoyé.")
         return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
@@ -1212,11 +1212,11 @@ def send_renewal_patient_sms(request, pk, days):
     if days == 5:
         cycle.reminder_5_patient_sms_sent_at = now
         cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
-    elif days == 3:
-        cycle.reminder_3_patient_sms_sent_at = now
-        cycle.save(update_fields=["reminder_3_patient_sms_sent_at"])
+    elif days == 1:
+        cycle.reminder_1_patient_sms_sent_at = now
+        cycle.save(update_fields=["reminder_1_patient_sms_sent_at"])
     else:
-        # Retard: on ne renseigne pas les champs J-5/J-3
+        # Retard: on ne renseigne pas les champs J-5/J-1
         pass
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,

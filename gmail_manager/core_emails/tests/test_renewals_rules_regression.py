@@ -22,6 +22,16 @@ from core_emails.services_renewal_rules import (
 )
 
 
+class RenewalDefaultPolicyTests(TestCase):
+    def test_only_j5_and_j1_are_active_by_default(self):
+        active_days = set(
+            RenewalNotificationRule.objects.filter(active=True)
+            .values_list("days_before", flat=True)
+        )
+
+        self.assertEqual(active_days, {5, 1})
+
+
 class RenewalsRulesRegressionTests(TestCase):
     """
     Tests de régression des règles configurables V9.
@@ -64,6 +74,10 @@ class RenewalsRulesRegressionTests(TestCase):
             comment="Première délivrance test règles dynamiques",
         )
 
+        # Le signal de création initialise le cycle 1. Ce scénario place
+        # volontairement l'ordonnance au cycle 3 : l'ancien cycle ne doit pas
+        # rester actif, sinon chaque règle produit deux notifications.
+        self.prescription.renewal_cycles.all().delete()
         self.cycle = PrescriptionRenewalCycle.objects.create(
             prescription=self.prescription,
             cycle_number=3,
@@ -115,6 +129,7 @@ class RenewalsRulesRegressionTests(TestCase):
         return [
             item for item in self._items_for(days_before)
             if item.get("prescription") == self.prescription
+            and int(getattr(item.get("rule"), "days_before", -1)) == days_before
         ]
 
     def test_inactive_rule_is_ignored(self):
@@ -307,6 +322,29 @@ class RenewalsRulesRegressionTests(TestCase):
         )
 
         self.assertEqual(self._items_for_prescription(5), [])
+
+    def test_already_sent_j1_rule_is_excluded(self):
+        self._create_rule(
+            name="J-1",
+            active=True,
+            days_before=1,
+            send_sms=True,
+            send_email=True,
+        )
+
+        self.assertEqual(len(self._items_for_prescription(1)), 1)
+
+        now = timezone.now()
+        self.cycle.reminder_1_patient_sms_sent_at = now
+        self.cycle.reminder_1_patient_email_sent_at = now
+        self.cycle.save(
+            update_fields=[
+                "reminder_1_patient_sms_sent_at",
+                "reminder_1_patient_email_sent_at",
+            ]
+        )
+
+        self.assertEqual(self._items_for_prescription(1), [])
 
     def test_management_command_dry_run_uses_dynamic_j30_rule(self):
         self._create_rule(

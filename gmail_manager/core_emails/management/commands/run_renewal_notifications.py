@@ -184,6 +184,9 @@ class Command(BaseCommand):
         elif int(days_before or 0) == 3 and hasattr(cycle, "reminder_3_patient_sms_sent_at"):
             cycle.reminder_3_patient_sms_sent_at = now
             cycle.save(update_fields=["reminder_3_patient_sms_sent_at"])
+        elif int(days_before or 0) == 1 and hasattr(cycle, "reminder_1_patient_sms_sent_at"):
+            cycle.reminder_1_patient_sms_sent_at = now
+            cycle.save(update_fields=["reminder_1_patient_sms_sent_at"])
 
         return "SENT" if sms else "FAILED"
 
@@ -237,5 +240,8 @@ class Command(BaseCommand):
             elif int(days_before or 0) == 3 and hasattr(cycle, "reminder_3_patient_email_sent_at"):
                 cycle.reminder_3_patient_email_sent_at = now
                 cycle.save(update_fields=["reminder_3_patient_email_sent_at"])
+            elif int(days_before or 0) == 1 and hasattr(cycle, "reminder_1_patient_email_sent_at"):
+                cycle.reminder_1_patient_email_sent_at = now
+                cycle.save(update_fields=["reminder_1_patient_email_sent_at"])
 
         return result

@@ -47,7 +47,7 @@ def get_active_renewal_rules() -> QuerySet:
     """
     Retourne les règles de notification actives.
 
-    Aucune valeur J-5 / J-3 n'est codée ici.
+    Aucune valeur J-5 / J-1 n'est codée ici.
     Les délais viennent exclusivement de RenewalNotificationRule.
     """
     return (
@@ -271,6 +271,11 @@ def _rule_already_sent(cycle: Any, rule: RenewalNotificationRule) -> bool:
         legacy_fields = [
             "reminder_3_patient_email_sent_at",
             "reminder_3_patient_sms_sent_at",
+        ]
+    elif days == 1:
+        legacy_fields = [
+            "reminder_1_patient_email_sent_at",
+            "reminder_1_patient_sms_sent_at",
         ]
 
     for field in legacy_fields:
@@ -632,6 +637,7 @@ def get_activity_metrics(today: Optional[date] = None) -> Dict[str, int]:
         email_q = (
             Q(reminder_5_patient_email_sent_at__gte=day_start, reminder_5_patient_email_sent_at__lte=day_end)
             | Q(reminder_3_patient_email_sent_at__gte=day_start, reminder_3_patient_email_sent_at__lte=day_end)
+            | Q(reminder_1_patient_email_sent_at__gte=day_start, reminder_1_patient_email_sent_at__lte=day_end)
             | Q(doctor_email_sent_at__gte=day_start, doctor_email_sent_at__lte=day_end)
         )
 
@@ -674,4 +680,3 @@ def get_activity_metrics(today: Optional[date] = None) -> Dict[str, int]:
         metrics["urgent_detected"] = 0
 
     return metrics
-

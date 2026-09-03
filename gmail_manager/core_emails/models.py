@@ -366,7 +366,7 @@ class PrescriptionRenewalEvent(models.Model):
 # CYCLES DE RENOUVELLEMENT (V9 — Cycle autonome)
 # Chaque cycle est une instance opérationnelle autonome :
 # - statut propre (comme une nouvelle ordonnance)
-# - notifications propres (J-5/J-3 + médecin)
+# - notifications propres (J-5/J-1 + médecin)
 # =====================================================
 class PrescriptionRenewalCycle(models.Model):
     prescription = models.ForeignKey(
@@ -393,6 +393,8 @@ class PrescriptionRenewalCycle(models.Model):
     reminder_5_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
     reminder_3_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
     reminder_3_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_1_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_1_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
     doctor_email_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -603,10 +605,8 @@ class RenewalNotificationRule(models.Model):
     Règle de notification configurable pour les renouvellements.
 
     Exemple :
-    - J-21 : SMS + Email
-    - J-10 : SMS uniquement
     - J-5  : SMS + Email
-    - J-2  : SMS uniquement
+    - J-1  : SMS uniquement
     """
     name = models.CharField(
         max_length=100,
@@ -755,4 +755,3 @@ class Holiday(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.date}"
-
