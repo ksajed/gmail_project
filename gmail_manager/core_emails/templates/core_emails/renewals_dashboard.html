@@ -298,6 +298,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
                         <input type="hidden" name="rule_id" value="{{ rule.id }}">
+                        <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
                                 data-channel="EMAIL" data-days="{{ rule.days_before }}" data-prescription="{{ p.id }}">
                           Email
@@ -310,6 +311,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
                         <input type="hidden" name="rule_id" value="{{ rule.id }}">
+                        <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
                                 data-channel="SMS" data-days="{{ rule.days_before }}" data-prescription="{{ p.id }}">
                           SMS

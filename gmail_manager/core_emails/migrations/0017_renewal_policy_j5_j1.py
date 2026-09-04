@@ -19,6 +19,19 @@ def apply_j5_j1_policy(apps, schema_editor):
         )
 
 
+def reverse_j5_j1_policy(apps, schema_editor):
+    """Neutralise la règle J-1 identifiable avant de retirer son suivi."""
+    Rule = apps.get_model("core_emails", "RenewalNotificationRule")
+
+    # La version 0016 ne sait pas tracer les envois J-1. La règle issue du
+    # J-2 livré par défaut doit donc être désactivée avant que Django supprime
+    # RenewalNotificationDelivery et les marqueurs J-1 lors d'un rollback.
+    # Les règles J-1 personnalisées, dont la signature diffère, restent intactes.
+    Rule.objects.filter(name="J-1", days_before=1, sort_order=40).update(
+        active=False,
+    )
+
+
 def backfill_legacy_delivery_markers(apps, schema_editor):
     """Associe les marqueurs historiques à leur unique règle par défaut."""
     Rule = apps.get_model("core_emails", "RenewalNotificationRule")
@@ -137,9 +150,7 @@ class Migration(migrations.Migration):
                 name="uniq_renewal_delivery",
             ),
         ),
-        # Ne pas tenter de restaurer automatiquement une configuration qui a
-        # pu être personnalisée après la migration.
-        migrations.RunPython(apply_j5_j1_policy, migrations.RunPython.noop),
+        migrations.RunPython(apply_j5_j1_policy, reverse_j5_j1_policy),
         migrations.RunPython(
             backfill_legacy_delivery_markers,
             migrations.RunPython.noop,

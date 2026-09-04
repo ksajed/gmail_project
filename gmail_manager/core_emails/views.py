@@ -50,6 +50,7 @@ from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
 from .services_renewal_templates import render_renewal_message
 from .services_renewal_rules import (
+    get_due_notifications,
     _rule_channel_already_sent,
     mark_rule_channel_sent,
 )
@@ -818,6 +819,37 @@ def _renewal_rule_for_manual_send(request, days, channel):
         return rules.filter(pk=rule_id).first()
     return rules.first()
 
+
+def _due_cycle_for_manual_send(request, prescription, rule, channel):
+    """Retourne uniquement le cycle exact, encore ouvert et dû, du formulaire."""
+    cycle_id = request.POST.get("cycle_id")
+    normalized_channel = str(channel or "").upper()
+    channel_key = {
+        "EMAIL": "send_email",
+        "SMS": "send_sms",
+    }.get(normalized_channel)
+
+    if not cycle_id or rule is None or channel_key is None:
+        return None
+
+    try:
+        requested_cycle_id = int(cycle_id)
+    except (TypeError, ValueError):
+        return None
+
+    for item in get_due_notifications(today=timezone.localdate()):
+        cycle = item.get("cycle")
+        item_rule = item.get("rule")
+        if (
+            getattr(cycle, "pk", None) == requested_cycle_id
+            and getattr(cycle, "prescription_id", None) == prescription.pk
+            and getattr(item_rule, "pk", None) == rule.pk
+            and bool(item.get(channel_key))
+        ):
+            return cycle
+
+    return None
+
 #====================================================
 # V7 — MARQUER RENOUVELLEMENT COMME RÉALISÉ
 #====================================================
@@ -991,7 +1023,25 @@ def send_renewal_patient_email(request, pk, days):
         return redirect(next_url)
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
-    cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
+    if rule is not None:
+        cycle = _due_cycle_for_manual_send(
+            request,
+            prescription,
+            rule,
+            "EMAIL",
+        )
+        if cycle is None:
+            messages.error(
+                request,
+                "Ce rappel n’est plus disponible. Actualisez le tableau de bord.",
+            )
+            return redirect(next_url)
+        current_number = cycle.cycle_number
+    else:
+        cycle, current_number = _get_or_create_current_renewal_cycle(
+            prescription,
+            info,
+        )
 
     if rule is not None and _rule_channel_already_sent(cycle, rule, "EMAIL"):
         messages.info(request, f"Email {rule.name} déjà envoyé.")
@@ -1138,7 +1188,25 @@ def send_renewal_patient_sms(request, pk, days):
         return redirect(next_url)
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
-    cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
+    if rule is not None:
+        cycle = _due_cycle_for_manual_send(
+            request,
+            prescription,
+            rule,
+            "SMS",
+        )
+        if cycle is None:
+            messages.error(
+                request,
+                "Ce rappel n’est plus disponible. Actualisez le tableau de bord.",
+            )
+            return redirect(next_url)
+        current_number = cycle.cycle_number
+    else:
+        cycle, current_number = _get_or_create_current_renewal_cycle(
+            prescription,
+            info,
+        )
 
     if rule is not None and _rule_channel_already_sent(cycle, rule, "SMS"):
         messages.info(request, f"SMS {rule.name} déjà envoyé.")

@@ -49,6 +49,7 @@
               {% csrf_token %}
               <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
               <input type="hidden" name="rule_id" value="{{ rule.id }}">
+              <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
               <button type="submit" data-days="{{ rule.days_before }}" style="background:#2563eb;color:white;border:0;padding:8px 12px;border-radius:6px;font-weight:bold;">
                 Envoyer l’email {{ rule.name }}
               </button>
@@ -60,6 +61,7 @@
               {% csrf_token %}
               <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
               <input type="hidden" name="rule_id" value="{{ rule.id }}">
+              <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
               <button type="submit" data-days="{{ rule.days_before }}" style="background:#0a8f3c;color:white;border:0;padding:8px 12px;border-radius:6px;font-weight:bold;">
                 Envoyer le SMS {{ rule.name }}
               </button>
