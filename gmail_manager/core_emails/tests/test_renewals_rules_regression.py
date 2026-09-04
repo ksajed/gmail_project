@@ -7,7 +7,9 @@ from unittest.mock import Mock, patch
 from django.apps import apps as django_apps
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -561,6 +563,20 @@ class RenewalsRulesRegressionTests(TestCase):
         self.assertIn('data-days="1"', html)
         self.assertIn(f'name="rule_id" value="{rule.pk}"', html)
         self.assertIn(f'name="cycle_id" value="{self.cycle.pk}"', html)
+        self.assertNotIn(
+            reverse(
+                "core_emails:send_renewal_patient_email",
+                args=[self.prescription.pk, 0],
+            ),
+            html,
+        )
+        self.assertNotIn(
+            reverse(
+                "core_emails:send_renewal_patient_sms",
+                args=[self.prescription.pk, 0],
+            ),
+            html,
+        )
 
     def test_successful_dynamic_j30_channels_are_not_due_again(self):
         rule = self._create_rule(
@@ -658,6 +674,69 @@ class RenewalsRulesRegressionTests(TestCase):
             RenewalNotificationDelivery.STATUS_PENDING,
         )
         self.assertEqual(retry_claim.failure_reason, "")
+
+    def test_stale_pending_claim_is_due_and_can_be_reclaimed(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+        stale_claim = claim_rule_channel(self.cycle, rule, "EMAIL")
+        stale_at = timezone.now() - timedelta(minutes=16)
+        RenewalNotificationDelivery.objects.filter(pk=stale_claim.pk).update(
+            claimed_at=stale_at,
+        )
+
+        due_items = self._items_for_prescription(30)
+        reclaimed = claim_rule_channel(self.cycle, rule, "EMAIL")
+
+        self.assertEqual(len(due_items), 1)
+        self.assertTrue(due_items[0]["send_email"])
+        self.assertIsNotNone(reclaimed)
+        self.assertEqual(reclaimed.pk, stale_claim.pk)
+        self.assertGreater(reclaimed.claimed_at, stale_at)
+
+    def test_management_sms_deduplication_key_contains_rule_identity(self):
+        first_rule = self._create_rule(
+            name="J-30 SMS A",
+            days_before=30,
+            send_sms=True,
+            send_email=False,
+            sort_order=1,
+        )
+        second_rule = self._create_rule(
+            name="J-30 SMS B",
+            days_before=30,
+            send_sms=True,
+            send_email=False,
+            sort_order=2,
+        )
+        command = Command()
+
+        with patch(
+            "core_notifications.services.send_sms_logged",
+            return_value=SimpleNamespace(status=SmsStatus.SENT),
+        ) as mocked_send_sms:
+            for rule in (first_rule, second_rule):
+                result = command._handle_sms(
+                    prescription=self.prescription,
+                    cycle=self.cycle,
+                    rule=rule,
+                    due_date=self._due_date(),
+                    days_before=30,
+                    send_real=True,
+                )
+                self.assertEqual(result, "SENT")
+
+        keys = [
+            call.kwargs["template_key"]
+            for call in mocked_send_sms.call_args_list
+        ]
+        self.assertEqual(len(keys), 2)
+        self.assertNotEqual(keys[0], keys[1])
+        self.assertTrue(keys[0].endswith(f":rule:{first_rule.pk}"))
+        self.assertTrue(keys[1].endswith(f":rule:{second_rule.pk}"))
 
     def test_management_email_claim_blocks_a_competing_dispatch(self):
         rule = self._create_rule(
@@ -826,6 +905,72 @@ class RenewalsRulesRegressionTests(TestCase):
                 channel="SMS",
             ).exists()
         )
+
+    def test_repair_migration_backfills_legacy_markers_after_table_creation(self):
+        default_rule = self._create_rule(
+            name="J-5",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+            sort_order=30,
+        )
+        sent_at = timezone.now() - timedelta(days=1)
+        self.cycle.reminder_5_patient_sms_sent_at = sent_at
+        self.cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
+        RenewalNotificationDelivery.objects.all().delete()
+
+        migration = import_module(
+            "core_emails.migrations.0019_backfill_legacy_renewal_deliveries"
+        )
+        migration.backfill_legacy_delivery_markers(django_apps, None)
+
+        delivery = RenewalNotificationDelivery.objects.get(
+            cycle=self.cycle,
+            rule=default_rule,
+            channel="SMS",
+        )
+        self.assertEqual(delivery.status, RenewalNotificationDelivery.STATUS_SENT)
+        self.assertEqual(delivery.sent_at, sent_at)
+
+    def test_due_scan_prefetches_delivery_states_once(self):
+        self._create_rule(
+            name="J-30 BOTH A",
+            days_before=30,
+            send_sms=True,
+            send_email=True,
+            sort_order=1,
+        )
+        self._create_rule(
+            name="J-30 BOTH B",
+            days_before=30,
+            send_sms=True,
+            send_email=True,
+            sort_order=2,
+        )
+        for cycle_number in range(4, 10):
+            PrescriptionRenewalCycle.objects.create(
+                prescription=self.prescription,
+                cycle_number=cycle_number,
+                status=PrescriptionStatus.RECEIVED,
+            )
+
+        due_date = date(2026, 9, 30)
+        notification_date = date(2026, 8, 31)
+        with (
+            patch(
+                "core_emails.services_renewal_rules._get_cycle_due_date",
+                return_value=due_date,
+            ),
+            patch(
+                "core_emails.services_renewal_rules.calculate_notification_date",
+                return_value=notification_date,
+            ),
+            CaptureQueriesContext(connection) as queries,
+        ):
+            items = get_due_notifications(today=notification_date)
+
+        self.assertEqual(len(items), 14)
+        self.assertLessEqual(len(queries), 3)
 
     def test_manual_email_rejects_a_rule_with_email_disabled(self):
         rule = self._create_rule(

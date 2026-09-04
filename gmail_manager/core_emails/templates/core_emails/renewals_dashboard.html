@@ -432,24 +432,6 @@
                   <td>
                     {% if p %}
                     <div class="actionbar">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
-                      </form>
-
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
-                      </form>
-
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
                     {% else %}
@@ -516,24 +498,6 @@
                   <td>
                     {% if p %}
                     <div class="actionbar">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
-                      </form>
-
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
-                      </form>
-
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
                     {% else %}

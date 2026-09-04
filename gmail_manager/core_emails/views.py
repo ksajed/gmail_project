@@ -55,6 +55,7 @@ from .services_renewal_rules import (
     _rule_channel_already_sent,
     mark_rule_channel_failed,
     mark_rule_channel_sent,
+    renewal_sms_template_key,
 )
 from core_emails.services import compute_renewals_watch, compute_renewals_watch_v9
 from core_emails.timeline import build_prescription_timeline_events
@@ -1310,10 +1311,13 @@ def send_renewal_patient_sms(request, pk, days):
             to_e164=patient.phone_number,
             text=msg,
             purpose=SmsPurpose.RENEWAL,
-            template_key=(
-                getattr(_template, "name", "")
-                if _template
-                else "renewal_manual"
+            template_key=renewal_sms_template_key(
+                (
+                    getattr(_template, "name", "")
+                    if _template
+                    else "renewal_manual"
+                ),
+                rule,
             ),
             prescription=prescription,
         )

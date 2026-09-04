@@ -11,6 +11,7 @@ from core_emails.services_renewal_rules import (
     get_due_notifications,
     mark_rule_channel_failed,
     mark_rule_channel_sent,
+    renewal_sms_template_key,
 )
 from core_emails.services_renewal_templates import render_renewal_message
 
@@ -205,7 +206,10 @@ class Command(BaseCommand):
                 to_e164=phone,
                 text=body,
                 purpose=purpose,
-                template_key=getattr(template, "name", "") if template else "renewal_auto",
+                template_key=renewal_sms_template_key(
+                    getattr(template, "name", "") if template else "renewal_auto",
+                    rule,
+                ),
                 prescription=prescription,
             )
         except Exception as exc:
