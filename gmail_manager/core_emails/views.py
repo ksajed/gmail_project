@@ -1318,6 +1318,7 @@ def send_renewal_patient_sms(request, pk, days):
                     else "renewal_manual"
                 ),
                 rule,
+                cycle,
             ),
             prescription=prescription,
         )

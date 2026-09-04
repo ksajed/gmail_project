@@ -50,7 +50,7 @@ def backfill_legacy_delivery_markers(apps, schema_editor):
                 .iterator()
             )
             for cycle_id, sent_at in marked_cycles:
-                Delivery.objects.get_or_create(
+                Delivery.objects.update_or_create(
                     cycle_id=cycle_id,
                     rule_id=rule_id,
                     channel=channel,

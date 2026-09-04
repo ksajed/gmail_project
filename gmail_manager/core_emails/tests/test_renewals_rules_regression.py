@@ -32,6 +32,7 @@ from core_emails.services_renewal_rules import (
     get_due_notifications,
     mark_rule_channel_failed,
     mark_rule_channel_sent,
+    renewal_sms_template_key,
 )
 from core_emails.management.commands.run_renewal_notifications import Command
 from core_notifications.models import SmsStatus
@@ -735,8 +736,39 @@ class RenewalsRulesRegressionTests(TestCase):
         ]
         self.assertEqual(len(keys), 2)
         self.assertNotEqual(keys[0], keys[1])
-        self.assertTrue(keys[0].endswith(f":rule:{first_rule.pk}"))
-        self.assertTrue(keys[1].endswith(f":rule:{second_rule.pk}"))
+        self.assertTrue(
+            keys[0].endswith(
+                f":rule:{first_rule.pk}:cycle:{self.cycle.pk}"
+            )
+        )
+        self.assertTrue(
+            keys[1].endswith(
+                f":rule:{second_rule.pk}:cycle:{self.cycle.pk}"
+            )
+        )
+
+    def test_sms_deduplication_key_contains_cycle_identity(self):
+        rule = self._create_rule(
+            name="J-30 SMS",
+            days_before=30,
+            send_sms=True,
+            send_email=False,
+        )
+        other_cycle = PrescriptionRenewalCycle.objects.create(
+            prescription=self.prescription,
+            cycle_number=4,
+            status=PrescriptionStatus.RECEIVED,
+            started_at=timezone.now(),
+        )
+
+        first_key = renewal_sms_template_key("renewal_auto", rule, self.cycle)
+        second_key = renewal_sms_template_key("renewal_auto", rule, other_cycle)
+
+        self.assertNotEqual(first_key, second_key)
+        self.assertTrue(first_key.endswith(f":cycle:{self.cycle.pk}"))
+        self.assertTrue(second_key.endswith(f":cycle:{other_cycle.pk}"))
+        self.assertLessEqual(len(first_key), 100)
+        self.assertLessEqual(len(second_key), 100)
 
     def test_management_email_claim_blocks_a_competing_dispatch(self):
         rule = self._create_rule(
@@ -931,6 +963,55 @@ class RenewalsRulesRegressionTests(TestCase):
         )
         self.assertEqual(delivery.status, RenewalNotificationDelivery.STATUS_SENT)
         self.assertEqual(delivery.sent_at, sent_at)
+
+    def test_repair_migration_overwrites_retryable_rows_with_legacy_markers(self):
+        default_rule = self._create_rule(
+            name="J-5",
+            days_before=5,
+            send_sms=True,
+            send_email=True,
+            sort_order=30,
+        )
+        sms_sent_at = timezone.now() - timedelta(days=2)
+        email_sent_at = timezone.now() - timedelta(days=1)
+        self.cycle.reminder_5_patient_sms_sent_at = sms_sent_at
+        self.cycle.reminder_5_patient_email_sent_at = email_sent_at
+        self.cycle.save(
+            update_fields=[
+                "reminder_5_patient_sms_sent_at",
+                "reminder_5_patient_email_sent_at",
+            ]
+        )
+        failed = RenewalNotificationDelivery.objects.create(
+            cycle=self.cycle,
+            rule=default_rule,
+            channel="SMS",
+            status=RenewalNotificationDelivery.STATUS_FAILED,
+            failure_reason="provider unavailable",
+        )
+        pending = RenewalNotificationDelivery.objects.create(
+            cycle=self.cycle,
+            rule=default_rule,
+            channel="EMAIL",
+            status=RenewalNotificationDelivery.STATUS_PENDING,
+            failure_reason="worker interrupted",
+        )
+
+        migration = import_module(
+            "core_emails.migrations.0019_backfill_legacy_renewal_deliveries"
+        )
+        migration.backfill_legacy_delivery_markers(django_apps, None)
+
+        failed.refresh_from_db()
+        pending.refresh_from_db()
+        self.assertEqual(failed.status, RenewalNotificationDelivery.STATUS_SENT)
+        self.assertEqual(failed.claimed_at, sms_sent_at)
+        self.assertEqual(failed.sent_at, sms_sent_at)
+        self.assertEqual(failed.failure_reason, "")
+        self.assertEqual(pending.status, RenewalNotificationDelivery.STATUS_SENT)
+        self.assertEqual(pending.claimed_at, email_sent_at)
+        self.assertEqual(pending.sent_at, email_sent_at)
+        self.assertEqual(pending.failure_reason, "")
 
     def test_due_scan_prefetches_delivery_states_once(self):
         self._create_rule(

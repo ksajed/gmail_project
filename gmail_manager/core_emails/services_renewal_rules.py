@@ -337,14 +337,20 @@ def _blocking_delivery_keys(cycles, rules):
     }
 
 
-def renewal_sms_template_key(base_key: str, rule=None) -> str:
-    """Ajoute l'identité de la règle à la clé anti-doublon du fournisseur."""
+def renewal_sms_template_key(base_key: str, rule=None, cycle=None) -> str:
+    """Ajoute les identités règle/cycle à la clé anti-doublon SMS."""
     normalized = str(base_key or "renewal")
     rule_id = getattr(rule, "pk", None)
-    if not rule_id:
+    cycle_id = getattr(cycle, "pk", None)
+    if not rule_id and not cycle_id:
         return normalized[:100]
 
-    suffix = f":rule:{rule_id}"
+    suffix_parts = []
+    if rule_id:
+        suffix_parts.append(f":rule:{rule_id}")
+    if cycle_id:
+        suffix_parts.append(f":cycle:{cycle_id}")
+    suffix = "".join(suffix_parts)
     return f"{normalized[: max(0, 100 - len(suffix))]}{suffix}"
 
 
@@ -865,20 +871,24 @@ def get_activity_metrics(today: Optional[date] = None) -> Dict[str, int]:
             metrics["sms_sent_today"] = 0
 
     # 2) Emails envoyés aujourd'hui
-    # On utilise les champs existants sur PrescriptionRenewalCycle.
-    # Pas de nouveau log parallèle.
+    # Les rappels patient sont comptés par livraison (une ligne par
+    # cycle/règle/canal). L'email médecin reste un marqueur historique séparé.
     try:
-        from django.db.models import Q
         from core_emails.models import PrescriptionRenewalCycle
 
-        email_q = (
-            Q(reminder_5_patient_email_sent_at__gte=day_start, reminder_5_patient_email_sent_at__lte=day_end)
-            | Q(reminder_3_patient_email_sent_at__gte=day_start, reminder_3_patient_email_sent_at__lte=day_end)
-            | Q(reminder_1_patient_email_sent_at__gte=day_start, reminder_1_patient_email_sent_at__lte=day_end)
-            | Q(doctor_email_sent_at__gte=day_start, doctor_email_sent_at__lte=day_end)
+        patient_email_count = RenewalNotificationDelivery.objects.filter(
+            channel=RenewalNotificationDelivery.CHANNEL_EMAIL,
+            status=RenewalNotificationDelivery.STATUS_SENT,
+            sent_at__gte=day_start,
+            sent_at__lte=day_end,
+        ).count()
+        doctor_email_count = PrescriptionRenewalCycle.objects.filter(
+            doctor_email_sent_at__gte=day_start,
+            doctor_email_sent_at__lte=day_end,
+        ).count()
+        metrics["emails_sent_today"] = (
+            patient_email_count + doctor_email_count
         )
-
-        metrics["emails_sent_today"] = PrescriptionRenewalCycle.objects.filter(email_q).distinct().count()
     except Exception:
         metrics["emails_sent_today"] = 0
 

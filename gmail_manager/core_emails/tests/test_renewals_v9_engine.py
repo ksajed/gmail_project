@@ -126,6 +126,37 @@ class RenewalsV9EngineTests(TestCase):
             self.assertIn(key, metrics)
             self.assertIsInstance(metrics[key], int)
 
+    def test_activity_metrics_counts_dynamic_email_deliveries_and_doctor_email(self):
+        second_rule = RenewalNotificationRule.objects.create(
+            name="TEST J-5 EMAIL B",
+            active=True,
+            days_before=5,
+            send_sms=False,
+            send_email=True,
+            sort_order=2,
+        )
+        sent_at = timezone.make_aware(
+            timezone.datetime(2026, 6, 7, 12, 0, 0)
+        )
+        mark_rule_channel_sent(
+            self.cycle,
+            self.rule,
+            "EMAIL",
+            sent_at=sent_at,
+        )
+        mark_rule_channel_sent(
+            self.cycle,
+            second_rule,
+            "EMAIL",
+            sent_at=sent_at,
+        )
+        self.cycle.doctor_email_sent_at = sent_at
+        self.cycle.save(update_fields=["doctor_email_sent_at"])
+
+        metrics = get_activity_metrics(today=date(2026, 6, 7))
+
+        self.assertEqual(metrics["emails_sent_today"], 3)
+
     def test_command_dry_run_does_not_mark_cycle_as_sent(self):
         due = _get_cycle_due_date(self.cycle)
         notification_day = due - timedelta(days=5)

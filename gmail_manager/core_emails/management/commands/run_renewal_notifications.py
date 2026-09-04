@@ -209,6 +209,7 @@ class Command(BaseCommand):
                 template_key=renewal_sms_template_key(
                     getattr(template, "name", "") if template else "renewal_auto",
                     rule,
+                    cycle,
                 ),
                 prescription=prescription,
             )
