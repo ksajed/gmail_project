@@ -19,6 +19,7 @@ from core_emails.services_renewal_rules import (
     get_due_notifications,
     get_final_renewals,
     get_activity_metrics,
+    mark_rule_channel_sent,
 )
 
 
@@ -68,7 +69,8 @@ class RenewalsV9EngineTests(TestCase):
             started_at=timezone.now(),
         )
 
-        RenewalNotificationRule.objects.create(
+        RenewalNotificationRule.objects.all().delete()
+        self.rule = RenewalNotificationRule.objects.create(
             name="TEST J-5",
             active=True,
             days_before=5,
@@ -140,15 +142,8 @@ class RenewalsV9EngineTests(TestCase):
         self.assertIsNone(self.cycle.reminder_5_patient_email_sent_at)
 
     def test_already_sent_j5_is_not_returned_again(self):
-        now = timezone.now()
-        self.cycle.reminder_5_patient_sms_sent_at = now
-        self.cycle.reminder_5_patient_email_sent_at = now
-        self.cycle.save(
-            update_fields=[
-                "reminder_5_patient_sms_sent_at",
-                "reminder_5_patient_email_sent_at",
-            ]
-        )
+        mark_rule_channel_sent(self.cycle, self.rule, "SMS")
+        mark_rule_channel_sent(self.cycle, self.rule, "EMAIL")
 
         due = _get_cycle_due_date(self.cycle)
         notification_day = due - timedelta(days=5)

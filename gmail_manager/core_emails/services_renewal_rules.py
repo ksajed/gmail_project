@@ -275,7 +275,7 @@ def _rule_channel_already_sent(
     channel: str,
 ) -> bool:
     normalized_channel = str(channel or "").upper()
-    if (
+    return bool(
         getattr(cycle, "pk", None)
         and getattr(rule, "pk", None)
         and normalized_channel in {"SMS", "EMAIL"}
@@ -284,11 +284,7 @@ def _rule_channel_already_sent(
             rule=rule,
             channel=normalized_channel,
         ).exists()
-    ):
-        return True
-
-    field = _legacy_channel_field(rule, channel)
-    return bool(field and getattr(cycle, field, None))
+    )
 
 
 def mark_rule_channel_sent(
@@ -323,8 +319,11 @@ def mark_rule_channel_sent(
 
 def _rule_already_sent(cycle: Any, rule: RenewalNotificationRule) -> bool:
     """
-    Évite les doublons grâce à la trace générique cycle/règle/canal, avec
-    repli sur les champs historiques J-5/J-3/J-1.
+    Évite les doublons grâce à la trace générique cycle/règle/canal.
+
+    Les marqueurs historiques J-5/J-3/J-1 sont convertis en traces génériques
+    par la migration, afin qu'ils ne puissent pas masquer une autre règle du
+    même jour.
     """
     enabled_channels = []
     if bool(getattr(rule, "send_sms", False)):

@@ -792,22 +792,25 @@ def change_prescription_type(request, pk):
 # V7 — ACTIONS RENOUVELLEMENT (EMAIL/SMS PATIENT + EMAIL MÉDECIN)
 # =====================================================
 
-def sms_backend_send(phone: str, message: str):
-    """
-    Backend SMS à brancher (Twilio/OVH/etc).
-    Pour l’instant: non configuré => erreur propre.
-    """
-    raise NotImplementedError("SMS non configuré (ajouter un provider SMS).")
-
-
-def _renewal_rule_for_manual_send(request, days):
-    """Résout uniquement une règle active correspondant au délai demandé."""
+def _renewal_rule_for_manual_send(request, days, channel):
+    """Résout une règle active qui autorise explicitement le canal demandé."""
     if days == 0:
         return None
 
+    channel_field = {
+        "EMAIL": "send_email",
+        "SMS": "send_sms",
+    }.get(str(channel or "").upper())
+    if not channel_field:
+        return None
+
+    filters = {
+        "active": True,
+        "days_before": days,
+        channel_field: True,
+    }
     rules = RenewalNotificationRule.objects.filter(
-        active=True,
-        days_before=days,
+        **filters,
     ).order_by("sort_order", "pk")
 
     rule_id = request.POST.get("rule_id")
@@ -977,7 +980,7 @@ def send_renewal_patient_email(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect(next_url)
 
-    rule = _renewal_rule_for_manual_send(request, days)
+    rule = _renewal_rule_for_manual_send(request, days, "EMAIL")
     if days != 0 and rule is None:
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
@@ -1124,7 +1127,7 @@ def send_renewal_patient_sms(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect(next_url)
 
-    rule = _renewal_rule_for_manual_send(request, days)
+    rule = _renewal_rule_for_manual_send(request, days, "SMS")
     if days != 0 and rule is None:
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
@@ -1186,10 +1189,31 @@ def send_renewal_patient_sms(request, pk, days):
             "Merci de contacter la pharmacie."
         )
 
+    from core_notifications.models import SmsPurpose, SmsStatus
+    from core_notifications.services import send_sms_logged
+
     try:
-        sms_backend_send(patient.phone_number, msg)
-    except NotImplementedError as e:
-        messages.error(request, str(e))
+        sms = send_sms_logged(
+            to_e164=patient.phone_number,
+            text=msg,
+            purpose=SmsPurpose.RENEWAL,
+            template_key=(
+                getattr(_template, "name", "")
+                if _template
+                else "renewal_manual"
+            ),
+            prescription=prescription,
+        )
+    except Exception:
+        logger.exception(
+            "Échec de préparation du SMS de renouvellement prescription=%s",
+            prescription.pk,
+        )
+        messages.error(request, "Le SMS n’a pas pu être envoyé.")
+        return redirect(next_url)
+
+    if getattr(sms, "status", None) != SmsStatus.SENT:
+        messages.error(request, "Le fournisseur SMS a refusé l’envoi.")
         return redirect(next_url)
 
     # Historique renouvellement (event) — éviter doublons (unique_together)

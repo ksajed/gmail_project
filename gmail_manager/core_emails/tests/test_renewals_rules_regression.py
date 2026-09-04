@@ -26,6 +26,7 @@ from core_emails.services_renewal_rules import (
     _get_cycle_due_date,
     get_due_notifications,
     calculate_notification_date,
+    mark_rule_channel_sent,
 )
 from core_emails.management.commands.run_renewal_notifications import Command
 from core_notifications.models import SmsStatus
@@ -362,7 +363,7 @@ class RenewalsRulesRegressionTests(TestCase):
         self.assertEqual(email_count, 1)
 
     def test_already_sent_j5_rule_is_excluded(self):
-        self._create_rule(
+        rule = self._create_rule(
             name="J-5",
             active=True,
             days_before=5,
@@ -372,20 +373,13 @@ class RenewalsRulesRegressionTests(TestCase):
 
         self.assertEqual(len(self._items_for_prescription(5)), 1)
 
-        now = timezone.now()
-        self.cycle.reminder_5_patient_sms_sent_at = now
-        self.cycle.reminder_5_patient_email_sent_at = now
-        self.cycle.save(
-            update_fields=[
-                "reminder_5_patient_sms_sent_at",
-                "reminder_5_patient_email_sent_at",
-            ]
-        )
+        mark_rule_channel_sent(self.cycle, rule, "SMS")
+        mark_rule_channel_sent(self.cycle, rule, "EMAIL")
 
         self.assertEqual(self._items_for_prescription(5), [])
 
     def test_already_sent_j1_rule_is_excluded(self):
-        self._create_rule(
+        rule = self._create_rule(
             name="J-1",
             active=True,
             days_before=1,
@@ -395,20 +389,13 @@ class RenewalsRulesRegressionTests(TestCase):
 
         self.assertEqual(len(self._items_for_prescription(1)), 1)
 
-        now = timezone.now()
-        self.cycle.reminder_1_patient_sms_sent_at = now
-        self.cycle.reminder_1_patient_email_sent_at = now
-        self.cycle.save(
-            update_fields=[
-                "reminder_1_patient_sms_sent_at",
-                "reminder_1_patient_email_sent_at",
-            ]
-        )
+        mark_rule_channel_sent(self.cycle, rule, "SMS")
+        mark_rule_channel_sent(self.cycle, rule, "EMAIL")
 
         self.assertEqual(self._items_for_prescription(1), [])
 
     def test_j1_keeps_only_the_unsent_channel_due(self):
-        self._create_rule(
+        rule = self._create_rule(
             name="J-1",
             active=True,
             days_before=1,
@@ -416,8 +403,7 @@ class RenewalsRulesRegressionTests(TestCase):
             send_email=True,
         )
 
-        self.cycle.reminder_1_patient_sms_sent_at = timezone.now()
-        self.cycle.save(update_fields=["reminder_1_patient_sms_sent_at"])
+        mark_rule_channel_sent(self.cycle, rule, "SMS")
 
         matched = self._items_for_prescription(1)
 
@@ -547,6 +533,169 @@ class RenewalsRulesRegressionTests(TestCase):
             {"SMS", "EMAIL"},
         )
         self.assertEqual(self._items_for_prescription(30), [])
+
+    def test_same_day_rule_is_not_hidden_by_another_rules_legacy_marker(self):
+        first_rule = self._create_rule(
+            name="J-5 SMS A",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+            sort_order=1,
+        )
+        second_rule = self._create_rule(
+            name="J-5 SMS B",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+            sort_order=2,
+        )
+
+        mark_rule_channel_sent(self.cycle, first_rule, "SMS")
+        matched = self._items_for_prescription(5)
+
+        self.assertEqual(len(matched), 1)
+        self.assertEqual(matched[0]["rule"], second_rule)
+        self.assertTrue(matched[0]["send_sms"])
+
+    def test_migration_backfills_the_identifiable_default_rule_only(self):
+        default_rule = self._create_rule(
+            name="J-5",
+            days_before=5,
+            send_sms=True,
+            send_email=True,
+            sort_order=30,
+        )
+        custom_rule = self._create_rule(
+            name="J-5 personnalisé",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+            sort_order=99,
+        )
+        sent_at = timezone.now()
+        self.cycle.reminder_5_patient_sms_sent_at = sent_at
+        self.cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
+
+        migration = import_module(
+            "core_emails.migrations.0017_renewal_policy_j5_j1"
+        )
+        migration.backfill_legacy_delivery_markers(django_apps, None)
+
+        self.assertTrue(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule=default_rule,
+                channel="SMS",
+            ).exists()
+        )
+        self.assertFalse(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule=custom_rule,
+                channel="SMS",
+            ).exists()
+        )
+
+    def test_manual_email_rejects_a_rule_with_email_disabled(self):
+        rule = self._create_rule(
+            name="J-1 SMS uniquement",
+            days_before=1,
+            send_sms=True,
+            send_email=False,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-channel",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+
+        with patch("core_emails.views.send_mail") as mocked_send_mail:
+            response = self.client.post(
+                reverse(
+                    "core_emails:send_renewal_patient_email",
+                    args=[self.prescription.pk, 1],
+                ),
+                {"rule_id": rule.pk},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        mocked_send_mail.assert_not_called()
+        self.assertFalse(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule=rule,
+                channel="EMAIL",
+            ).exists()
+        )
+
+    def test_manual_sms_uses_provider_and_marks_only_success(self):
+        rule = self._create_rule(
+            name="J-30 SMS",
+            days_before=30,
+            send_sms=True,
+            send_email=False,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-sms-success",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+
+        with patch(
+            "core_notifications.services.send_sms_logged",
+            return_value=SimpleNamespace(status=SmsStatus.SENT),
+        ) as mocked_send_sms:
+            response = self.client.post(
+                reverse(
+                    "core_emails:send_renewal_patient_sms",
+                    args=[self.prescription.pk, 30],
+                ),
+                {"rule_id": rule.pk},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        mocked_send_sms.assert_called_once()
+        self.assertTrue(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule=rule,
+                channel="SMS",
+            ).exists()
+        )
+
+    def test_manual_sms_failure_does_not_mark_delivery(self):
+        rule = self._create_rule(
+            name="J-30 SMS",
+            days_before=30,
+            send_sms=True,
+            send_email=False,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-sms-failure",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+
+        with patch(
+            "core_notifications.services.send_sms_logged",
+            return_value=SimpleNamespace(status=SmsStatus.FAILED),
+        ):
+            response = self.client.post(
+                reverse(
+                    "core_emails:send_renewal_patient_sms",
+                    args=[self.prescription.pk, 30],
+                ),
+                {"rule_id": rule.pk},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule=rule,
+                channel="SMS",
+            ).exists()
+        )
 
     def test_management_command_dry_run_uses_dynamic_j30_rule(self):
         self._create_rule(
