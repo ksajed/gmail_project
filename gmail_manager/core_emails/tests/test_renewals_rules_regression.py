@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from importlib import import_module
 from io import StringIO
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.apps import apps as django_apps
 from django.contrib.auth import get_user_model
@@ -124,6 +124,49 @@ class RenewalDefaultPolicyTests(TestCase):
         custom_j1.refresh_from_db()
         self.assertFalse(migrated_default.active)
         self.assertTrue(custom_j1.active)
+
+    def test_claim_migration_creates_the_legacy_missing_delivery_table(self):
+        migration = import_module(
+            "core_emails.migrations.0018_renewal_delivery_claim_status"
+        )
+        schema_editor = SimpleNamespace(
+            connection=SimpleNamespace(
+                introspection=SimpleNamespace(
+                    table_names=Mock(return_value=[]),
+                ),
+            ),
+            create_model=Mock(),
+        )
+
+        migration.ensure_delivery_table(django_apps, schema_editor)
+
+        schema_editor.create_model.assert_called_once()
+        delivery_model = schema_editor.create_model.call_args.args[0]
+        self.assertEqual(
+            delivery_model._meta.db_table,
+            "core_emails_renewalnotificationdelivery",
+        )
+
+    def test_claim_migration_keeps_an_existing_delivery_table(self):
+        migration = import_module(
+            "core_emails.migrations.0018_renewal_delivery_claim_status"
+        )
+        schema_editor = SimpleNamespace(
+            connection=SimpleNamespace(
+                introspection=SimpleNamespace(
+                    table_names=Mock(
+                        return_value=[
+                            "core_emails_renewalnotificationdelivery",
+                        ]
+                    ),
+                ),
+            ),
+            create_model=Mock(),
+        )
+
+        migration.ensure_delivery_table(django_apps, schema_editor)
+
+        schema_editor.create_model.assert_not_called()
 
 
 class RenewalsRulesRegressionTests(TestCase):
