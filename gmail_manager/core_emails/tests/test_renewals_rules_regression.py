@@ -698,6 +698,53 @@ class RenewalsRulesRegressionTests(TestCase):
         self.assertEqual(reclaimed.pk, stale_claim.pk)
         self.assertGreater(reclaimed.claimed_at, stale_at)
 
+    def test_reclaimed_claim_rejects_the_previous_workers_updates(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+        previous_claim = claim_rule_channel(self.cycle, rule, "EMAIL")
+        stale_at = timezone.now() - timedelta(minutes=16)
+        RenewalNotificationDelivery.objects.filter(pk=previous_claim.pk).update(
+            claimed_at=stale_at,
+        )
+        previous_claim.claimed_at = stale_at
+
+        current_claim = claim_rule_channel(self.cycle, rule, "EMAIL")
+        self.assertIsNotNone(current_claim)
+        self.assertGreater(current_claim.claimed_at, stale_at)
+
+        failed = mark_rule_channel_failed(previous_claim, reason="late failure")
+        sent = mark_rule_channel_sent(
+            self.cycle,
+            rule,
+            "EMAIL",
+            delivery_claim=previous_claim,
+        )
+
+        self.assertFalse(failed)
+        self.assertIsNone(sent)
+        current_claim.refresh_from_db()
+        self.assertEqual(
+            current_claim.status,
+            RenewalNotificationDelivery.STATUS_PENDING,
+        )
+        self.assertNotEqual(current_claim.claimed_at, previous_claim.claimed_at)
+
+        completed = mark_rule_channel_sent(
+            self.cycle,
+            rule,
+            "EMAIL",
+            delivery_claim=current_claim,
+        )
+        self.assertIsNotNone(completed)
+        self.assertEqual(
+            completed.status,
+            RenewalNotificationDelivery.STATUS_SENT,
+        )
+
     def test_management_sms_deduplication_key_contains_rule_identity(self):
         first_rule = self._create_rule(
             name="J-30 SMS A",
@@ -1012,6 +1059,62 @@ class RenewalsRulesRegressionTests(TestCase):
         self.assertEqual(pending.claimed_at, email_sent_at)
         self.assertEqual(pending.sent_at, email_sent_at)
         self.assertEqual(pending.failure_reason, "")
+
+    def test_repair_migration_uses_a_uniquely_renamed_legacy_rule(self):
+        renamed_rule = self._create_rule(
+            name="Rappel personnalisé cinq jours",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+            sort_order=99,
+        )
+        sent_at = timezone.now() - timedelta(days=1)
+        self.cycle.reminder_5_patient_sms_sent_at = sent_at
+        self.cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
+
+        migration = import_module(
+            "core_emails.migrations.0019_backfill_legacy_renewal_deliveries"
+        )
+        migration.backfill_legacy_delivery_markers(django_apps, None)
+
+        delivery = RenewalNotificationDelivery.objects.get(
+            cycle=self.cycle,
+            rule=renamed_rule,
+            channel="SMS",
+        )
+        self.assertEqual(delivery.status, RenewalNotificationDelivery.STATUS_SENT)
+        self.assertEqual(delivery.sent_at, sent_at)
+
+    def test_repair_migration_skips_an_ambiguous_renamed_legacy_day(self):
+        first_rule = self._create_rule(
+            name="Premier rappel cinq jours",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+            sort_order=98,
+        )
+        second_rule = self._create_rule(
+            name="Second rappel cinq jours",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+            sort_order=99,
+        )
+        self.cycle.reminder_5_patient_sms_sent_at = timezone.now()
+        self.cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
+
+        migration = import_module(
+            "core_emails.migrations.0019_backfill_legacy_renewal_deliveries"
+        )
+        migration.backfill_legacy_delivery_markers(django_apps, None)
+
+        self.assertFalse(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule__in=[first_rule, second_rule],
+                channel="SMS",
+            ).exists()
+        )
 
     def test_due_scan_prefetches_delivery_states_once(self):
         self._create_rule(
