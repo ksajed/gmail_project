@@ -206,6 +206,11 @@ def compute_renewals_dashboard_v10():
     if not isinstance(v9_data, dict):
         return dashboard
 
+    # Conserver aussi le contexte V9 brut : le template historique et stylé
+    # du dashboard utilise ces clés (renewals_active, renewals_urgent, etc.).
+    # Les données de présentation V10 restent ajoutées ci-dessous.
+    dashboard.update(v9_data)
+
     dashboard["engine_status"]["v9_available"] = bool(source)
     dashboard["engine_status"]["source"] = source
 

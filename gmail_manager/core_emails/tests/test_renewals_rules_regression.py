@@ -539,8 +539,9 @@ class RenewalsRulesRegressionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response,
-            "core_emails/renewals_dashboard_v10.html",
+            "core_emails/renewals_dashboard.html",
         )
+        self.assertContains(response, "Renouvellements — Pharmacie")
         html = response.content.decode()
 
         self.assertIn(

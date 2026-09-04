@@ -239,7 +239,7 @@ def renewals_dashboard(request):
     Cette vue utilise le service V10 sans modifier le moteur V9.
     """
     context = compute_renewals_dashboard_v10()
-    return render(request, "core_emails/renewals_dashboard_v10.html", context)
+    return render(request, "core_emails/renewals_dashboard.html", context)
 
 @login_required
 def prescription_detail(request, pk):
