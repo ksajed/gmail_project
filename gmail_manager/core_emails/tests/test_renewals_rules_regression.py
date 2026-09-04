@@ -441,7 +441,15 @@ class RenewalsRulesRegressionTests(TestCase):
 
         html = render_to_string(
             "core_emails/renewals_dashboard.html",
-            {"renewals_notifications_due": [item]},
+            {
+                "renewals_notifications_due": [item],
+                "request": SimpleNamespace(
+                    user=SimpleNamespace(
+                        get_full_name="Utilisateur test",
+                        username="test-renewals",
+                    )
+                ),
+            },
         )
 
         self.assertIn(
