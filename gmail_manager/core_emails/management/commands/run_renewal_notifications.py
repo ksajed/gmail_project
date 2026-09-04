@@ -6,7 +6,13 @@ from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 
-from core_emails.services_renewal_rules import get_due_notifications
+from core_emails.services_renewal_rules import (
+    claim_rule_channel,
+    get_due_notifications,
+    mark_rule_channel_failed,
+    mark_rule_channel_sent,
+    renewal_sms_template_key,
+)
 from core_emails.services_renewal_templates import render_renewal_message
 
 
@@ -86,14 +92,17 @@ class Command(BaseCommand):
                     result = self._handle_sms(
                         prescription=prescription,
                         cycle=cycle,
+                        rule=rule,
                         due_date=due_date,
                         days_before=days_before,
                         send_real=send_real,
                     )
                     if result == "SENT":
                         summary["sms_sent"] += 1
-                    else:
+                    elif self._is_skipped_result(result):
                         summary["sms_skipped"] += 1
+                    else:
+                        summary["errors"] += 1
                     self.stdout.write(f"  SMS : {result}")
                 except Exception as e:
                     summary["errors"] += 1
@@ -108,14 +117,17 @@ class Command(BaseCommand):
                     result = self._handle_email(
                         prescription=prescription,
                         cycle=cycle,
+                        rule=rule,
                         due_date=due_date,
                         days_before=days_before,
                         send_real=send_real,
                     )
                     if result == "SENT":
                         summary["email_sent"] += 1
-                    else:
+                    elif self._is_skipped_result(result):
                         summary["email_skipped"] += 1
+                    else:
+                        summary["errors"] += 1
                     self.stdout.write(f"  EMAIL : {result}")
                 except Exception as e:
                     summary["errors"] += 1
@@ -129,6 +141,11 @@ class Command(BaseCommand):
         for k, v in summary.items():
             self.stdout.write(f"{k}: {v}")
 
+    @staticmethod
+    def _is_skipped_result(result) -> bool:
+        normalized = str(result or "").upper()
+        return normalized == "DRY-RUN" or normalized.startswith("SKIPPED")
+
     def _safe_reference(self, prescription):
         return f"#{getattr(prescription, 'id', '')}"
 
@@ -138,7 +155,16 @@ class Command(BaseCommand):
         except Exception:
             return ""
 
-    def _handle_sms(self, *, prescription, cycle, due_date, days_before, send_real: bool):
+    def _handle_sms(
+        self,
+        *,
+        prescription,
+        cycle,
+        rule=None,
+        due_date,
+        days_before,
+        send_real: bool,
+    ):
         patient = getattr(prescription, "patient", None)
         phone = getattr(patient, "phone_number", None)
 
@@ -164,30 +190,68 @@ class Command(BaseCommand):
         if not send_real:
             return "DRY-RUN"
 
+        delivery_claim = None
+        if rule is not None:
+            delivery_claim = claim_rule_channel(cycle, rule, "SMS")
+            if delivery_claim is None:
+                return "SKIPPED(already-claimed)"
+
         from core_notifications.services import send_sms_logged
-        from core_notifications.models import SmsPurpose
+        from core_notifications.models import SmsPurpose, SmsStatus
 
         purpose = getattr(SmsPurpose, "RENEWAL", SmsPurpose.INFO)
 
-        sms = send_sms_logged(
-            to_e164=phone,
-            text=body,
-            purpose=purpose,
-            template_key=getattr(template, "name", "") if template else "renewal_auto",
-            prescription=prescription,
-        )
+        try:
+            sms = send_sms_logged(
+                to_e164=phone,
+                text=body,
+                purpose=purpose,
+                template_key=renewal_sms_template_key(
+                    getattr(template, "name", "") if template else "renewal_auto",
+                    rule,
+                    cycle,
+                ),
+                prescription=prescription,
+            )
+        except Exception as exc:
+            if delivery_claim is not None:
+                mark_rule_channel_failed(
+                    delivery_claim,
+                    reason=f"{type(exc).__name__}: {exc}",
+                )
+            raise
 
-        now = timezone.now()
-        if int(days_before or 0) == 5 and hasattr(cycle, "reminder_5_patient_sms_sent_at"):
-            cycle.reminder_5_patient_sms_sent_at = now
-            cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
-        elif int(days_before or 0) == 3 and hasattr(cycle, "reminder_3_patient_sms_sent_at"):
-            cycle.reminder_3_patient_sms_sent_at = now
-            cycle.save(update_fields=["reminder_3_patient_sms_sent_at"])
+        sms_status = getattr(sms, "status", None)
+        if sms_status != SmsStatus.SENT:
+            if delivery_claim is not None:
+                mark_rule_channel_failed(
+                    delivery_claim,
+                    reason=str(sms_status or "FAILED"),
+                )
+            return str(sms_status or "FAILED")
 
-        return "SENT" if sms else "FAILED"
+        if rule is not None:
+            completed = mark_rule_channel_sent(
+                cycle,
+                rule,
+                "SMS",
+                delivery_claim=delivery_claim,
+            )
+            if completed is None:
+                return "ERROR(claim-lost-after-send)"
 
-    def _handle_email(self, *, prescription, cycle, due_date, days_before, send_real: bool):
+        return "SENT"
+
+    def _handle_email(
+        self,
+        *,
+        prescription,
+        cycle,
+        rule=None,
+        due_date,
+        days_before,
+        send_real: bool,
+    ):
         patient = getattr(prescription, "patient", None)
         email = getattr(patient, "email", None)
 
@@ -221,21 +285,38 @@ class Command(BaseCommand):
         if not send_real:
             return "DRY-RUN"
 
+        delivery_claim = None
+        if rule is not None:
+            delivery_claim = claim_rule_channel(cycle, rule, "EMAIL")
+            if delivery_claim is None:
+                return "SKIPPED(already-claimed)"
+
         from core_emails.services_notifications import _send_email_strict
 
-        result = _send_email_strict(
-            to_email=email,
-            subject=subject,
-            body=body,
-        )
+        try:
+            result = _send_email_strict(
+                to_email=email,
+                subject=subject,
+                body=body,
+            )
+        except Exception as exc:
+            if delivery_claim is not None:
+                mark_rule_channel_failed(
+                    delivery_claim,
+                    reason=f"{type(exc).__name__}: {exc}",
+                )
+            raise
 
-        now = timezone.now()
-        if result == "SENT":
-            if int(days_before or 0) == 5 and hasattr(cycle, "reminder_5_patient_email_sent_at"):
-                cycle.reminder_5_patient_email_sent_at = now
-                cycle.save(update_fields=["reminder_5_patient_email_sent_at"])
-            elif int(days_before or 0) == 3 and hasattr(cycle, "reminder_3_patient_email_sent_at"):
-                cycle.reminder_3_patient_email_sent_at = now
-                cycle.save(update_fields=["reminder_3_patient_email_sent_at"])
+        if result == "SENT" and rule is not None:
+            completed = mark_rule_channel_sent(
+                cycle,
+                rule,
+                "EMAIL",
+                delivery_claim=delivery_claim,
+            )
+            if completed is None:
+                return "ERROR(claim-lost-after-send)"
+        elif delivery_claim is not None:
+            mark_rule_channel_failed(delivery_claim, reason=str(result or "FAILED"))
 
         return result

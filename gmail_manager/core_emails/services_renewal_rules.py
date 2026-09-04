@@ -17,15 +17,21 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional
 
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from .models import (
     Holiday,
     Prescription,
     PrescriptionRenewalCycle,
+    RenewalNotificationDelivery,
     RenewalNotificationRule,
 )
+
+
+# Une réservation protège contre les doubles envois concurrents, mais elle ne
+# doit pas bloquer définitivement un rappel si le processus est interrompu.
+DELIVERY_CLAIM_LEASE = timedelta(minutes=15)
 
 
 def _today(value: Optional[date] = None) -> date:
@@ -47,7 +53,7 @@ def get_active_renewal_rules() -> QuerySet:
     """
     Retourne les règles de notification actives.
 
-    Aucune valeur J-5 / J-3 n'est codée ici.
+    Aucune valeur J-5 / J-1 n'est codée ici.
     Les délais viennent exclusivement de RenewalNotificationRule.
     """
     return (
@@ -233,7 +239,11 @@ def _get_active_cycles() -> QuerySet:
 
     Cette fonction reste prudente et n'écrit aucune donnée.
     """
-    qs = PrescriptionRenewalCycle.objects.all()
+    qs = PrescriptionRenewalCycle.objects.select_related(
+        "prescription",
+        "prescription__patient",
+        "prescription__renewal_info",
+    )
 
     if hasattr(PrescriptionRenewalCycle, "status"):
         qs = qs.exclude(status="DELIVERED").exclude(status="ARCHIVED")
@@ -244,40 +254,282 @@ def _get_active_cycles() -> QuerySet:
     return qs
 
 
-def _rule_already_sent(cycle: Any, rule: RenewalNotificationRule) -> bool:
-    """
-    Essaie d'éviter les doublons avec les champs existants V8.
-
-    Pour Lot 4, on ne crée pas encore de table de logs générique.
-    On vérifie seulement les anciens champs connus si la règle correspond.
-
-    Important :
-    aucun délai n'est codé comme logique cible.
-    Ces tests servent uniquement de compatibilité legacy.
-    """
+def _legacy_channel_field(rule: RenewalNotificationRule, channel: str) -> Optional[str]:
+    """Retourne le marqueur legacy correspondant à un délai et un canal."""
     try:
         days = int(rule.days_before)
     except (TypeError, ValueError):
+        return None
+
+    fields_by_day = {
+        5: {
+            "email": "reminder_5_patient_email_sent_at",
+            "sms": "reminder_5_patient_sms_sent_at",
+        },
+        3: {
+            "email": "reminder_3_patient_email_sent_at",
+            "sms": "reminder_3_patient_sms_sent_at",
+        },
+        1: {
+            "email": "reminder_1_patient_email_sent_at",
+            "sms": "reminder_1_patient_sms_sent_at",
+        },
+    }
+    return fields_by_day.get(days, {}).get(channel.lower())
+
+
+def _rule_channel_already_sent(
+    cycle: Any,
+    rule: RenewalNotificationRule,
+    channel: str,
+    *,
+    blocking_delivery_keys=None,
+) -> bool:
+    normalized_channel = str(channel or "").upper()
+    cycle_id = getattr(cycle, "pk", None)
+    rule_id = getattr(rule, "pk", None)
+    if not cycle_id or not rule_id or normalized_channel not in {"SMS", "EMAIL"}:
         return False
 
-    # Compatibilité V8 existante.
-    legacy_fields = []
-    if days == 5:
-        legacy_fields = [
-            "reminder_5_patient_email_sent_at",
-            "reminder_5_patient_sms_sent_at",
-        ]
-    elif days == 3:
-        legacy_fields = [
-            "reminder_3_patient_email_sent_at",
-            "reminder_3_patient_sms_sent_at",
-        ]
+    key = (cycle_id, rule_id, normalized_channel)
+    if blocking_delivery_keys is not None:
+        return key in blocking_delivery_keys
 
-    for field in legacy_fields:
-        if getattr(cycle, field, None):
-            return True
+    pending_cutoff = timezone.now() - DELIVERY_CLAIM_LEASE
+    return RenewalNotificationDelivery.objects.filter(
+        cycle_id=cycle_id,
+        rule_id=rule_id,
+        channel=normalized_channel,
+    ).filter(
+        Q(status=RenewalNotificationDelivery.STATUS_SENT)
+        | Q(
+            status=RenewalNotificationDelivery.STATUS_PENDING,
+            claimed_at__gte=pending_cutoff,
+        )
+    ).exists()
 
-    return False
+
+def _blocking_delivery_keys(cycles, rules):
+    """Charge une seule fois les livraisons qui bloquent réellement un envoi."""
+    cycle_ids = [cycle.pk for cycle in cycles if getattr(cycle, "pk", None)]
+    rule_ids = [rule.pk for rule in rules if getattr(rule, "pk", None)]
+    if not cycle_ids or not rule_ids:
+        return set()
+
+    pending_cutoff = timezone.now() - DELIVERY_CLAIM_LEASE
+    rows = RenewalNotificationDelivery.objects.filter(
+        cycle_id__in=cycle_ids,
+        rule_id__in=rule_ids,
+        status__in=[
+            RenewalNotificationDelivery.STATUS_PENDING,
+            RenewalNotificationDelivery.STATUS_SENT,
+        ],
+    ).values_list("cycle_id", "rule_id", "channel", "status", "claimed_at")
+
+    return {
+        (cycle_id, rule_id, channel)
+        for cycle_id, rule_id, channel, status, claimed_at in rows
+        if status == RenewalNotificationDelivery.STATUS_SENT
+        or (
+            status == RenewalNotificationDelivery.STATUS_PENDING
+            and claimed_at >= pending_cutoff
+        )
+    }
+
+
+def renewal_sms_template_key(base_key: str, rule=None, cycle=None) -> str:
+    """Ajoute les identités règle/cycle à la clé anti-doublon SMS."""
+    normalized = str(base_key or "renewal")
+    rule_id = getattr(rule, "pk", None)
+    cycle_id = getattr(cycle, "pk", None)
+    if not rule_id and not cycle_id:
+        return normalized[:100]
+
+    suffix_parts = []
+    if rule_id:
+        suffix_parts.append(f":rule:{rule_id}")
+    if cycle_id:
+        suffix_parts.append(f":cycle:{cycle_id}")
+    suffix = "".join(suffix_parts)
+    return f"{normalized[: max(0, 100 - len(suffix))]}{suffix}"
+
+
+def claim_rule_channel(
+    cycle: PrescriptionRenewalCycle,
+    rule: RenewalNotificationRule,
+    channel: str,
+) -> Optional[RenewalNotificationDelivery]:
+    """Réserve atomiquement un canal avant l'appel au fournisseur.
+
+    La contrainte unique ``cycle/rule/channel`` arbitre les appels concurrents.
+    Une livraison en échec peut être reprise ; une réservation en cours ou un
+    envoi réussi bloque toute nouvelle émission.
+    """
+    normalized_channel = str(channel or "").upper()
+    if normalized_channel not in {"SMS", "EMAIL"}:
+        raise ValueError("Canal de renouvellement invalide.")
+    if not getattr(cycle, "pk", None) or not getattr(rule, "pk", None):
+        raise ValueError("Le cycle et la règle doivent être enregistrés.")
+
+    claimed_at = timezone.now()
+    delivery, created = RenewalNotificationDelivery.objects.get_or_create(
+        cycle=cycle,
+        rule=rule,
+        channel=normalized_channel,
+        defaults={
+            "status": RenewalNotificationDelivery.STATUS_PENDING,
+            "claimed_at": claimed_at,
+            "sent_at": None,
+            "failure_reason": "",
+        },
+    )
+    if created:
+        return delivery
+
+    pending_cutoff = claimed_at - DELIVERY_CLAIM_LEASE
+    reclaimed = RenewalNotificationDelivery.objects.filter(pk=delivery.pk).filter(
+        Q(status=RenewalNotificationDelivery.STATUS_FAILED)
+        | Q(
+            status=RenewalNotificationDelivery.STATUS_PENDING,
+            claimed_at__lt=pending_cutoff,
+        )
+    ).update(
+        status=RenewalNotificationDelivery.STATUS_PENDING,
+        claimed_at=claimed_at,
+        sent_at=None,
+        failure_reason="",
+    )
+    if not reclaimed:
+        return None
+
+    delivery.refresh_from_db()
+    return delivery
+
+
+def mark_rule_channel_failed(
+    delivery: RenewalNotificationDelivery,
+    *,
+    reason: str = "",
+) -> bool:
+    """Échoue la réservation seulement si son propriétaire est inchangé."""
+    if not getattr(delivery, "pk", None) or not getattr(
+        delivery,
+        "claimed_at",
+        None,
+    ):
+        return False
+    updated = RenewalNotificationDelivery.objects.filter(
+        pk=delivery.pk,
+        status=RenewalNotificationDelivery.STATUS_PENDING,
+        claimed_at=delivery.claimed_at,
+    ).update(
+        status=RenewalNotificationDelivery.STATUS_FAILED,
+        sent_at=None,
+        failure_reason=str(reason or "")[:500],
+    )
+    return bool(updated)
+
+
+def mark_rule_channel_sent(
+    cycle: PrescriptionRenewalCycle,
+    rule: RenewalNotificationRule,
+    channel: str,
+    *,
+    sent_at=None,
+    delivery_claim: Optional[RenewalNotificationDelivery] = None,
+) -> Optional[RenewalNotificationDelivery]:
+    """Marque un canal envoyé, quelle que soit la valeur ``days_before``."""
+    normalized_channel = str(channel or "").upper()
+    if normalized_channel not in {"SMS", "EMAIL"}:
+        raise ValueError("Canal de renouvellement invalide.")
+    if not getattr(cycle, "pk", None) or not getattr(rule, "pk", None):
+        raise ValueError("Le cycle et la règle doivent être enregistrés.")
+
+    marker_time = sent_at or timezone.now()
+    if delivery_claim is not None:
+        claim_matches_channel = (
+            getattr(delivery_claim, "cycle_id", None) == cycle.pk
+            and getattr(delivery_claim, "rule_id", None) == rule.pk
+            and getattr(delivery_claim, "channel", None) == normalized_channel
+            and getattr(delivery_claim, "claimed_at", None) is not None
+        )
+        if not claim_matches_channel:
+            return None
+        updated = RenewalNotificationDelivery.objects.filter(
+            pk=delivery_claim.pk,
+            cycle=cycle,
+            rule=rule,
+            channel=normalized_channel,
+            status=RenewalNotificationDelivery.STATUS_PENDING,
+            claimed_at=delivery_claim.claimed_at,
+        ).update(
+            status=RenewalNotificationDelivery.STATUS_SENT,
+            sent_at=marker_time,
+            failure_reason="",
+        )
+        if not updated:
+            return None
+        delivery = delivery_claim
+        delivery.refresh_from_db()
+    else:
+        delivery, created = RenewalNotificationDelivery.objects.get_or_create(
+            cycle=cycle,
+            rule=rule,
+            channel=normalized_channel,
+            defaults={
+                "status": RenewalNotificationDelivery.STATUS_SENT,
+                "claimed_at": marker_time,
+                "sent_at": marker_time,
+                "failure_reason": "",
+            },
+        )
+        if not created and delivery.status != RenewalNotificationDelivery.STATUS_SENT:
+            RenewalNotificationDelivery.objects.filter(pk=delivery.pk).update(
+                status=RenewalNotificationDelivery.STATUS_SENT,
+                sent_at=marker_time,
+                failure_reason="",
+            )
+            delivery.refresh_from_db()
+
+    legacy_field = _legacy_channel_field(rule, normalized_channel)
+    if legacy_field and not getattr(cycle, legacy_field, None):
+        setattr(cycle, legacy_field, marker_time)
+        cycle.save(update_fields=[legacy_field])
+
+    return delivery
+
+
+def _rule_already_sent(
+    cycle: Any,
+    rule: RenewalNotificationRule,
+    *,
+    blocking_delivery_keys=None,
+) -> bool:
+    """
+    Évite les doublons grâce à la trace générique cycle/règle/canal.
+
+    Les marqueurs historiques J-5/J-3/J-1 sont convertis en traces génériques
+    par la migration, afin qu'ils ne puissent pas masquer une autre règle du
+    même jour.
+    """
+    enabled_channels = []
+    if bool(getattr(rule, "send_sms", False)):
+        enabled_channels.append("sms")
+    if bool(getattr(rule, "send_email", False)):
+        enabled_channels.append("email")
+
+    if not enabled_channels:
+        return True
+
+    return all(
+        _rule_channel_already_sent(
+            cycle,
+            rule,
+            channel,
+            blocking_delivery_keys=blocking_delivery_keys,
+        )
+        for channel in enabled_channels
+    )
 
 
 def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
@@ -307,7 +559,10 @@ def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
     if not rules:
         return results
 
-    for cycle in _get_active_cycles():
+    cycles = list(_get_active_cycles())
+    blocking_delivery_keys = _blocking_delivery_keys(cycles, rules)
+
+    for cycle in cycles:
         due_date = _get_cycle_due_date(cycle)
         if not due_date:
             continue
@@ -320,7 +575,33 @@ def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
             if notification_date > current_day:
                 continue
 
-            if _rule_already_sent(cycle, rule):
+            if _rule_already_sent(
+                cycle,
+                rule,
+                blocking_delivery_keys=blocking_delivery_keys,
+            ):
+                continue
+
+            send_sms = (
+                bool(getattr(rule, "send_sms", False))
+                and not _rule_channel_already_sent(
+                    cycle,
+                    rule,
+                    "sms",
+                    blocking_delivery_keys=blocking_delivery_keys,
+                )
+            )
+            send_email = (
+                bool(getattr(rule, "send_email", False))
+                and not _rule_channel_already_sent(
+                    cycle,
+                    rule,
+                    "email",
+                    blocking_delivery_keys=blocking_delivery_keys,
+                )
+            )
+
+            if not send_sms and not send_email:
                 continue
 
             results.append({
@@ -329,8 +610,8 @@ def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
                 "rule": rule,
                 "due_date": due_date,
                 "notification_date": notification_date,
-                "send_sms": bool(getattr(rule, "send_sms", False)),
-                "send_email": bool(getattr(rule, "send_email", False)),
+                "send_sms": send_sms,
+                "send_email": send_email,
             })
 
     return results
@@ -623,19 +904,24 @@ def get_activity_metrics(today: Optional[date] = None) -> Dict[str, int]:
             metrics["sms_sent_today"] = 0
 
     # 2) Emails envoyés aujourd'hui
-    # On utilise les champs existants sur PrescriptionRenewalCycle.
-    # Pas de nouveau log parallèle.
+    # Les rappels patient sont comptés par livraison (une ligne par
+    # cycle/règle/canal). L'email médecin reste un marqueur historique séparé.
     try:
-        from django.db.models import Q
         from core_emails.models import PrescriptionRenewalCycle
 
-        email_q = (
-            Q(reminder_5_patient_email_sent_at__gte=day_start, reminder_5_patient_email_sent_at__lte=day_end)
-            | Q(reminder_3_patient_email_sent_at__gte=day_start, reminder_3_patient_email_sent_at__lte=day_end)
-            | Q(doctor_email_sent_at__gte=day_start, doctor_email_sent_at__lte=day_end)
+        patient_email_count = RenewalNotificationDelivery.objects.filter(
+            channel=RenewalNotificationDelivery.CHANNEL_EMAIL,
+            status=RenewalNotificationDelivery.STATUS_SENT,
+            sent_at__gte=day_start,
+            sent_at__lte=day_end,
+        ).count()
+        doctor_email_count = PrescriptionRenewalCycle.objects.filter(
+            doctor_email_sent_at__gte=day_start,
+            doctor_email_sent_at__lte=day_end,
+        ).count()
+        metrics["emails_sent_today"] = (
+            patient_email_count + doctor_email_count
         )
-
-        metrics["emails_sent_today"] = PrescriptionRenewalCycle.objects.filter(email_q).distinct().count()
     except Exception:
         metrics["emails_sent_today"] = 0
 
@@ -674,4 +960,3 @@ def get_activity_metrics(today: Optional[date] = None) -> Dict[str, int]:
         metrics["urgent_detected"] = 0
 
     return metrics
-

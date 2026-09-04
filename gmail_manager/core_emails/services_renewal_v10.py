@@ -28,6 +28,7 @@ def _empty_dashboard():
             "urgent_files": 0,
             "anomalies_count": 0,
         },
+        "renewals_notifications_due": [],
         "sections": {
             "urgent": [],
             "overdue": [],
@@ -205,6 +206,11 @@ def compute_renewals_dashboard_v10():
     if not isinstance(v9_data, dict):
         return dashboard
 
+    # Conserver aussi le contexte V9 brut : le template historique et stylé
+    # du dashboard utilise ces clés (renewals_active, renewals_urgent, etc.).
+    # Les données de présentation V10 restent ajoutées ci-dessous.
+    dashboard.update(v9_data)
+
     dashboard["engine_status"]["v9_available"] = bool(source)
     dashboard["engine_status"]["source"] = source
 
@@ -264,6 +270,9 @@ def compute_renewals_dashboard_v10():
         or v9_data.get("active")
         or []
     )
+
+    notifications_due = v9_data.get("renewals_notifications_due") or []
+    dashboard["renewals_notifications_due"] = notifications_due
 
     urgent_normal, urgent_anomalies = _split_integrity(urgent)
     overdue_normal, overdue_anomalies = _split_integrity(overdue)

@@ -135,7 +135,7 @@
       <div class="titlewrap">
         <h1 class="page-title">Renouvellements</h1>
         <div class="breadcrumb">Dashboard → Renouvellements</div>
-        <div class="page-subtitle">Suivi J-5 / J-3 / Retard — actions Email/SMS centralisées.</div>
+        <div class="page-subtitle">Suivi J-5 / J-1 / Retard — actions Email/SMS centralisées.</div>
       </div>
 
       <div class="btnrow">
@@ -294,22 +294,26 @@
                     {% if p %}
                     <div class="actionbar">
                       {% if item.send_email %}
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id rule.days_before %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <input type="hidden" name="rule_id" value="{{ rule.id }}">
+                        <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
+                                data-channel="EMAIL" data-days="{{ rule.days_before }}" data-prescription="{{ p.id }}">
                           Email
                         </button>
                       </form>
                       {% endif %}
 
                       {% if item.send_sms %}
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
+                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id rule.days_before %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <input type="hidden" name="rule_id" value="{{ rule.id }}">
+                        <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
+                                data-channel="SMS" data-days="{{ rule.days_before }}" data-prescription="{{ p.id }}">
                           SMS
                         </button>
                       </form>
@@ -428,24 +432,6 @@
                   <td>
                     {% if p %}
                     <div class="actionbar">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
-                      </form>
-
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
-                      </form>
-
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
                     {% else %}
@@ -512,24 +498,6 @@
                   <td>
                     {% if p %}
                     <div class="actionbar">
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="EMAIL" data-days="0" data-prescription="{{ p.id }}">
-                          Email
-                        </button>
-                      </form>
-
-                      <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id 0 %}" style="margin:0;">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
-                        <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
-                                data-channel="SMS" data-days="0" data-prescription="{{ p.id }}">
-                          SMS
-                        </button>
-                      </form>
-
                       <a class="btn btn--sm" href="{% url 'core_emails:prescription_detail' p.id %}">Voir fiche</a>
                     </div>
                     {% else %}

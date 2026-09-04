@@ -366,7 +366,7 @@ class PrescriptionRenewalEvent(models.Model):
 # CYCLES DE RENOUVELLEMENT (V9 — Cycle autonome)
 # Chaque cycle est une instance opérationnelle autonome :
 # - statut propre (comme une nouvelle ordonnance)
-# - notifications propres (J-5/J-3 + médecin)
+# - notifications propres (J-5/J-1 + médecin)
 # =====================================================
 class PrescriptionRenewalCycle(models.Model):
     prescription = models.ForeignKey(
@@ -393,6 +393,8 @@ class PrescriptionRenewalCycle(models.Model):
     reminder_5_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
     reminder_3_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
     reminder_3_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_1_patient_email_sent_at = models.DateTimeField(null=True, blank=True)
+    reminder_1_patient_sms_sent_at = models.DateTimeField(null=True, blank=True)
     doctor_email_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -603,10 +605,8 @@ class RenewalNotificationRule(models.Model):
     Règle de notification configurable pour les renouvellements.
 
     Exemple :
-    - J-21 : SMS + Email
-    - J-10 : SMS uniquement
     - J-5  : SMS + Email
-    - J-2  : SMS uniquement
+    - J-1  : SMS uniquement
     """
     name = models.CharField(
         max_length=100,
@@ -660,6 +660,61 @@ class RenewalNotificationRule(models.Model):
             channels.append("Email")
         channel_text = " + ".join(channels) if channels else "Aucun canal"
         return f"{self.name} ({channel_text})"
+
+
+class RenewalNotificationDelivery(models.Model):
+    """Réservation et trace durable d'un rappel pour un cycle et une règle."""
+
+    CHANNEL_SMS = "SMS"
+    CHANNEL_EMAIL = "EMAIL"
+    CHANNEL_CHOICES = [
+        (CHANNEL_SMS, "SMS"),
+        (CHANNEL_EMAIL, "Email"),
+    ]
+
+    STATUS_PENDING = "PENDING"
+    STATUS_SENT = "SENT"
+    STATUS_FAILED = "FAILED"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "En cours"),
+        (STATUS_SENT, "Envoyé"),
+        (STATUS_FAILED, "Échec"),
+    ]
+
+    cycle = models.ForeignKey(
+        PrescriptionRenewalCycle,
+        on_delete=models.CASCADE,
+        related_name="notification_deliveries",
+    )
+    rule = models.ForeignKey(
+        RenewalNotificationRule,
+        on_delete=models.CASCADE,
+        related_name="deliveries",
+    )
+    channel = models.CharField(max_length=10, choices=CHANNEL_CHOICES)
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default=STATUS_SENT,
+    )
+    claimed_at = models.DateTimeField(default=timezone.now)
+    sent_at = models.DateTimeField(blank=True, null=True, default=None)
+    failure_reason = models.CharField(max_length=500, blank=True, default="")
+
+    class Meta:
+        ordering = ["-sent_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cycle", "rule", "channel"],
+                name="uniq_renewal_delivery",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"RenewalDelivery(cycle={self.cycle_id}, "
+            f"rule={self.rule_id}, channel={self.channel}, status={self.status})"
+        )
 
 
 class RenewalNotificationTemplate(models.Model):
@@ -755,4 +810,3 @@ class Holiday(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.date}"
-

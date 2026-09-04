@@ -443,7 +443,7 @@ def send_prescription_notifications(
     # --- SMS premium (court / safe)
     text_patient = (
         f"{pharmacy_name}\n"
-        f"L'ordonnance ref. {ref} est desormais {status_label}."
+        f"Votre dossier ref. {ref} est desormais {status_label}."
     )
     if msg_free:
         text_patient += f"\nMessage: {_sanitize_free_text(msg_free, 80)}"
@@ -705,4 +705,3 @@ def send_prescription_notifications(
         "nurse_email_status": nurse_email_status,
         "summary": summary,
     }
-

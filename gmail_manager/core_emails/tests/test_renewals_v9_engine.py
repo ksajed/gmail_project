@@ -19,6 +19,7 @@ from core_emails.services_renewal_rules import (
     get_due_notifications,
     get_final_renewals,
     get_activity_metrics,
+    mark_rule_channel_sent,
 )
 
 
@@ -48,14 +49,19 @@ class RenewalsV9EngineTests(TestCase):
             timezone.datetime(2026, 6, 4, 10, 0, 0)
         )
 
-        PrescriptionStatusHistory.objects.create(
+        delivered_history = PrescriptionStatusHistory.objects.create(
             prescription=self.prescription,
             old_status=PrescriptionStatus.READY,
             new_status=PrescriptionStatus.DELIVERED,
-            changed_at=self.first_delivered,
             comment="Première délivrance test V9",
         )
+        PrescriptionStatusHistory.objects.filter(pk=delivered_history.pk).update(
+            changed_at=self.first_delivered,
+        )
 
+        # Le signal initialise le cycle 1. Ce scénario teste explicitement le
+        # cycle 3, donc aucun ancien cycle ne doit rester actif.
+        self.prescription.renewal_cycles.all().delete()
         self.cycle = PrescriptionRenewalCycle.objects.create(
             prescription=self.prescription,
             cycle_number=3,
@@ -63,7 +69,8 @@ class RenewalsV9EngineTests(TestCase):
             started_at=timezone.now(),
         )
 
-        RenewalNotificationRule.objects.create(
+        RenewalNotificationRule.objects.all().delete()
+        self.rule = RenewalNotificationRule.objects.create(
             name="TEST J-5",
             active=True,
             days_before=5,
@@ -74,7 +81,7 @@ class RenewalsV9EngineTests(TestCase):
 
     def test_due_date_uses_first_delivered_plus_cycle_period(self):
         due = _get_cycle_due_date(self.cycle)
-        self.assertEqual(due, date(2026, 9, 6))
+        self.assertEqual(due, date(2026, 9, 2))
 
     def test_due_notifications_detects_j5(self):
         due = _get_cycle_due_date(self.cycle)
@@ -119,6 +126,37 @@ class RenewalsV9EngineTests(TestCase):
             self.assertIn(key, metrics)
             self.assertIsInstance(metrics[key], int)
 
+    def test_activity_metrics_counts_dynamic_email_deliveries_and_doctor_email(self):
+        second_rule = RenewalNotificationRule.objects.create(
+            name="TEST J-5 EMAIL B",
+            active=True,
+            days_before=5,
+            send_sms=False,
+            send_email=True,
+            sort_order=2,
+        )
+        sent_at = timezone.make_aware(
+            timezone.datetime(2026, 6, 7, 12, 0, 0)
+        )
+        mark_rule_channel_sent(
+            self.cycle,
+            self.rule,
+            "EMAIL",
+            sent_at=sent_at,
+        )
+        mark_rule_channel_sent(
+            self.cycle,
+            second_rule,
+            "EMAIL",
+            sent_at=sent_at,
+        )
+        self.cycle.doctor_email_sent_at = sent_at
+        self.cycle.save(update_fields=["doctor_email_sent_at"])
+
+        metrics = get_activity_metrics(today=date(2026, 6, 7))
+
+        self.assertEqual(metrics["emails_sent_today"], 3)
+
     def test_command_dry_run_does_not_mark_cycle_as_sent(self):
         due = _get_cycle_due_date(self.cycle)
         notification_day = due - timedelta(days=5)
@@ -135,15 +173,8 @@ class RenewalsV9EngineTests(TestCase):
         self.assertIsNone(self.cycle.reminder_5_patient_email_sent_at)
 
     def test_already_sent_j5_is_not_returned_again(self):
-        now = timezone.now()
-        self.cycle.reminder_5_patient_sms_sent_at = now
-        self.cycle.reminder_5_patient_email_sent_at = now
-        self.cycle.save(
-            update_fields=[
-                "reminder_5_patient_sms_sent_at",
-                "reminder_5_patient_email_sent_at",
-            ]
-        )
+        mark_rule_channel_sent(self.cycle, self.rule, "SMS")
+        mark_rule_channel_sent(self.cycle, self.rule, "EMAIL")
 
         due = _get_cycle_due_date(self.cycle)
         notification_day = due - timedelta(days=5)
