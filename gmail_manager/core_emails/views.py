@@ -1146,6 +1146,27 @@ def send_renewal_patient_email(request, pk, days):
         messages.error(request, "Le fournisseur email a refusé l’envoi.")
         return redirect(next_url)
 
+    if rule is not None:
+        completed = mark_rule_channel_sent(
+            cycle,
+            rule,
+            "EMAIL",
+            delivery_claim=delivery_claim,
+        )
+        if completed is None:
+            logger.warning(
+                "Réservation email remplacée après envoi prescription=%s cycle=%s règle=%s",
+                prescription.pk,
+                cycle.pk,
+                rule.pk,
+            )
+            messages.warning(
+                request,
+                "L’email a été accepté, mais sa réservation a été remplacée. "
+                "Actualisez le tableau de bord.",
+            )
+            return redirect(next_url)
+
     # Historique renouvellement (event) — éviter doublons (unique_together)
     next_number = int(current_number)
     max_len = _renewal_note_max_len()
@@ -1171,9 +1192,6 @@ def send_renewal_patient_email(request, pk, days):
             update_fields.append("created_by")
         if update_fields:
             ev.save(update_fields=update_fields)
-
-    if rule is not None:
-        mark_rule_channel_sent(cycle, rule, "EMAIL")
 
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
@@ -1344,6 +1362,27 @@ def send_renewal_patient_sms(request, pk, days):
         messages.error(request, "Le fournisseur SMS a refusé l’envoi.")
         return redirect(next_url)
 
+    if rule is not None:
+        completed = mark_rule_channel_sent(
+            cycle,
+            rule,
+            "SMS",
+            delivery_claim=delivery_claim,
+        )
+        if completed is None:
+            logger.warning(
+                "Réservation SMS remplacée après envoi prescription=%s cycle=%s règle=%s",
+                prescription.pk,
+                cycle.pk,
+                rule.pk,
+            )
+            messages.warning(
+                request,
+                "Le SMS a été accepté, mais sa réservation a été remplacée. "
+                "Actualisez le tableau de bord.",
+            )
+            return redirect(next_url)
+
     # Historique renouvellement (event) — éviter doublons (unique_together)
     next_number = int(current_number)
     max_len = _renewal_note_max_len()
@@ -1370,8 +1409,6 @@ def send_renewal_patient_sms(request, pk, days):
         if update_fields:
             ev.save(update_fields=update_fields)
 
-    if rule is not None:
-        mark_rule_channel_sent(cycle, rule, "SMS")
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
         old_status=prescription.status,
