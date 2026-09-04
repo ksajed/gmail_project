@@ -6,7 +6,10 @@ from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 
-from core_emails.services_renewal_rules import get_due_notifications
+from core_emails.services_renewal_rules import (
+    get_due_notifications,
+    mark_rule_channel_sent,
+)
 from core_emails.services_renewal_templates import render_renewal_message
 
 
@@ -86,6 +89,7 @@ class Command(BaseCommand):
                     result = self._handle_sms(
                         prescription=prescription,
                         cycle=cycle,
+                        rule=rule,
                         due_date=due_date,
                         days_before=days_before,
                         send_real=send_real,
@@ -108,6 +112,7 @@ class Command(BaseCommand):
                     result = self._handle_email(
                         prescription=prescription,
                         cycle=cycle,
+                        rule=rule,
                         due_date=due_date,
                         days_before=days_before,
                         send_real=send_real,
@@ -138,7 +143,16 @@ class Command(BaseCommand):
         except Exception:
             return ""
 
-    def _handle_sms(self, *, prescription, cycle, due_date, days_before, send_real: bool):
+    def _handle_sms(
+        self,
+        *,
+        prescription,
+        cycle,
+        rule=None,
+        due_date,
+        days_before,
+        send_real: bool,
+    ):
         patient = getattr(prescription, "patient", None)
         phone = getattr(patient, "phone_number", None)
 
@@ -181,20 +195,21 @@ class Command(BaseCommand):
         if sms_status != SmsStatus.SENT:
             return str(sms_status or "FAILED")
 
-        now = timezone.now()
-        if int(days_before or 0) == 5 and hasattr(cycle, "reminder_5_patient_sms_sent_at"):
-            cycle.reminder_5_patient_sms_sent_at = now
-            cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
-        elif int(days_before or 0) == 3 and hasattr(cycle, "reminder_3_patient_sms_sent_at"):
-            cycle.reminder_3_patient_sms_sent_at = now
-            cycle.save(update_fields=["reminder_3_patient_sms_sent_at"])
-        elif int(days_before or 0) == 1 and hasattr(cycle, "reminder_1_patient_sms_sent_at"):
-            cycle.reminder_1_patient_sms_sent_at = now
-            cycle.save(update_fields=["reminder_1_patient_sms_sent_at"])
+        if rule is not None:
+            mark_rule_channel_sent(cycle, rule, "SMS")
 
         return "SENT"
 
-    def _handle_email(self, *, prescription, cycle, due_date, days_before, send_real: bool):
+    def _handle_email(
+        self,
+        *,
+        prescription,
+        cycle,
+        rule=None,
+        due_date,
+        days_before,
+        send_real: bool,
+    ):
         patient = getattr(prescription, "patient", None)
         email = getattr(patient, "email", None)
 
@@ -236,16 +251,7 @@ class Command(BaseCommand):
             body=body,
         )
 
-        now = timezone.now()
-        if result == "SENT":
-            if int(days_before or 0) == 5 and hasattr(cycle, "reminder_5_patient_email_sent_at"):
-                cycle.reminder_5_patient_email_sent_at = now
-                cycle.save(update_fields=["reminder_5_patient_email_sent_at"])
-            elif int(days_before or 0) == 3 and hasattr(cycle, "reminder_3_patient_email_sent_at"):
-                cycle.reminder_3_patient_email_sent_at = now
-                cycle.save(update_fields=["reminder_3_patient_email_sent_at"])
-            elif int(days_before or 0) == 1 and hasattr(cycle, "reminder_1_patient_email_sent_at"):
-                cycle.reminder_1_patient_email_sent_at = now
-                cycle.save(update_fields=["reminder_1_patient_email_sent_at"])
+        if result == "SENT" and rule is not None:
+            mark_rule_channel_sent(cycle, rule, "EMAIL")
 
         return result

@@ -36,6 +36,7 @@ from .models import (
     PrescriptionStatus,
     PrescriptionStatusHistory,
     PrescriptionType,
+    RenewalNotificationRule,
     SenderType,
 )
 from .models_assignment import PrescriptionAssignment
@@ -48,6 +49,10 @@ from .states import PrescriptionStatusEnum, PRESCRIPTION_STATUS_TRANSITIONS
 from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
 from .services_renewal_templates import render_renewal_message
+from .services_renewal_rules import (
+    _rule_channel_already_sent,
+    mark_rule_channel_sent,
+)
 from core_emails.services import compute_renewals_watch, compute_renewals_watch_v9
 from core_emails.timeline import build_prescription_timeline_events
 
@@ -794,6 +799,22 @@ def sms_backend_send(phone: str, message: str):
     """
     raise NotImplementedError("SMS non configuré (ajouter un provider SMS).")
 
+
+def _renewal_rule_for_manual_send(request, days):
+    """Résout uniquement une règle active correspondant au délai demandé."""
+    if days == 0:
+        return None
+
+    rules = RenewalNotificationRule.objects.filter(
+        active=True,
+        days_before=days,
+    ).order_by("sort_order", "pk")
+
+    rule_id = request.POST.get("rule_id")
+    if rule_id:
+        return rules.filter(pk=rule_id).first()
+    return rules.first()
+
 #====================================================
 # V7 — MARQUER RENOUVELLEMENT COMME RÉALISÉ
 #====================================================
@@ -956,8 +977,8 @@ def send_renewal_patient_email(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect(next_url)
 
-    # 5 / 1 / 0 (RETARD)
-    if days not in (5, 1, 0):
+    rule = _renewal_rule_for_manual_send(request, days)
+    if days != 0 and rule is None:
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
 
@@ -969,12 +990,8 @@ def send_renewal_patient_email(request, pk, days):
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
 
-    # Anti-doublon: ne pas renvoyer J-5/J-1 si déjà envoyé
-    if days == 5 and cycle.reminder_5_patient_email_sent_at is not None:
-        messages.info(request, "Email J-5 déjà envoyé.")
-        return redirect(next_url)
-    if days == 1 and cycle.reminder_1_patient_email_sent_at is not None:
-        messages.info(request, "Email J-1 déjà envoyé.")
+    if rule is not None and _rule_channel_already_sent(cycle, rule, "EMAIL"):
+        messages.info(request, f"Email {rule.name} déjà envoyé.")
         return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
@@ -1069,14 +1086,8 @@ def send_renewal_patient_email(request, pk, days):
         if update_fields:
             ev.save(update_fields=update_fields)
 
-    now = timezone.now()
-    if days == 5:
-        cycle.reminder_5_patient_email_sent_at = now
-        cycle.save(update_fields=["reminder_5_patient_email_sent_at"])
-    elif days == 1:
-        cycle.reminder_1_patient_email_sent_at = now
-        cycle.save(update_fields=["reminder_1_patient_email_sent_at"])
-    # days == 0 => RETARD : on ne touche pas les champs J-5/J-1
+    if rule is not None:
+        mark_rule_channel_sent(cycle, rule, "EMAIL")
 
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
@@ -1113,7 +1124,8 @@ def send_renewal_patient_sms(request, pk, days):
         messages.error(request, "Cette ordonnance n’est pas un renouvellement.")
         return redirect(next_url)
 
-    if days not in (5, 1, 0):
+    rule = _renewal_rule_for_manual_send(request, days)
+    if days != 0 and rule is None:
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
 
@@ -1125,12 +1137,8 @@ def send_renewal_patient_sms(request, pk, days):
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     cycle, current_number = _get_or_create_current_renewal_cycle(prescription, info)
 
-    # Anti-doublon: ne pas renvoyer J-5/J-1 si déjà envoyé
-    if days == 5 and cycle.reminder_5_patient_sms_sent_at is not None:
-        messages.info(request, "SMS J-5 déjà envoyé.")
-        return redirect(next_url)
-    if days == 1 and cycle.reminder_1_patient_sms_sent_at is not None:
-        messages.info(request, "SMS J-1 déjà envoyé.")
+    if rule is not None and _rule_channel_already_sent(cycle, rule, "SMS"):
+        messages.info(request, f"SMS {rule.name} déjà envoyé.")
         return redirect(next_url)
     # Base = date du 1er retrait (1ère délivrance)
     first_delivered_at = (
@@ -1210,16 +1218,8 @@ def send_renewal_patient_sms(request, pk, days):
         if update_fields:
             ev.save(update_fields=update_fields)
 
-    now = timezone.now()
-    if days == 5:
-        cycle.reminder_5_patient_sms_sent_at = now
-        cycle.save(update_fields=["reminder_5_patient_sms_sent_at"])
-    elif days == 1:
-        cycle.reminder_1_patient_sms_sent_at = now
-        cycle.save(update_fields=["reminder_1_patient_sms_sent_at"])
-    else:
-        # Retard: on ne renseigne pas les champs J-5/J-1
-        pass
+    if rule is not None:
+        mark_rule_channel_sent(cycle, rule, "SMS")
     PrescriptionStatusHistory.objects.create(
         prescription=prescription,
         old_status=prescription.status,

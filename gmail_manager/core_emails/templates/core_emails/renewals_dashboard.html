@@ -297,6 +297,7 @@
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id rule.days_before %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <input type="hidden" name="rule_id" value="{{ rule.id }}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
                                 data-channel="EMAIL" data-days="{{ rule.days_before }}" data-prescription="{{ p.id }}">
                           Email
@@ -308,6 +309,7 @@
                       <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id rule.days_before %}" style="margin:0;">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+                        <input type="hidden" name="rule_id" value="{{ rule.id }}">
                         <button type="button" class="btn btn--sm btn--soft-info js-confirm-send"
                                 data-channel="SMS" data-days="{{ rule.days_before }}" data-prescription="{{ p.id }}">
                           SMS

@@ -5,8 +5,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.apps import apps as django_apps
+from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.template.loader import render_to_string
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -19,6 +19,7 @@ from core_emails.models import (
     PrescriptionRenewalInfo,
     PrescriptionRenewalCycle,
     PrescriptionStatusHistory,
+    RenewalNotificationDelivery,
     RenewalNotificationRule,
 )
 from core_emails.services_renewal_rules import (
@@ -69,6 +70,27 @@ class RenewalDefaultPolicyTests(TestCase):
         self.assertEqual(default_j2.name, "J-1")
         self.assertEqual(default_j2.days_before, 1)
         self.assertTrue(default_j2.active)
+
+    def test_migration_does_not_reactivate_a_disabled_default_j2_rule(self):
+        RenewalNotificationRule.objects.all().delete()
+        default_j2 = RenewalNotificationRule.objects.create(
+            name="J-2",
+            days_before=2,
+            send_sms=True,
+            send_email=False,
+            active=False,
+            sort_order=40,
+        )
+
+        migration = import_module(
+            "core_emails.migrations.0017_renewal_policy_j5_j1"
+        )
+        migration.apply_j5_j1_policy(django_apps, None)
+
+        default_j2.refresh_from_db()
+        self.assertEqual(default_j2.name, "J-1")
+        self.assertEqual(default_j2.days_before, 1)
+        self.assertFalse(default_j2.active)
 
 
 class RenewalsRulesRegressionTests(TestCase):
@@ -439,18 +461,26 @@ class RenewalsRulesRegressionTests(TestCase):
             "send_email": True,
         }
 
-        html = render_to_string(
-            "core_emails/renewals_dashboard.html",
-            {
-                "renewals_notifications_due": [item],
-                "request": SimpleNamespace(
-                    user=SimpleNamespace(
-                        get_full_name="Utilisateur test",
-                        username="test-renewals",
-                    )
-                ),
-            },
+        user = get_user_model().objects.create_user(
+            username="test-renewals-dashboard",
+            password="test-only-password",
         )
+        self.client.force_login(user)
+
+        with patch(
+            "core_emails.services_renewal_rules.get_due_notifications",
+            return_value=[item],
+        ):
+            response = self.client.get(
+                reverse("core_emails:renewals_dashboard")
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "core_emails/renewals_dashboard_v10.html",
+        )
+        html = response.content.decode()
 
         self.assertIn(
             reverse(
@@ -467,6 +497,56 @@ class RenewalsRulesRegressionTests(TestCase):
             html,
         )
         self.assertIn('data-days="1"', html)
+        self.assertIn(f'name="rule_id" value="{rule.pk}"', html)
+
+    def test_successful_dynamic_j30_channels_are_not_due_again(self):
+        rule = self._create_rule(
+            name="J-30",
+            active=True,
+            days_before=30,
+            send_sms=True,
+            send_email=True,
+        )
+        command = Command()
+
+        with patch(
+            "core_notifications.services.send_sms_logged",
+            return_value=SimpleNamespace(status=SmsStatus.SENT),
+        ):
+            sms_result = command._handle_sms(
+                prescription=self.prescription,
+                cycle=self.cycle,
+                rule=rule,
+                due_date=self._due_date(),
+                days_before=30,
+                send_real=True,
+            )
+
+        with patch(
+            "core_emails.services_notifications._send_email_strict",
+            return_value="SENT",
+        ):
+            email_result = command._handle_email(
+                prescription=self.prescription,
+                cycle=self.cycle,
+                rule=rule,
+                due_date=self._due_date(),
+                days_before=30,
+                send_real=True,
+            )
+
+        self.assertEqual(sms_result, "SENT")
+        self.assertEqual(email_result, "SENT")
+        self.assertEqual(
+            set(
+                RenewalNotificationDelivery.objects.filter(
+                    cycle=self.cycle,
+                    rule=rule,
+                ).values_list("channel", flat=True)
+            ),
+            {"SMS", "EMAIL"},
+        )
+        self.assertEqual(self._items_for_prescription(30), [])
 
     def test_management_command_dry_run_uses_dynamic_j30_rule(self):
         self._create_rule(

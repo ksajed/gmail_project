@@ -24,6 +24,7 @@ from .models import (
     Holiday,
     Prescription,
     PrescriptionRenewalCycle,
+    RenewalNotificationDelivery,
     RenewalNotificationRule,
 )
 
@@ -273,20 +274,57 @@ def _rule_channel_already_sent(
     rule: RenewalNotificationRule,
     channel: str,
 ) -> bool:
+    normalized_channel = str(channel or "").upper()
+    if (
+        getattr(cycle, "pk", None)
+        and getattr(rule, "pk", None)
+        and normalized_channel in {"SMS", "EMAIL"}
+        and RenewalNotificationDelivery.objects.filter(
+            cycle=cycle,
+            rule=rule,
+            channel=normalized_channel,
+        ).exists()
+    ):
+        return True
+
     field = _legacy_channel_field(rule, channel)
     return bool(field and getattr(cycle, field, None))
 
 
+def mark_rule_channel_sent(
+    cycle: PrescriptionRenewalCycle,
+    rule: RenewalNotificationRule,
+    channel: str,
+    *,
+    sent_at=None,
+) -> RenewalNotificationDelivery:
+    """Marque un canal envoyé, quelle que soit la valeur ``days_before``."""
+    normalized_channel = str(channel or "").upper()
+    if normalized_channel not in {"SMS", "EMAIL"}:
+        raise ValueError("Canal de renouvellement invalide.")
+    if not getattr(cycle, "pk", None) or not getattr(rule, "pk", None):
+        raise ValueError("Le cycle et la règle doivent être enregistrés.")
+
+    marker_time = sent_at or timezone.now()
+    delivery, _created = RenewalNotificationDelivery.objects.get_or_create(
+        cycle=cycle,
+        rule=rule,
+        channel=normalized_channel,
+        defaults={"sent_at": marker_time},
+    )
+
+    legacy_field = _legacy_channel_field(rule, normalized_channel)
+    if legacy_field and not getattr(cycle, legacy_field, None):
+        setattr(cycle, legacy_field, marker_time)
+        cycle.save(update_fields=[legacy_field])
+
+    return delivery
+
+
 def _rule_already_sent(cycle: Any, rule: RenewalNotificationRule) -> bool:
     """
-    Essaie d'éviter les doublons avec les champs existants V8.
-
-    Pour Lot 4, on ne crée pas encore de table de logs générique.
-    On vérifie seulement les anciens champs connus si la règle correspond.
-
-    Important :
-    aucun délai n'est codé comme logique cible.
-    Ces tests servent uniquement de compatibilité legacy.
+    Évite les doublons grâce à la trace générique cycle/règle/canal, avec
+    repli sur les champs historiques J-5/J-3/J-1.
     """
     enabled_channels = []
     if bool(getattr(rule, "send_sms", False)):

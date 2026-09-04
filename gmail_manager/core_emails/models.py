@@ -662,6 +662,45 @@ class RenewalNotificationRule(models.Model):
         return f"{self.name} ({channel_text})"
 
 
+class RenewalNotificationDelivery(models.Model):
+    """Trace durable d'un rappel envoyé pour un cycle et une règle."""
+
+    CHANNEL_SMS = "SMS"
+    CHANNEL_EMAIL = "EMAIL"
+    CHANNEL_CHOICES = [
+        (CHANNEL_SMS, "SMS"),
+        (CHANNEL_EMAIL, "Email"),
+    ]
+
+    cycle = models.ForeignKey(
+        PrescriptionRenewalCycle,
+        on_delete=models.CASCADE,
+        related_name="notification_deliveries",
+    )
+    rule = models.ForeignKey(
+        RenewalNotificationRule,
+        on_delete=models.CASCADE,
+        related_name="deliveries",
+    )
+    channel = models.CharField(max_length=10, choices=CHANNEL_CHOICES)
+    sent_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-sent_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cycle", "rule", "channel"],
+                name="uniq_renewal_delivery",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"RenewalDelivery(cycle={self.cycle_id}, "
+            f"rule={self.rule_id}, channel={self.channel})"
+        )
+
+
 class RenewalNotificationTemplate(models.Model):
     """
     Modèle de message SMS ou Email pour les notifications de renouvellement.

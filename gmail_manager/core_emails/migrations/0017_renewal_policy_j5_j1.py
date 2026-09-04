@@ -1,4 +1,6 @@
 from django.db import migrations, models
+import django.db.models.deletion
+import django.utils.timezone
 
 
 def apply_j5_j1_policy(apps, schema_editor):
@@ -14,7 +16,6 @@ def apply_j5_j1_policy(apps, schema_editor):
         Rule.objects.filter(pk=default_j2.pk).update(
             name="J-1",
             days_before=1,
-            active=True,
         )
 
 
@@ -33,6 +34,55 @@ class Migration(migrations.Migration):
             model_name="prescriptionrenewalcycle",
             name="reminder_1_patient_sms_sent_at",
             field=models.DateTimeField(blank=True, null=True),
+        ),
+        migrations.CreateModel(
+            name="RenewalNotificationDelivery",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "channel",
+                    models.CharField(
+                        choices=[("SMS", "SMS"), ("EMAIL", "Email")],
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "sent_at",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                (
+                    "cycle",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notification_deliveries",
+                        to="core_emails.prescriptionrenewalcycle",
+                    ),
+                ),
+                (
+                    "rule",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="deliveries",
+                        to="core_emails.renewalnotificationrule",
+                    ),
+                ),
+            ],
+            options={"ordering": ["-sent_at"]},
+        ),
+        migrations.AddConstraint(
+            model_name="renewalnotificationdelivery",
+            constraint=models.UniqueConstraint(
+                fields=("cycle", "rule", "channel"),
+                name="uniq_renewal_delivery",
+            ),
         ),
         # Ne pas tenter de restaurer automatiquement une configuration qui a
         # pu être personnalisée après la migration.
