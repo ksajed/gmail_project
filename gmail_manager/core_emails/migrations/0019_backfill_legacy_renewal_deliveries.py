@@ -39,10 +39,21 @@ def backfill_legacy_delivery_markers(apps, schema_editor):
         matching_rules = list(
             Rule.objects.filter(**rule_signature).values_list("pk", flat=True)[:2]
         )
-        if len(matching_rules) != 1:
-            continue
+        if len(matching_rules) == 1:
+            rule_id = matching_rules[0]
+        else:
+            # Le pharmacien peut avoir renommé ou réordonné la règle livrée.
+            # Le délai historique reste alors le seul lien fiable, mais
+            # uniquement s'il désigne une seule règle sans ambiguïté.
+            same_day_rules = list(
+                Rule.objects.filter(
+                    days_before=rule_signature["days_before"],
+                ).values_list("pk", flat=True)[:2]
+            )
+            if len(same_day_rules) != 1:
+                continue
+            rule_id = same_day_rules[0]
 
-        rule_id = matching_rules[0]
         for channel, field_name in channel_fields.items():
             marked_cycles = (
                 Cycle.objects.exclude(**{f"{field_name}__isnull": True})
