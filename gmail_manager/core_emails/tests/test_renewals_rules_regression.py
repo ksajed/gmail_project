@@ -25,8 +25,10 @@ from core_emails.models import (
 )
 from core_emails.services_renewal_rules import (
     _get_cycle_due_date,
-    get_due_notifications,
     calculate_notification_date,
+    claim_rule_channel,
+    get_due_notifications,
+    mark_rule_channel_failed,
     mark_rule_channel_sent,
 )
 from core_emails.management.commands.run_renewal_notifications import Command
@@ -565,6 +567,160 @@ class RenewalsRulesRegressionTests(TestCase):
         )
         self.assertEqual(self._items_for_prescription(30), [])
 
+    def test_overlapping_delivery_claims_allow_only_one_sender(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+
+        first_claim = claim_rule_channel(self.cycle, rule, "EMAIL")
+        competing_claim = claim_rule_channel(self.cycle, rule, "EMAIL")
+
+        self.assertIsNotNone(first_claim)
+        self.assertIsNone(competing_claim)
+        first_claim.refresh_from_db()
+        self.assertEqual(
+            first_claim.status,
+            RenewalNotificationDelivery.STATUS_PENDING,
+        )
+        self.assertIsNone(first_claim.sent_at)
+
+    def test_failed_delivery_claim_is_due_and_can_be_retried(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+        first_claim = claim_rule_channel(self.cycle, rule, "EMAIL")
+
+        mark_rule_channel_failed(first_claim, reason="provider unavailable")
+
+        first_claim.refresh_from_db()
+        self.assertEqual(
+            first_claim.status,
+            RenewalNotificationDelivery.STATUS_FAILED,
+        )
+        self.assertTrue(self._items_for_prescription(30)[0]["send_email"])
+
+        retry_claim = claim_rule_channel(self.cycle, rule, "EMAIL")
+
+        self.assertIsNotNone(retry_claim)
+        self.assertEqual(retry_claim.pk, first_claim.pk)
+        self.assertEqual(
+            retry_claim.status,
+            RenewalNotificationDelivery.STATUS_PENDING,
+        )
+        self.assertEqual(retry_claim.failure_reason, "")
+
+    def test_management_email_claim_blocks_a_competing_dispatch(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+        claim_rule_channel(self.cycle, rule, "EMAIL")
+        command = Command()
+
+        with patch(
+            "core_emails.services_notifications._send_email_strict"
+        ) as mocked_send_email:
+            result = command._handle_email(
+                prescription=self.prescription,
+                cycle=self.cycle,
+                rule=rule,
+                due_date=self._due_date(),
+                days_before=30,
+                send_real=True,
+            )
+
+        self.assertEqual(result, "SKIPPED(already-claimed)")
+        mocked_send_email.assert_not_called()
+
+    def test_management_email_failure_releases_claim_for_retry(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+        command = Command()
+
+        with patch(
+            "core_emails.services_notifications._send_email_strict",
+            return_value="FAILED",
+        ):
+            failed_result = command._handle_email(
+                prescription=self.prescription,
+                cycle=self.cycle,
+                rule=rule,
+                due_date=self._due_date(),
+                days_before=30,
+                send_real=True,
+            )
+
+        delivery = RenewalNotificationDelivery.objects.get(
+            cycle=self.cycle,
+            rule=rule,
+            channel="EMAIL",
+        )
+        self.assertEqual(failed_result, "FAILED")
+        self.assertEqual(delivery.status, RenewalNotificationDelivery.STATUS_FAILED)
+
+        with patch(
+            "core_emails.services_notifications._send_email_strict",
+            return_value="SENT",
+        ) as mocked_retry:
+            retry_result = command._handle_email(
+                prescription=self.prescription,
+                cycle=self.cycle,
+                rule=rule,
+                due_date=self._due_date(),
+                days_before=30,
+                send_real=True,
+            )
+
+        delivery.refresh_from_db()
+        self.assertEqual(retry_result, "SENT")
+        mocked_retry.assert_called_once()
+        self.assertEqual(delivery.status, RenewalNotificationDelivery.STATUS_SENT)
+        self.assertIsNotNone(delivery.sent_at)
+
+    def test_manual_email_does_not_send_after_losing_the_claim_race(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-email-race",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+        claim_rule_channel(self.cycle, rule, "EMAIL")
+
+        with (
+            patch(
+                "core_emails.views._due_cycle_for_manual_send",
+                return_value=self.cycle,
+            ),
+            patch("core_emails.views.send_mail") as mocked_send_mail,
+        ):
+            response = self.client.post(
+                reverse(
+                    "core_emails:send_renewal_patient_email",
+                    args=[self.prescription.pk, 30],
+                ),
+                {"rule_id": rule.pk, "cycle_id": self.cycle.pk},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        mocked_send_mail.assert_not_called()
+
     def test_same_day_rule_is_not_hidden_by_another_rules_legacy_marker(self):
         first_rule = self._create_rule(
             name="J-5 SMS A",
@@ -700,7 +856,7 @@ class RenewalsRulesRegressionTests(TestCase):
             ).exists()
         )
 
-    def test_manual_sms_failure_does_not_mark_delivery(self):
+    def test_manual_sms_failure_is_recorded_as_failed_and_remains_due(self):
         rule = self._create_rule(
             name="J-30 SMS",
             days_before=30,
@@ -733,13 +889,14 @@ class RenewalsRulesRegressionTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         mocked_send_sms.assert_called_once()
-        self.assertFalse(
-            RenewalNotificationDelivery.objects.filter(
-                cycle=self.cycle,
-                rule=rule,
-                channel="SMS",
-            ).exists()
+        delivery = RenewalNotificationDelivery.objects.get(
+            cycle=self.cycle,
+            rule=rule,
+            channel="SMS",
         )
+        self.assertEqual(delivery.status, RenewalNotificationDelivery.STATUS_FAILED)
+        self.assertIsNone(delivery.sent_at)
+        self.assertTrue(self._items_for_prescription(30)[0]["send_sms"])
 
     def test_manual_email_rejects_a_stale_completed_cycle(self):
         rule = self._create_rule(

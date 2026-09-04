@@ -50,8 +50,10 @@ from .services_workflow import change_prescription_status
 from .services import send_prescription_notifications
 from .services_renewal_templates import render_renewal_message
 from .services_renewal_rules import (
+    claim_rule_channel,
     get_due_notifications,
     _rule_channel_already_sent,
+    mark_rule_channel_failed,
     mark_rule_channel_sent,
 )
 from core_emails.services import compute_renewals_watch, compute_renewals_watch_v9
@@ -1109,13 +1111,39 @@ def send_renewal_patient_email(request, pk, days):
             "La pharmacie",
         ])
 
-    send_mail(
-        subject,
-        body,
-        settings.DEFAULT_FROM_EMAIL,
-        [patient.email],
-        fail_silently=False,
-    )
+    delivery_claim = None
+    if rule is not None:
+        delivery_claim = claim_rule_channel(cycle, rule, "EMAIL")
+        if delivery_claim is None:
+            messages.info(request, f"Email {rule.name} déjà envoyé ou en cours.")
+            return redirect(next_url)
+
+    try:
+        sent_count = send_mail(
+            subject,
+            body,
+            settings.DEFAULT_FROM_EMAIL,
+            [patient.email],
+            fail_silently=False,
+        )
+    except Exception as exc:
+        if delivery_claim is not None:
+            mark_rule_channel_failed(
+                delivery_claim,
+                reason=f"{type(exc).__name__}: {exc}",
+            )
+        logger.exception(
+            "Échec de l'email de renouvellement prescription=%s",
+            prescription.pk,
+        )
+        messages.error(request, "L’email n’a pas pu être envoyé.")
+        return redirect(next_url)
+
+    if sent_count == 0:
+        if delivery_claim is not None:
+            mark_rule_channel_failed(delivery_claim, reason="send_mail returned 0")
+        messages.error(request, "Le fournisseur email a refusé l’envoi.")
+        return redirect(next_url)
 
     # Historique renouvellement (event) — éviter doublons (unique_together)
     next_number = int(current_number)
@@ -1270,6 +1298,13 @@ def send_renewal_patient_sms(request, pk, days):
     from core_notifications.models import SmsPurpose, SmsStatus
     from core_notifications.services import send_sms_logged
 
+    delivery_claim = None
+    if rule is not None:
+        delivery_claim = claim_rule_channel(cycle, rule, "SMS")
+        if delivery_claim is None:
+            messages.info(request, f"SMS {rule.name} déjà envoyé ou en cours.")
+            return redirect(next_url)
+
     try:
         sms = send_sms_logged(
             to_e164=patient.phone_number,
@@ -1282,7 +1317,12 @@ def send_renewal_patient_sms(request, pk, days):
             ),
             prescription=prescription,
         )
-    except Exception:
+    except Exception as exc:
+        if delivery_claim is not None:
+            mark_rule_channel_failed(
+                delivery_claim,
+                reason=f"{type(exc).__name__}: {exc}",
+            )
         logger.exception(
             "Échec de préparation du SMS de renouvellement prescription=%s",
             prescription.pk,
@@ -1291,6 +1331,11 @@ def send_renewal_patient_sms(request, pk, days):
         return redirect(next_url)
 
     if getattr(sms, "status", None) != SmsStatus.SENT:
+        if delivery_claim is not None:
+            mark_rule_channel_failed(
+                delivery_claim,
+                reason=str(getattr(sms, "status", None) or "FAILED"),
+            )
         messages.error(request, "Le fournisseur SMS a refusé l’envoi.")
         return redirect(next_url)
 

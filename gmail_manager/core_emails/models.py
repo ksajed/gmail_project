@@ -663,13 +663,22 @@ class RenewalNotificationRule(models.Model):
 
 
 class RenewalNotificationDelivery(models.Model):
-    """Trace durable d'un rappel envoyé pour un cycle et une règle."""
+    """Réservation et trace durable d'un rappel pour un cycle et une règle."""
 
     CHANNEL_SMS = "SMS"
     CHANNEL_EMAIL = "EMAIL"
     CHANNEL_CHOICES = [
         (CHANNEL_SMS, "SMS"),
         (CHANNEL_EMAIL, "Email"),
+    ]
+
+    STATUS_PENDING = "PENDING"
+    STATUS_SENT = "SENT"
+    STATUS_FAILED = "FAILED"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "En cours"),
+        (STATUS_SENT, "Envoyé"),
+        (STATUS_FAILED, "Échec"),
     ]
 
     cycle = models.ForeignKey(
@@ -683,7 +692,14 @@ class RenewalNotificationDelivery(models.Model):
         related_name="deliveries",
     )
     channel = models.CharField(max_length=10, choices=CHANNEL_CHOICES)
-    sent_at = models.DateTimeField(default=timezone.now)
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default=STATUS_SENT,
+    )
+    claimed_at = models.DateTimeField(default=timezone.now)
+    sent_at = models.DateTimeField(blank=True, null=True, default=None)
+    failure_reason = models.CharField(max_length=500, blank=True, default="")
 
     class Meta:
         ordering = ["-sent_at"]
@@ -697,7 +713,7 @@ class RenewalNotificationDelivery(models.Model):
     def __str__(self):
         return (
             f"RenewalDelivery(cycle={self.cycle_id}, "
-            f"rule={self.rule_id}, channel={self.channel})"
+            f"rule={self.rule_id}, channel={self.channel}, status={self.status})"
         )
 
 

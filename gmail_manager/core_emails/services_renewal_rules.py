@@ -283,7 +283,77 @@ def _rule_channel_already_sent(
             cycle=cycle,
             rule=rule,
             channel=normalized_channel,
+            status__in=[
+                RenewalNotificationDelivery.STATUS_PENDING,
+                RenewalNotificationDelivery.STATUS_SENT,
+            ],
         ).exists()
+    )
+
+
+def claim_rule_channel(
+    cycle: PrescriptionRenewalCycle,
+    rule: RenewalNotificationRule,
+    channel: str,
+) -> Optional[RenewalNotificationDelivery]:
+    """Réserve atomiquement un canal avant l'appel au fournisseur.
+
+    La contrainte unique ``cycle/rule/channel`` arbitre les appels concurrents.
+    Une livraison en échec peut être reprise ; une réservation en cours ou un
+    envoi réussi bloque toute nouvelle émission.
+    """
+    normalized_channel = str(channel or "").upper()
+    if normalized_channel not in {"SMS", "EMAIL"}:
+        raise ValueError("Canal de renouvellement invalide.")
+    if not getattr(cycle, "pk", None) or not getattr(rule, "pk", None):
+        raise ValueError("Le cycle et la règle doivent être enregistrés.")
+
+    claimed_at = timezone.now()
+    delivery, created = RenewalNotificationDelivery.objects.get_or_create(
+        cycle=cycle,
+        rule=rule,
+        channel=normalized_channel,
+        defaults={
+            "status": RenewalNotificationDelivery.STATUS_PENDING,
+            "claimed_at": claimed_at,
+            "sent_at": None,
+            "failure_reason": "",
+        },
+    )
+    if created:
+        return delivery
+
+    reclaimed = RenewalNotificationDelivery.objects.filter(
+        pk=delivery.pk,
+        status=RenewalNotificationDelivery.STATUS_FAILED,
+    ).update(
+        status=RenewalNotificationDelivery.STATUS_PENDING,
+        claimed_at=claimed_at,
+        sent_at=None,
+        failure_reason="",
+    )
+    if not reclaimed:
+        return None
+
+    delivery.refresh_from_db()
+    return delivery
+
+
+def mark_rule_channel_failed(
+    delivery: RenewalNotificationDelivery,
+    *,
+    reason: str = "",
+) -> None:
+    """Marque une réservation comme échouée afin qu'elle soit retentable."""
+    if not getattr(delivery, "pk", None):
+        return
+    RenewalNotificationDelivery.objects.filter(
+        pk=delivery.pk,
+        status=RenewalNotificationDelivery.STATUS_PENDING,
+    ).update(
+        status=RenewalNotificationDelivery.STATUS_FAILED,
+        sent_at=None,
+        failure_reason=str(reason or "")[:500],
     )
 
 
@@ -302,12 +372,24 @@ def mark_rule_channel_sent(
         raise ValueError("Le cycle et la règle doivent être enregistrés.")
 
     marker_time = sent_at or timezone.now()
-    delivery, _created = RenewalNotificationDelivery.objects.get_or_create(
+    delivery, created = RenewalNotificationDelivery.objects.get_or_create(
         cycle=cycle,
         rule=rule,
         channel=normalized_channel,
-        defaults={"sent_at": marker_time},
+        defaults={
+            "status": RenewalNotificationDelivery.STATUS_SENT,
+            "claimed_at": marker_time,
+            "sent_at": marker_time,
+            "failure_reason": "",
+        },
     )
+    if not created and delivery.status != RenewalNotificationDelivery.STATUS_SENT:
+        RenewalNotificationDelivery.objects.filter(pk=delivery.pk).update(
+            status=RenewalNotificationDelivery.STATUS_SENT,
+            sent_at=marker_time,
+            failure_reason="",
+        )
+        delivery.refresh_from_db()
 
     legacy_field = _legacy_channel_field(rule, normalized_channel)
     if legacy_field and not getattr(cycle, legacy_field, None):

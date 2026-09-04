@@ -7,7 +7,9 @@ from django.utils.dateparse import parse_date
 from django.utils import timezone
 
 from core_emails.services_renewal_rules import (
+    claim_rule_channel,
     get_due_notifications,
+    mark_rule_channel_failed,
     mark_rule_channel_sent,
 )
 from core_emails.services_renewal_templates import render_renewal_message
@@ -187,21 +189,40 @@ class Command(BaseCommand):
         if not send_real:
             return "DRY-RUN"
 
+        delivery_claim = None
+        if rule is not None:
+            delivery_claim = claim_rule_channel(cycle, rule, "SMS")
+            if delivery_claim is None:
+                return "SKIPPED(already-claimed)"
+
         from core_notifications.services import send_sms_logged
         from core_notifications.models import SmsPurpose, SmsStatus
 
         purpose = getattr(SmsPurpose, "RENEWAL", SmsPurpose.INFO)
 
-        sms = send_sms_logged(
-            to_e164=phone,
-            text=body,
-            purpose=purpose,
-            template_key=getattr(template, "name", "") if template else "renewal_auto",
-            prescription=prescription,
-        )
+        try:
+            sms = send_sms_logged(
+                to_e164=phone,
+                text=body,
+                purpose=purpose,
+                template_key=getattr(template, "name", "") if template else "renewal_auto",
+                prescription=prescription,
+            )
+        except Exception as exc:
+            if delivery_claim is not None:
+                mark_rule_channel_failed(
+                    delivery_claim,
+                    reason=f"{type(exc).__name__}: {exc}",
+                )
+            raise
 
         sms_status = getattr(sms, "status", None)
         if sms_status != SmsStatus.SENT:
+            if delivery_claim is not None:
+                mark_rule_channel_failed(
+                    delivery_claim,
+                    reason=str(sms_status or "FAILED"),
+                )
             return str(sms_status or "FAILED")
 
         if rule is not None:
@@ -252,15 +273,31 @@ class Command(BaseCommand):
         if not send_real:
             return "DRY-RUN"
 
+        delivery_claim = None
+        if rule is not None:
+            delivery_claim = claim_rule_channel(cycle, rule, "EMAIL")
+            if delivery_claim is None:
+                return "SKIPPED(already-claimed)"
+
         from core_emails.services_notifications import _send_email_strict
 
-        result = _send_email_strict(
-            to_email=email,
-            subject=subject,
-            body=body,
-        )
+        try:
+            result = _send_email_strict(
+                to_email=email,
+                subject=subject,
+                body=body,
+            )
+        except Exception as exc:
+            if delivery_claim is not None:
+                mark_rule_channel_failed(
+                    delivery_claim,
+                    reason=f"{type(exc).__name__}: {exc}",
+                )
+            raise
 
         if result == "SENT" and rule is not None:
             mark_rule_channel_sent(cycle, rule, "EMAIL")
+        elif delivery_claim is not None:
+            mark_rule_channel_failed(delivery_claim, reason=str(result or "FAILED"))
 
         return result
