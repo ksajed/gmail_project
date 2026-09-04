@@ -231,7 +231,14 @@ class Command(BaseCommand):
             return str(sms_status or "FAILED")
 
         if rule is not None:
-            mark_rule_channel_sent(cycle, rule, "SMS")
+            completed = mark_rule_channel_sent(
+                cycle,
+                rule,
+                "SMS",
+                delivery_claim=delivery_claim,
+            )
+            if completed is None:
+                return "ERROR(claim-lost-after-send)"
 
         return "SENT"
 
@@ -301,7 +308,14 @@ class Command(BaseCommand):
             raise
 
         if result == "SENT" and rule is not None:
-            mark_rule_channel_sent(cycle, rule, "EMAIL")
+            completed = mark_rule_channel_sent(
+                cycle,
+                rule,
+                "EMAIL",
+                delivery_claim=delivery_claim,
+            )
+            if completed is None:
+                return "ERROR(claim-lost-after-send)"
         elif delivery_claim is not None:
             mark_rule_channel_failed(delivery_claim, reason=str(result or "FAILED"))
 
