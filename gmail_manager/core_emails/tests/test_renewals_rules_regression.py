@@ -18,6 +18,7 @@ from core_emails.models import (
     PrescriptionStatus,
     PrescriptionRenewalInfo,
     PrescriptionRenewalCycle,
+    PrescriptionRenewalEvent,
     PrescriptionStatusHistory,
     RenewalNotificationDelivery,
     RenewalNotificationRule,
@@ -850,6 +851,98 @@ class RenewalsRulesRegressionTests(TestCase):
         self.assertFalse(
             RenewalNotificationDelivery.objects.filter(rule=rule).exists()
         )
+
+    def test_manual_j0_email_is_cycle_bound_and_recorded_as_j0(self):
+        rule = self._create_rule(
+            name="J-0 EMAIL",
+            days_before=0,
+            send_sms=False,
+            send_email=True,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-j0-email",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+
+        with (
+            patch(
+                "core_emails.views.timezone.localdate",
+                return_value=self._due_date(),
+            ),
+            patch("core_emails.views.send_mail") as mocked_send_mail,
+        ):
+            response = self.client.post(
+                reverse(
+                    "core_emails:send_renewal_patient_email",
+                    args=[self.prescription.pk, 0],
+                ),
+                {"rule_id": rule.pk, "cycle_id": self.cycle.pk},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        mocked_send_mail.assert_called_once()
+        self.assertTrue(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule=rule,
+                channel="EMAIL",
+            ).exists()
+        )
+        event = PrescriptionRenewalEvent.objects.get(
+            prescription=self.prescription,
+            number=self.cycle.cycle_number,
+        )
+        self.assertIn("J-0", event.note)
+        self.assertNotIn("RETARD", event.note)
+
+    def test_manual_j0_sms_is_cycle_bound_marked_and_not_sent_twice(self):
+        rule = self._create_rule(
+            name="J-0 SMS",
+            days_before=0,
+            send_sms=True,
+            send_email=False,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-j0-sms",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+        url = reverse(
+            "core_emails:send_renewal_patient_sms",
+            args=[self.prescription.pk, 0],
+        )
+        post_data = {"rule_id": rule.pk, "cycle_id": self.cycle.pk}
+
+        with (
+            patch(
+                "core_emails.views.timezone.localdate",
+                return_value=self._due_date(),
+            ),
+            patch(
+                "core_notifications.services.send_sms_logged",
+                return_value=SimpleNamespace(status=SmsStatus.SENT),
+            ) as mocked_send_sms,
+        ):
+            first_response = self.client.post(url, post_data)
+            second_response = self.client.post(url, post_data)
+
+        self.assertEqual(first_response.status_code, 302)
+        self.assertEqual(second_response.status_code, 302)
+        mocked_send_sms.assert_called_once()
+        self.assertTrue(
+            RenewalNotificationDelivery.objects.filter(
+                cycle=self.cycle,
+                rule=rule,
+                channel="SMS",
+            ).exists()
+        )
+        event = PrescriptionRenewalEvent.objects.get(
+            prescription=self.prescription,
+            number=self.cycle.cycle_number,
+        )
+        self.assertIn("J-0", event.note)
+        self.assertNotIn("RETARD", event.note)
 
     def test_management_command_dry_run_uses_dynamic_j30_rule(self):
         self._create_rule(

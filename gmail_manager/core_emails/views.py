@@ -795,7 +795,10 @@ def change_prescription_type(request, pk):
 
 def _renewal_rule_for_manual_send(request, days, channel):
     """Résout une règle active qui autorise explicitement le canal demandé."""
-    if days == 0:
+    rule_id = request.POST.get("rule_id")
+    # Sans rule_id, days=0 conserve le sens historique « RETARD ». Avec un
+    # rule_id explicite, J-0 est une vraie règle configurable à résoudre.
+    if days == 0 and not rule_id:
         return None
 
     channel_field = {
@@ -814,7 +817,6 @@ def _renewal_rule_for_manual_send(request, days, channel):
         **filters,
     ).order_by("sort_order", "pk")
 
-    rule_id = request.POST.get("rule_id")
     if rule_id:
         return rules.filter(pk=rule_id).first()
     return rules.first()
@@ -1013,9 +1015,11 @@ def send_renewal_patient_email(request, pk, days):
         return redirect(next_url)
 
     rule = _renewal_rule_for_manual_send(request, days, "EMAIL")
-    if days != 0 and rule is None:
+    rule_was_submitted = bool(request.POST.get("rule_id"))
+    if rule is None and (days != 0 or rule_was_submitted):
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
+    is_overdue_action = days == 0 and rule is None
 
     patient = prescription.patient
     if not patient or not patient.email:
@@ -1085,7 +1089,7 @@ def send_renewal_patient_email(request, pk, days):
     if not subject:
         subject = (
             "Renouvellement en retard"
-            if days == 0
+            if is_overdue_action
             else "Votre renouvellement approche"
         )
 
@@ -1096,7 +1100,7 @@ def send_renewal_patient_email(request, pk, days):
             "",
             (
                 f"Votre renouvellement est en retard. Référence : {reference}."
-                if days == 0
+                if is_overdue_action
                 else f"Votre renouvellement approche. Référence : {reference}."
             ),
             "Merci de contacter la pharmacie.",
@@ -1118,7 +1122,7 @@ def send_renewal_patient_email(request, pk, days):
     max_len = _renewal_note_max_len()
     note = (
         "Rappel renouvellement patient (EMAIL) — RETARD."
-        if days == 0
+        if is_overdue_action
         else "Rappel renouvellement patient (EMAIL) — J-%s." % days
     )
     note = _renewal_truncate(note, max_len)
@@ -1149,14 +1153,18 @@ def send_renewal_patient_email(request, pk, days):
         changed_by=request.user,
         comment=(
             "Rappel renouvellement envoyé au patient (EMAIL) — RETARD."
-            if days == 0
+            if is_overdue_action
             else f"Rappel renouvellement envoyé au patient (EMAIL) — J-{days}."
         ),
     )
 
     messages.success(
         request,
-        ("Email patient envoyé (RETARD)." if days == 0 else f"Email patient envoyé (J-{days}).")
+        (
+            "Email patient envoyé (RETARD)."
+            if is_overdue_action
+            else f"Email patient envoyé (J-{days})."
+        )
     )
     return redirect(next_url)
 
@@ -1178,9 +1186,11 @@ def send_renewal_patient_sms(request, pk, days):
         return redirect(next_url)
 
     rule = _renewal_rule_for_manual_send(request, days, "SMS")
-    if days != 0 and rule is None:
+    rule_was_submitted = bool(request.POST.get("rule_id"))
+    if rule is None and (days != 0 or rule_was_submitted):
         messages.error(request, "Jour de rappel invalide.")
         return redirect(next_url)
+    is_overdue_action = days == 0 and rule is None
 
     patient = prescription.patient
     if not patient or not patient.phone_number:
@@ -1251,7 +1261,7 @@ def send_renewal_patient_sms(request, pk, days):
         msg = (
             f"Votre renouvellement est en retard. Référence : {reference}. "
             "Merci de contacter la pharmacie."
-            if days == 0
+            if is_overdue_action
             else
             f"Votre renouvellement approche. Référence : {reference}. "
             "Merci de contacter la pharmacie."
@@ -1289,7 +1299,7 @@ def send_renewal_patient_sms(request, pk, days):
     max_len = _renewal_note_max_len()
     note = (
         "Rappel renouvellement patient (SMS) — RETARD."
-        if days == 0
+        if is_overdue_action
         else "Rappel renouvellement patient (SMS) — J-%s." % days
     )
     note = _renewal_truncate(note, max_len)
@@ -1317,10 +1327,21 @@ def send_renewal_patient_sms(request, pk, days):
         old_status=prescription.status,
         new_status=prescription.status,
         changed_by=request.user,
-        comment=("Rappel renouvellement envoyé au patient (SMS) — RETARD." if days == 0 else f"Rappel renouvellement envoyé au patient (SMS) — J-{days}."),
+        comment=(
+            "Rappel renouvellement envoyé au patient (SMS) — RETARD."
+            if is_overdue_action
+            else f"Rappel renouvellement envoyé au patient (SMS) — J-{days}."
+        ),
     )
 
-    messages.success(request, ("SMS patient envoyé (RETARD)." if days == 0 else f"SMS patient envoyé (J-{days})."))
+    messages.success(
+        request,
+        (
+            "SMS patient envoyé (RETARD)."
+            if is_overdue_action
+            else f"SMS patient envoyé (J-{days})."
+        ),
+    )
     return redirect(next_url)
 
 @login_required
