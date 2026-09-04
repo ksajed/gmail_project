@@ -96,8 +96,10 @@ class Command(BaseCommand):
                     )
                     if result == "SENT":
                         summary["sms_sent"] += 1
-                    else:
+                    elif self._is_skipped_result(result):
                         summary["sms_skipped"] += 1
+                    else:
+                        summary["errors"] += 1
                     self.stdout.write(f"  SMS : {result}")
                 except Exception as e:
                     summary["errors"] += 1
@@ -119,8 +121,10 @@ class Command(BaseCommand):
                     )
                     if result == "SENT":
                         summary["email_sent"] += 1
-                    else:
+                    elif self._is_skipped_result(result):
                         summary["email_skipped"] += 1
+                    else:
+                        summary["errors"] += 1
                     self.stdout.write(f"  EMAIL : {result}")
                 except Exception as e:
                     summary["errors"] += 1
@@ -133,6 +137,11 @@ class Command(BaseCommand):
         self.stdout.write("=== RÉSUMÉ ===")
         for k, v in summary.items():
             self.stdout.write(f"{k}: {v}")
+
+    @staticmethod
+    def _is_skipped_result(result) -> bool:
+        normalized = str(result or "").upper()
+        return normalized == "DRY-RUN" or normalized.startswith("SKIPPED")
 
     def _safe_reference(self, prescription):
         return f"#{getattr(prescription, 'id', '')}"

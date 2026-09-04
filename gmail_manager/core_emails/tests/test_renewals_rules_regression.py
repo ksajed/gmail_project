@@ -724,6 +724,33 @@ class RenewalsRulesRegressionTests(TestCase):
         self.assertIsNone(self.cycle.reminder_5_patient_sms_sent_at)
         self.assertIsNone(self.cycle.reminder_5_patient_email_sent_at)
 
+    def test_management_command_counts_rejected_sms_as_error(self):
+        self._create_rule(
+            name="J-1 SMS",
+            active=True,
+            days_before=1,
+            send_sms=True,
+            send_email=False,
+        )
+        out = StringIO()
+
+        with patch(
+            "core_notifications.services.send_sms_logged",
+            return_value=SimpleNamespace(status=SmsStatus.FAILED),
+        ):
+            call_command(
+                "run_renewal_notifications",
+                date=str(self._day_for_rule(1)),
+                send=True,
+                stdout=out,
+            )
+
+        output = out.getvalue()
+        self.assertIn("SMS : FAILED", output)
+        self.assertIn("sms_sent: 0", output)
+        self.assertIn("sms_skipped: 0", output)
+        self.assertIn("errors: 1", output)
+
     def test_management_command_limit_one_limits_results(self):
         self._create_rule(
             name="J-5 A",
