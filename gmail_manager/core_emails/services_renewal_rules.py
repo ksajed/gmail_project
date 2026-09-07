@@ -570,9 +570,13 @@ def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
         for rule in rules:
             notification_date = calculate_notification_date(due_date, rule)
             # Le rattrapage reste possible entre la date prévue du rappel
-            # et l'échéance. Après l'échéance, le dossier relève uniquement
-            # du traitement RETARD : on n'envoie plus un ancien rappel J-x.
-            if notification_date > current_day or current_day > due_date:
+            # et l'échéance. Si un jour fermé reporte le rappel au-delà de
+            # l'échéance, cette date ouvrée reportée reste l'unique borne finale.
+            latest_delivery_date = max(due_date, notification_date)
+            if (
+                notification_date > current_day
+                or current_day > latest_delivery_date
+            ):
                 continue
 
             if _rule_already_sent(
