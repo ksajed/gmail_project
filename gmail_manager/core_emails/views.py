@@ -826,7 +826,7 @@ def _renewal_rule_for_manual_send(request, days, channel):
 
 
 def _due_cycle_for_manual_send(request, prescription, rule, channel):
-    """Retourne uniquement le cycle exact, encore ouvert et dû, du formulaire."""
+    """Retourne le cycle exact et l'échéance validée par le moteur de règles."""
     cycle_id = request.POST.get("cycle_id")
     normalized_channel = str(channel or "").upper()
     channel_key = {
@@ -851,7 +851,7 @@ def _due_cycle_for_manual_send(request, prescription, rule, channel):
             and getattr(item_rule, "pk", None) == rule.pk
             and bool(item.get(channel_key))
         ):
-            return cycle
+            return cycle, item.get("due_date")
 
     return None
 
@@ -1031,18 +1031,19 @@ def send_renewal_patient_email(request, pk, days):
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     if rule is not None:
-        cycle = _due_cycle_for_manual_send(
+        due_selection = _due_cycle_for_manual_send(
             request,
             prescription,
             rule,
             "EMAIL",
         )
-        if cycle is None:
+        if due_selection is None:
             messages.error(
                 request,
                 "Ce rappel n’est plus disponible. Actualisez le tableau de bord.",
             )
             return redirect(next_url)
+        cycle, end_date = due_selection
         current_number = cycle.cycle_number
     else:
         cycle, current_number = _get_or_create_current_renewal_cycle(
@@ -1053,29 +1054,29 @@ def send_renewal_patient_email(request, pk, days):
     if rule is not None and _rule_channel_already_sent(cycle, rule, "EMAIL"):
         messages.info(request, f"Email {rule.name} déjà envoyé.")
         return redirect(next_url)
-    # Base = date du 1er retrait (1ère délivrance)
-    first_delivered_at = (
-        PrescriptionStatusHistory.objects
-        .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
-        .order_by("changed_at")
-        .values_list("changed_at", flat=True)
-        .first()
-    )
-
-    if not first_delivered_at:
-        messages.error(
-            request,
-            "Première délivrance (retrait) introuvable. "
-            "Passez l’ordonnance en statut 'Délivrée' pour démarrer les rappels."
+    if rule is None:
+        # L'action RETARD historique ne vient pas d'une notification déjà
+        # validée : elle conserve donc son calcul depuis la première délivrance.
+        first_delivered_at = (
+            PrescriptionStatusHistory.objects
+            .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
+            .order_by("changed_at")
+            .values_list("changed_at", flat=True)
+            .first()
         )
-        return redirect("core_emails:prescription_detail", pk=pk)
 
-    start_date = timezone.localtime(first_delivered_at).date()
+        if not first_delivered_at:
+            messages.error(
+                request,
+                "Première délivrance (retrait) introuvable. "
+                "Passez l’ordonnance en statut 'Délivrée' pour démarrer les rappels."
+            )
+            return redirect("core_emails:prescription_detail", pk=pk)
 
-    # Échéance du prochain renouvellement = start_date + (done_count + 1) * period_days
-    end_date = start_date + datetime.timedelta(
-        days=(int(info.renewal_done_count) + 1) * int(info.period_days)
-    )
+        start_date = timezone.localtime(first_delivered_at).date()
+        end_date = start_date + datetime.timedelta(
+            days=(int(info.renewal_done_count) + 1) * int(info.period_days)
+        )
 
     # ORDO V9 - Email via template configurable.
     # RGPD : ne pas inclure médicament, diagnostic ou pathologie.
@@ -1246,18 +1247,19 @@ def send_renewal_patient_sms(request, pk, days):
 
     info, _ = PrescriptionRenewalInfo.objects.get_or_create(prescription=prescription)
     if rule is not None:
-        cycle = _due_cycle_for_manual_send(
+        due_selection = _due_cycle_for_manual_send(
             request,
             prescription,
             rule,
             "SMS",
         )
-        if cycle is None:
+        if due_selection is None:
             messages.error(
                 request,
                 "Ce rappel n’est plus disponible. Actualisez le tableau de bord.",
             )
             return redirect(next_url)
+        cycle, end_date = due_selection
         current_number = cycle.cycle_number
     else:
         cycle, current_number = _get_or_create_current_renewal_cycle(
@@ -1268,29 +1270,29 @@ def send_renewal_patient_sms(request, pk, days):
     if rule is not None and _rule_channel_already_sent(cycle, rule, "SMS"):
         messages.info(request, f"SMS {rule.name} déjà envoyé.")
         return redirect(next_url)
-    # Base = date du 1er retrait (1ère délivrance)
-    first_delivered_at = (
-        PrescriptionStatusHistory.objects
-        .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
-        .order_by("changed_at")
-        .values_list("changed_at", flat=True)
-        .first()
-    )
-
-    if not first_delivered_at:
-        messages.error(
-            request,
-            "Première délivrance (retrait) introuvable. "
-            "Passez l’ordonnance en statut 'Délivrée' pour démarrer les rappels."
+    if rule is None:
+        # L'action RETARD historique ne vient pas d'une notification déjà
+        # validée : elle conserve donc son calcul depuis la première délivrance.
+        first_delivered_at = (
+            PrescriptionStatusHistory.objects
+            .filter(prescription=prescription, new_status=PrescriptionStatus.DELIVERED)
+            .order_by("changed_at")
+            .values_list("changed_at", flat=True)
+            .first()
         )
-        return redirect("core_emails:prescription_detail", pk=pk)
 
-    start_date = timezone.localtime(first_delivered_at).date()
+        if not first_delivered_at:
+            messages.error(
+                request,
+                "Première délivrance (retrait) introuvable. "
+                "Passez l’ordonnance en statut 'Délivrée' pour démarrer les rappels."
+            )
+            return redirect("core_emails:prescription_detail", pk=pk)
 
-    # Échéance du prochain renouvellement = start_date + (done_count + 1) * period_days
-    end_date = start_date + datetime.timedelta(
-        days=(int(info.renewal_done_count) + 1) * int(info.period_days)
-    )
+        start_date = timezone.localtime(first_delivered_at).date()
+        end_date = start_date + datetime.timedelta(
+            days=(int(info.renewal_done_count) + 1) * int(info.period_days)
+        )
     # ORDO V9 - SMS via template configurable.
     # RGPD : ne pas inclure médicament, diagnostic ou pathologie.
     _subject, msg, _template = render_renewal_message(
