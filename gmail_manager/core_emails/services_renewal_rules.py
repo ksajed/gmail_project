@@ -569,10 +569,10 @@ def get_due_notifications(today: Optional[date] = None) -> List[Dict[str, Any]]:
 
         for rule in rules:
             notification_date = calculate_notification_date(due_date, rule)
-            # V9 Lot 18 : rattrapage automatique.
-            # Si le serveur était arrêté le jour prévu,
-            # on traite aussi les notifications passées non encore envoyées.
-            if notification_date > current_day:
+            # Le rattrapage reste possible entre la date prévue du rappel
+            # et l'échéance. Après l'échéance, le dossier relève uniquement
+            # du traitement RETARD : on n'envoie plus un ancien rappel J-x.
+            if notification_date > current_day or current_day > due_date:
                 continue
 
             if _rule_already_sent(
