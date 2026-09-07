@@ -160,9 +160,49 @@ class RenewalDefaultPolicyTests(TestCase):
         self.assertEqual(customized_j2.days_before, 2)
         self.assertTrue(customized_j2.active)
 
-    def test_migration_reverse_disables_only_the_identifiable_default_j1(self):
+    def test_migration_round_trip_restores_only_rules_changed_by_policy(self):
         RenewalNotificationRule.objects.all().delete()
-        migrated_default = RenewalNotificationRule.objects.create(
+        default_j21 = RenewalNotificationRule.objects.create(
+            name="J-21",
+            days_before=21,
+            send_sms=True,
+            send_email=True,
+            active=True,
+            sort_order=10,
+        )
+        inactive_j21 = RenewalNotificationRule.objects.create(
+            name="J-21",
+            days_before=21,
+            send_sms=True,
+            send_email=True,
+            active=False,
+            sort_order=10,
+        )
+        default_j10 = RenewalNotificationRule.objects.create(
+            name="J-10",
+            days_before=10,
+            send_sms=True,
+            send_email=False,
+            active=True,
+            sort_order=20,
+        )
+        inactive_j10 = RenewalNotificationRule.objects.create(
+            name="J-10",
+            days_before=10,
+            send_sms=True,
+            send_email=False,
+            active=False,
+            sort_order=20,
+        )
+        default_j2 = RenewalNotificationRule.objects.create(
+            name="J-2",
+            days_before=2,
+            send_sms=True,
+            send_email=False,
+            active=True,
+            sort_order=40,
+        )
+        custom_j1 = RenewalNotificationRule.objects.create(
             name="J-1",
             days_before=1,
             send_sms=True,
@@ -170,23 +210,35 @@ class RenewalDefaultPolicyTests(TestCase):
             active=True,
             sort_order=40,
         )
-        custom_j1 = RenewalNotificationRule.objects.create(
-            name="Rappel J-1 personnalisé",
-            days_before=1,
-            send_sms=False,
-            send_email=True,
-            active=True,
-            sort_order=99,
-        )
 
         migration = import_module(
             "core_emails.migrations.0017_renewal_policy_j5_j1"
         )
+        migration.apply_j5_j1_policy(django_apps, None)
         migration.reverse_j5_j1_policy(django_apps, None)
 
-        migrated_default.refresh_from_db()
+        default_j21.refresh_from_db()
+        inactive_j21.refresh_from_db()
+        default_j10.refresh_from_db()
+        inactive_j10.refresh_from_db()
+        default_j2.refresh_from_db()
         custom_j1.refresh_from_db()
-        self.assertFalse(migrated_default.active)
+
+        self.assertTrue(default_j21.active)
+        self.assertEqual(default_j21.sort_order, 10)
+        self.assertFalse(inactive_j21.active)
+        self.assertEqual(inactive_j21.sort_order, 10)
+        self.assertTrue(default_j10.active)
+        self.assertEqual(default_j10.sort_order, 20)
+        self.assertFalse(inactive_j10.active)
+        self.assertEqual(inactive_j10.sort_order, 20)
+        self.assertEqual(default_j2.name, "J-2")
+        self.assertEqual(default_j2.days_before, 2)
+        self.assertEqual(default_j2.sort_order, 40)
+        self.assertTrue(default_j2.active)
+        self.assertEqual(custom_j1.name, "J-1")
+        self.assertEqual(custom_j1.days_before, 1)
+        self.assertEqual(custom_j1.sort_order, 40)
         self.assertTrue(custom_j1.active)
 
     def test_claim_migration_creates_the_legacy_missing_delivery_table(self):
