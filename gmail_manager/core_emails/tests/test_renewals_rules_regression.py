@@ -908,7 +908,7 @@ class RenewalsRulesRegressionTests(TestCase):
         with (
             patch(
                 "core_emails.views._due_cycle_for_manual_send",
-                return_value=self.cycle,
+                return_value=(self.cycle, self._due_date()),
             ),
             patch("core_emails.views.send_mail") as mocked_send_mail,
         ):
@@ -1188,6 +1188,97 @@ class RenewalsRulesRegressionTests(TestCase):
             ).exists()
         )
 
+    def test_manual_email_uses_dashboard_due_date_without_delivered_history(self):
+        rule = self._create_rule(
+            name="J-30 EMAIL",
+            days_before=30,
+            send_sms=False,
+            send_email=True,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-email-established-at",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+        PrescriptionStatusHistory.objects.filter(
+            prescription=self.prescription,
+            new_status=PrescriptionStatus.DELIVERED,
+        ).delete()
+        expected_due_date = _get_cycle_due_date(self.cycle)
+        notification_day = calculate_notification_date(expected_due_date, rule)
+
+        with (
+            patch(
+                "core_emails.views.timezone.localdate",
+                return_value=notification_day,
+            ),
+            patch(
+                "core_emails.views.render_renewal_message",
+                return_value=("Sujet", "Message", None),
+            ) as mocked_render,
+            patch("core_emails.views.send_mail", return_value=1) as mocked_send_mail,
+        ):
+            response = self.client.post(
+                reverse(
+                    "core_emails:send_renewal_patient_email",
+                    args=[self.prescription.pk, 30],
+                ),
+                {"rule_id": rule.pk, "cycle_id": self.cycle.pk},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        mocked_send_mail.assert_called_once()
+        self.assertEqual(
+            mocked_render.call_args.kwargs["extra_context"]["date_echeance"],
+            expected_due_date.strftime("%d/%m/%Y"),
+        )
+
+    def test_manual_sms_uses_selected_cycles_dashboard_due_date(self):
+        rule = self._create_rule(
+            name="J-30 SMS",
+            days_before=30,
+            send_sms=True,
+            send_email=False,
+        )
+        user = get_user_model().objects.create_user(
+            username="test-renewals-sms-cycle-due-date",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+        self.info.renewal_done_count = 0
+        self.info.save(update_fields=["renewal_done_count"])
+        expected_due_date = _get_cycle_due_date(self.cycle)
+        notification_day = calculate_notification_date(expected_due_date, rule)
+
+        with (
+            patch(
+                "core_emails.views.timezone.localdate",
+                return_value=notification_day,
+            ),
+            patch(
+                "core_emails.views.render_renewal_message",
+                return_value=("", "Message", None),
+            ) as mocked_render,
+            patch(
+                "core_notifications.services.send_sms_logged",
+                return_value=SimpleNamespace(status=SmsStatus.SENT),
+            ) as mocked_send_sms,
+        ):
+            response = self.client.post(
+                reverse(
+                    "core_emails:send_renewal_patient_sms",
+                    args=[self.prescription.pk, 30],
+                ),
+                {"rule_id": rule.pk, "cycle_id": self.cycle.pk},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        mocked_send_sms.assert_called_once()
+        self.assertEqual(
+            mocked_render.call_args.kwargs["extra_context"]["date_echeance"],
+            expected_due_date.strftime("%d/%m/%Y"),
+        )
+
     def test_manual_sms_uses_provider_and_marks_only_success(self):
         rule = self._create_rule(
             name="J-30 SMS",
@@ -1398,7 +1489,7 @@ class RenewalsRulesRegressionTests(TestCase):
         with (
             patch(
                 "core_emails.views.timezone.localdate",
-                return_value=self._due_date(),
+                return_value=self._day_for_rule(0),
             ),
             patch("core_emails.views.send_mail") as mocked_send_mail,
         ):
@@ -1447,7 +1538,7 @@ class RenewalsRulesRegressionTests(TestCase):
         with (
             patch(
                 "core_emails.views.timezone.localdate",
-                return_value=self._due_date(),
+                return_value=self._day_for_rule(0),
             ),
             patch(
                 "core_notifications.services.send_sms_logged",
