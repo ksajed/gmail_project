@@ -99,6 +99,67 @@ class RenewalDefaultPolicyTests(TestCase):
         self.assertEqual(default_j2.days_before, 1)
         self.assertFalse(default_j2.active)
 
+    def test_migration_preserves_channel_customized_default_rules(self):
+        RenewalNotificationRule.objects.all().delete()
+        untouched_j21 = RenewalNotificationRule.objects.create(
+            name="J-21",
+            days_before=21,
+            send_sms=True,
+            send_email=True,
+            active=True,
+            sort_order=10,
+        )
+        customized_j21 = RenewalNotificationRule.objects.create(
+            name="J-21",
+            days_before=21,
+            send_sms=False,
+            send_email=True,
+            active=True,
+            sort_order=10,
+        )
+        untouched_j10 = RenewalNotificationRule.objects.create(
+            name="J-10",
+            days_before=10,
+            send_sms=True,
+            send_email=False,
+            active=True,
+            sort_order=20,
+        )
+        customized_j10 = RenewalNotificationRule.objects.create(
+            name="J-10",
+            days_before=10,
+            send_sms=True,
+            send_email=True,
+            active=True,
+            sort_order=20,
+        )
+        customized_j2 = RenewalNotificationRule.objects.create(
+            name="J-2",
+            days_before=2,
+            send_sms=False,
+            send_email=True,
+            active=True,
+            sort_order=40,
+        )
+
+        migration = import_module(
+            "core_emails.migrations.0017_renewal_policy_j5_j1"
+        )
+        migration.apply_j5_j1_policy(django_apps, None)
+
+        untouched_j21.refresh_from_db()
+        customized_j21.refresh_from_db()
+        untouched_j10.refresh_from_db()
+        customized_j10.refresh_from_db()
+        customized_j2.refresh_from_db()
+        self.assertFalse(untouched_j21.active)
+        self.assertTrue(customized_j21.active)
+        self.assertFalse(untouched_j10.active)
+        self.assertTrue(customized_j10.active)
+        self.assertEqual(customized_j2.name, "J-2")
+        self.assertEqual(customized_j2.days_before, 2)
+        self.assertTrue(customized_j2.active)
+
     def test_migration_reverse_disables_only_the_identifiable_default_j1(self):
         RenewalNotificationRule.objects.all().delete()
         migrated_default = RenewalNotificationRule.objects.create(
@@ -562,6 +623,7 @@ class RenewalsRulesRegressionTests(TestCase):
             html,
         )
         self.assertIn('data-days="1"', html)
+        self.assertIn(f'data-rule-id="{rule.pk}"', html)
         self.assertIn(f'name="rule_id" value="{rule.pk}"', html)
         self.assertIn(f'name="cycle_id" value="{self.cycle.pk}"', html)
         self.assertNotIn(
@@ -576,6 +638,49 @@ class RenewalsRulesRegressionTests(TestCase):
                 "core_emails:send_renewal_patient_sms",
                 args=[self.prescription.pk, 0],
             ),
+            html,
+        )
+
+    def test_configured_j0_confirmation_is_not_labeled_overdue(self):
+        rule = self._create_rule(
+            name="J-0",
+            active=True,
+            days_before=0,
+            send_sms=True,
+            send_email=True,
+        )
+        item = {
+            "prescription": self.prescription,
+            "cycle": self.cycle,
+            "rule": rule,
+            "due_date": self._due_date(),
+            "send_sms": True,
+            "send_email": True,
+        }
+        user = get_user_model().objects.create_user(
+            username="test-renewals-dashboard-j0",
+            password="test-only-password",
+        )
+        self.client.force_login(user)
+
+        with patch(
+            "core_emails.services_renewal_rules.get_due_notifications",
+            return_value=[item],
+        ):
+            response = self.client.get(
+                reverse("core_emails:renewals_dashboard")
+            )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn('data-days="0"', html)
+        self.assertIn(f'data-rule-id="{rule.pk}"', html)
+        self.assertIn(
+            'const ruleId = String(btn.getAttribute("data-rule-id") || "");',
+            html,
+        )
+        self.assertIn(
+            'const when = (days === "0" && !ruleId) ? "RETARD" : ("J-" + days);',
             html,
         )
 
