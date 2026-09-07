@@ -31,6 +31,53 @@
 
   </div>
 
+  <h2>Notifications à envoyer ({{ renewals_notifications_due|length }})</h2>
+
+  {% for item in renewals_notifications_due %}
+    {% with p=item.prescription cycle=item.cycle rule=item.rule %}
+      <div style="border-left: 4px solid #7c3aed; padding: 12px; margin-bottom: 8px; background: #faf7ff;">
+        <strong>Ordonnance #{{ p.id }} — {{ rule.name }}</strong>
+        <p>
+          Patient : {{ p.patient.full_name|default:p.patient.email|default:"—" }}<br>
+          Cycle : {{ cycle.cycle_number|default:"—" }}<br>
+          Échéance : {{ item.due_date|date:"d/m/Y" }}
+        </p>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          {% if item.send_email %}
+            <form method="post" action="{% url 'core_emails:send_renewal_patient_email' p.id rule.days_before %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+              <input type="hidden" name="rule_id" value="{{ rule.id }}">
+              <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
+              <button type="submit" data-days="{{ rule.days_before }}" style="background:#2563eb;color:white;border:0;padding:8px 12px;border-radius:6px;font-weight:bold;">
+                Envoyer l’email {{ rule.name }}
+              </button>
+            </form>
+          {% endif %}
+
+          {% if item.send_sms %}
+            <form method="post" action="{% url 'core_emails:send_renewal_patient_sms' p.id rule.days_before %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'core_emails:renewals_dashboard' %}">
+              <input type="hidden" name="rule_id" value="{{ rule.id }}">
+              <input type="hidden" name="cycle_id" value="{{ cycle.id }}">
+              <button type="submit" data-days="{{ rule.days_before }}" style="background:#0a8f3c;color:white;border:0;padding:8px 12px;border-radius:6px;font-weight:bold;">
+                Envoyer le SMS {{ rule.name }}
+              </button>
+            </form>
+          {% endif %}
+
+          <a href="{% url 'core_emails:prescription_detail' p.id %}" style="display:inline-block;background:#fff;color:#111827;border:1px solid #d1d5db;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:bold;">
+            Ouvrir l’ordonnance
+          </a>
+        </div>
+      </div>
+    {% endwith %}
+  {% empty %}
+    <p>Aucune notification à envoyer aujourd’hui.</p>
+  {% endfor %}
+
   <h2>Votre travail</h2>
 
   <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">

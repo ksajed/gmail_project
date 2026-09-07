@@ -554,7 +554,7 @@ margin-left:10px;
         name="established_at"
         value="{% if prescription.established_at %}{{ prescription.established_at|date:'Y-m-d' }}{% endif %}"
       />
-      <div class="hint">Base du calcul J-5 / J-3.</div>
+      <div class="hint">Base du calcul J-5 / J-1.</div>
       {% if context_structure_locked %}
         <div class="hint" style="color:#92400e; margin-top:8px;">Paramètres de renouvellement verrouillés : traitement déjà commencé.</div>
       {% endif %}
@@ -701,8 +701,8 @@ margin-left:10px;
       <div style="font-weight:900; margin-bottom:6px;">Rappels envoyés (anti-doublon)</div>
       <div><strong>J-5 Email :</strong> {{ renewal_cycle.reminder_5_patient_email_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
       <div><strong>J-5 SMS :</strong> {{ renewal_cycle.reminder_5_patient_sms_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
-      <div><strong>J-3 Email :</strong> {{ renewal_cycle.reminder_3_patient_email_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
-      <div><strong>J-3 SMS :</strong> {{ renewal_cycle.reminder_3_patient_sms_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
+      <div><strong>J-1 Email :</strong> {{ renewal_cycle.reminder_1_patient_email_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
+      <div><strong>J-1 SMS :</strong> {{ renewal_cycle.reminder_1_patient_sms_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
       <div><strong>Email médecin :</strong> {{ renewal_cycle.doctor_email_sent_at|date:"j F Y à H:i"|default:"—" }}</div>
     </div>
 

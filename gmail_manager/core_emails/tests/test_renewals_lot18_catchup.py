@@ -18,6 +18,7 @@ from core_emails.services_renewal_rules import (
     _get_cycle_due_date,
     calculate_notification_date,
     get_due_notifications,
+    mark_rule_channel_sent,
 )
 
 
@@ -133,15 +134,8 @@ class RenewalsLot18CatchupTests(TestCase):
         due = _get_cycle_due_date(self.cycle)
         notification_day = calculate_notification_date(due, rule)
 
-        now = timezone.now()
-        self.cycle.reminder_5_patient_sms_sent_at = now
-        self.cycle.reminder_5_patient_email_sent_at = now
-        self.cycle.save(
-            update_fields=[
-                "reminder_5_patient_sms_sent_at",
-                "reminder_5_patient_email_sent_at",
-            ]
-        )
+        mark_rule_channel_sent(self.cycle, rule, "SMS")
+        mark_rule_channel_sent(self.cycle, rule, "EMAIL")
 
         today_after_restart = notification_day + timedelta(days=1)
 
