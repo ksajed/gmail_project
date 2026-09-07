@@ -385,6 +385,61 @@ class RenewalsRulesRegressionTests(TestCase):
             and int(getattr(item.get("rule"), "days_before", -1)) == days_before
         ]
 
+    def test_missed_reminder_is_caught_up_before_due_date(self):
+        self._create_rule(
+            name="J-5 CATCHUP",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+        )
+
+        due_date = self._due_date()
+        items = get_due_notifications(today=due_date - timedelta(days=2))
+        matched = [
+            item
+            for item in items
+            if item.get("prescription") == self.prescription
+        ]
+
+        self.assertEqual(len(matched), 1)
+        self.assertEqual(matched[0]["due_date"], due_date)
+
+    def test_reminder_is_still_due_on_the_deadline(self):
+        self._create_rule(
+            name="J-5 DEADLINE",
+            days_before=5,
+            send_sms=True,
+            send_email=False,
+        )
+
+        due_date = self._due_date()
+        items = get_due_notifications(today=due_date)
+        matched = [
+            item
+            for item in items
+            if item.get("prescription") == self.prescription
+        ]
+
+        self.assertEqual(len(matched), 1)
+
+    def test_past_due_cycle_is_not_returned_as_an_old_reminder(self):
+        self._create_rule(
+            name="J-5 EXPIRED",
+            days_before=5,
+            send_sms=True,
+            send_email=True,
+        )
+
+        due_date = self._due_date()
+        items = get_due_notifications(today=due_date + timedelta(days=1))
+        matched = [
+            item
+            for item in items
+            if item.get("prescription") == self.prescription
+        ]
+
+        self.assertEqual(matched, [])
+
     def test_inactive_rule_is_ignored(self):
         self._create_rule(
             name="J-5 INACTIF",
