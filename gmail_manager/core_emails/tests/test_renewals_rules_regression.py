@@ -422,6 +422,70 @@ class RenewalsRulesRegressionTests(TestCase):
 
         self.assertEqual(len(matched), 1)
 
+    def test_j0_closed_deadline_is_sent_on_next_open_day(self):
+        self._create_rule(
+            name="J-0 CLOSED DEADLINE",
+            days_before=0,
+            send_sms=True,
+            send_email=False,
+        )
+        sunday_due_date = date(2026, 9, 6)
+        monday_notification_date = date(2026, 9, 7)
+
+        with patch(
+            "core_emails.services_renewal_rules._get_cycle_due_date",
+            return_value=sunday_due_date,
+        ):
+            items = get_due_notifications(today=monday_notification_date)
+
+        matched = [
+            item
+            for item in items
+            if item.get("prescription") == self.prescription
+        ]
+        self.assertEqual(len(matched), 1)
+        self.assertEqual(
+            matched[0]["notification_date"],
+            monday_notification_date,
+        )
+
+    def test_j1_closed_days_can_shift_past_deadline(self):
+        self._create_rule(
+            name="J-1 CLOSED DAYS",
+            days_before=1,
+            send_sms=True,
+            send_email=False,
+        )
+        monday_due_date = date(2026, 9, 7)
+        tuesday_notification_date = date(2026, 9, 8)
+        closed_days = {
+            date(2026, 9, 6),
+            monday_due_date,
+        }
+
+        with (
+            patch(
+                "core_emails.services_renewal_rules._get_cycle_due_date",
+                return_value=monday_due_date,
+            ),
+            patch(
+                "core_emails.services_renewal_rules.is_closed_day",
+                side_effect=lambda value: value in closed_days,
+            ),
+        ):
+            items = get_due_notifications(today=tuesday_notification_date)
+
+        matched = [
+            item
+            for item in items
+            if item.get("prescription") == self.prescription
+        ]
+        self.assertEqual(len(matched), 1)
+        self.assertEqual(
+            matched[0]["notification_date"],
+            tuesday_notification_date,
+        )
+
     def test_past_due_cycle_is_not_returned_as_an_old_reminder(self):
         self._create_rule(
             name="J-5 EXPIRED",
