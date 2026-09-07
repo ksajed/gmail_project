@@ -8,10 +8,30 @@ def apply_j5_j1_policy(apps, schema_editor):
 
     # Ne modifier que les règles initiales livrées par ORDO V9. Les règles
     # personnalisées du pharmacien restent intactes.
-    Rule.objects.filter(name="J-21", days_before=21, sort_order=10).update(active=False)
-    Rule.objects.filter(name="J-10", days_before=10, sort_order=20).update(active=False)
+    Rule.objects.filter(
+        name="J-21",
+        days_before=21,
+        send_sms=True,
+        send_email=True,
+        active=True,
+        sort_order=10,
+    ).update(active=False)
+    Rule.objects.filter(
+        name="J-10",
+        days_before=10,
+        send_sms=True,
+        send_email=False,
+        active=True,
+        sort_order=20,
+    ).update(active=False)
 
-    default_j2 = Rule.objects.filter(name="J-2", days_before=2, sort_order=40).first()
+    default_j2 = Rule.objects.filter(
+        name="J-2",
+        days_before=2,
+        send_sms=True,
+        send_email=False,
+        sort_order=40,
+    ).first()
     if default_j2:
         Rule.objects.filter(pk=default_j2.pk).update(
             name="J-1",
@@ -27,9 +47,13 @@ def reverse_j5_j1_policy(apps, schema_editor):
     # J-2 livré par défaut doit donc être désactivée avant que Django supprime
     # RenewalNotificationDelivery et les marqueurs J-1 lors d'un rollback.
     # Les règles J-1 personnalisées, dont la signature diffère, restent intactes.
-    Rule.objects.filter(name="J-1", days_before=1, sort_order=40).update(
-        active=False,
-    )
+    Rule.objects.filter(
+        name="J-1",
+        days_before=1,
+        send_sms=True,
+        send_email=False,
+        sort_order=40,
+    ).update(active=False)
 
 
 def backfill_legacy_delivery_markers(apps, schema_editor):
