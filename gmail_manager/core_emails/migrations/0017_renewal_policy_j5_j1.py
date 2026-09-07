@@ -3,6 +3,14 @@ import django.db.models.deletion
 import django.utils.timezone
 
 
+# Les valeurs 10_000+ sont réservées à cette migration. Elles permettent au
+# code inverse de distinguer les règles réellement modifiées ici des règles
+# identiques que le pharmacien avait déjà désactivées ou créées lui-même.
+MIGRATED_J21_SORT_ORDER = 10010
+MIGRATED_J10_SORT_ORDER = 10020
+MIGRATED_J2_SORT_ORDER = 10040
+
+
 def apply_j5_j1_policy(apps, schema_editor):
     Rule = apps.get_model("core_emails", "RenewalNotificationRule")
 
@@ -15,7 +23,10 @@ def apply_j5_j1_policy(apps, schema_editor):
         send_email=True,
         active=True,
         sort_order=10,
-    ).update(active=False)
+    ).update(
+        active=False,
+        sort_order=MIGRATED_J21_SORT_ORDER,
+    )
     Rule.objects.filter(
         name="J-10",
         days_before=10,
@@ -23,7 +34,10 @@ def apply_j5_j1_policy(apps, schema_editor):
         send_email=False,
         active=True,
         sort_order=20,
-    ).update(active=False)
+    ).update(
+        active=False,
+        sort_order=MIGRATED_J10_SORT_ORDER,
+    )
 
     default_j2 = Rule.objects.filter(
         name="J-2",
@@ -36,24 +50,44 @@ def apply_j5_j1_policy(apps, schema_editor):
         Rule.objects.filter(pk=default_j2.pk).update(
             name="J-1",
             days_before=1,
+            sort_order=MIGRATED_J2_SORT_ORDER,
         )
 
 
 def reverse_j5_j1_policy(apps, schema_editor):
-    """Neutralise la règle J-1 identifiable avant de retirer son suivi."""
+    """Restaure exactement la politique V9 remplacée par cette migration."""
     Rule = apps.get_model("core_emails", "RenewalNotificationRule")
 
-    # La version 0016 ne sait pas tracer les envois J-1. La règle issue du
-    # J-2 livré par défaut doit donc être désactivée avant que Django supprime
-    # RenewalNotificationDelivery et les marqueurs J-1 lors d'un rollback.
-    # Les règles J-1 personnalisées, dont la signature diffère, restent intactes.
+    # Les ordres 10_000+ servent de marqueurs : une règle restée à son ordre
+    # d'origine n'a pas été modifiée par apply_j5_j1_policy et doit donc rester
+    # intacte, notamment si le pharmacien l'avait déjà désactivée.
+    Rule.objects.filter(
+        name="J-21",
+        days_before=21,
+        send_sms=True,
+        send_email=True,
+        active=False,
+        sort_order=MIGRATED_J21_SORT_ORDER,
+    ).update(active=True, sort_order=10)
+    Rule.objects.filter(
+        name="J-10",
+        days_before=10,
+        send_sms=True,
+        send_email=False,
+        active=False,
+        sort_order=MIGRATED_J10_SORT_ORDER,
+    ).update(active=True, sort_order=20)
     Rule.objects.filter(
         name="J-1",
         days_before=1,
         send_sms=True,
         send_email=False,
+        sort_order=MIGRATED_J2_SORT_ORDER,
+    ).update(
+        name="J-2",
+        days_before=2,
         sort_order=40,
-    ).update(active=False)
+    )
 
 
 def backfill_legacy_delivery_markers(apps, schema_editor):
